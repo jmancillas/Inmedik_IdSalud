@@ -1,0 +1,48 @@
+﻿<div class="col-md-12 no-padding-sides">
+    <div class="col-md-9 no-padding-right">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.address.$touched && currentForm.address.$invalid)}">
+            <label for="address" class="control-label col-md-2">Dirección<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.address.addressLine" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="address" required name="address" placeholder="Dirección" maxlength="200">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 no-padding-left">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.postalCode.$touched && currentForm.postalCode.$invalid)}">
+            <label for="postalCode" class="control-label col-md-6 no-padding-left">Código Postal<span class="required">*</span>: </label>
+            <div class="col-md-6">
+                <input type="text" class="form-control" ng-pattern="INMEDIKApp.regularExpretions.onlyNumbers.exp" ng-model="INMEDIKApp.address.postalCode" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="postalCode" required name="postalCode" placeholder="Código Postal" maxlength="5">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 no-padding-right">
+        <div class="form-group " ng-class="{'invalid-group': (currentForm.stateAux.$touched && currentForm.stateAux.$invalid)}">
+            <label for="state" class="control-label col-md-3">Estado<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <select name="stateAux" id="stateAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.selectedState" ng-change="INMEDIKApp.UpdateCities()" required ng-options="s.name for s in INMEDIKApp.states track by s.id">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 no-padding-left">
+        <div class="form-group " ng-class="{'invalid-group': (currentForm.cityAux.$touched && currentForm.cityAux.$invalid)}">
+            <label for="state" class="control-label col-md-3">Municipio<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <select name="cityAux" id="cityAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.selectedCity" ng-change="INMEDIKApp.UpdateCounties()" required ng-options="c.name for c in INMEDIKApp.cities track by c.id" ng-disabled="INMEDIKApp.selectedState == undefined">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 no-padding-right">
+        <div class="form-group " ng-class="{'invalid-group': (currentForm.countyAux.$touched && currentForm.countyAux.$invalid)}">
+            <label for="state" class="control-label col-md-3">Departamento<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <select name="countyAux" id="countyAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.address.countyAux" required ng-options="ct.name for ct in INMEDIKApp.counties track by ct.id" ng-disabled="INMEDIKApp.selectedCity == undefined">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

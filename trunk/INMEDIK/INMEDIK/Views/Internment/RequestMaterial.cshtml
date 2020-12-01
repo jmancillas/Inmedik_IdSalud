@@ -1,0 +1,287 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('InternmentController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.errors = [];
+            dt.Request = {};
+            dt.Request.RequestedMaterialAux = [];
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+
+            function Actions(data, type, full, meta) {
+                return  '<div class="text-center">'+
+                        '<a type="button" ng-click="INMEDIKApp.loadMaterialRequest(' + data + ');"  class="btn btn-info btn-xs col-xs-12">' +
+                            'Detalle' +
+                        '</a>';
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetRequest", "Internment")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen solicitudes",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron solicitudes",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID").withClass('notSearchable').withOption("visible", false),
+                DTColumnBuilder.newColumn("id").withTitle("ID").withClass('numericSearch text-center').notSortable(),
+                DTColumnBuilder.newColumn("StatusAux.Name").withTitle("Status").withClass('notSearchable text-center'),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Fecha").withClass('notSearchable text-center'),
+                DTColumnBuilder.newColumn("id").withTitle("Acciones").withClass('notSearchable text-center').renderWith(Actions).notSortable(),
+
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        if ($(this).hasClass('numericSearch')) {
+                            $(this).html('<input type="number" class="form-control" placeholder="' + title + '" />');
+                        }
+                        else {
+                            $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                        }
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.loadMaterialRequest = function (RequestId) {
+                dt.canSend = (RequestId == null);
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetRequestedMaterial", "Internment")',
+                    data: { RequestId: RequestId },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        $("#NewElementModal").modal('show');
+                        dt.Request = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                });
+            };
+            dt.SendRequest = function () {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SendRequest", "Internment")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                });
+            };
+            function init() {
+
+            };
+            init();
+
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="InternmentController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Solicitar material para internamientos
+            <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.loadMaterialRequest(null);">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="InternmentTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="NewElementModal" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">
+                    <span ng-if="INMEDIKApp.canSend">Nueva solicitud</span>
+                    <span ng-if="!INMEDIKApp.canSend">Detalle solicitud</span>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-hover">
+                        <tbody>
+                            <tr ng-if="INMEDIKApp.Request.RequestedMaterialAux.length > 0">
+                                <th>Concepto</th>
+                                <th>Cantidad solicitada</th>
+                                <th ng-if="!INMEDIKApp.canSend">Cantidad resurtida</th>
+                            </tr>
+                            <tr ng-repeat="item in INMEDIKApp.Request.RequestedMaterialAux" ng-if="INMEDIKApp.Request.RequestedMaterialAux.length > 0">
+                                <td>{{item.ConceptAux.name}}</td>
+                                <td>{{item.QuantityRequested}}</td>
+                                <td ng-if="!INMEDIKApp.canSend">{{item.QuantityRestoked}}</td>
+                            </tr>
+                            <tr ng-if="INMEDIKApp.Request.RequestedMaterialAux.length <= 0">
+                                <td><i>Sin material utilizado en internamientos</i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" 
+                            ng-click="INMEDIKApp.SendRequest();" ng-if="INMEDIKApp.canSend && INMEDIKApp.Request.RequestedMaterialAux.length > 0">Enviar solicitud</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

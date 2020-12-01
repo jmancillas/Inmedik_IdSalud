@@ -1,0 +1,352 @@
+﻿
+    <div class="panel panel-default">
+        <div class="panel-heading">Agregar material de internamiento.</div>
+        <div class="panel-body">
+            <div class="col-md-6" style="border-right: 1px solid #dddddd;">
+                <ul class="nav nav-tabs" ng-init="type = 'Productos'">
+                    <li class="active"><a ng-click="type = 'Productos';" data-toggle="tab" href="#Productos-tab">Productos</a></li>
+                    <li><a ng-click="type = 'Servicios';" data-toggle="tab" href="#Servicios-tab">Servicios</a></li>
+                    <li><a ng-click="type = 'Exámenes';" data-toggle="tab" href="#Examenes-tab">Exámenes</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Productos-tab" class="tab-pane fade in active">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre o Código" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Descuento(%): </label>
+                                <div class="col-sm-3">
+                                    <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                    <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Cantidad: </label>
+                                <div class="col-sm-3">
+                                    <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                </div>
+                                <label class="control-label col-sm-3 ">Código: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].productAux.code}}" readonly>
+                                </div>
+                            </div>
+                            @*<div class="form-group">
+                                <label class="control-label col-sm-3 "></label>
+                                <div class="col-sm-3 text-center" ng-if="INMEDIKApp.ConceptsSelecteds[type].stock <= 0">
+                                    <span class="text-danger">Sin existencia.</span>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Existencia: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" ng-class="INMEDIKApp.ConceptsSelecteds[type].stock <= 0?'ng-touched ng-invalid':''" value="{{INMEDIKApp.ConceptsSelecteds[type].stock}}" readonly>
+                                </div>
+                            </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 "></label>
+                                <div class="col-md-9 text-center" ng-if="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                    <span class="text-danger">Nombre del medico y la cedula obligatorios para este producto.</span>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Nombre del Medico: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" maxlength="50" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicName" ng-required="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Cédula del Medico: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" maxlength="50" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicDecree" ng-required="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                </div>
+
+                            </div>
+                            @*<div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>*@
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar"
+                                           ng-disabled="!INMEDIKApp.valid[type] ||
+                                                    (INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired &&
+                                                    !(INMEDIKApp.ConceptsSelecteds[type].medicDecree && INMEDIKApp.ConceptsSelecteds[type].medicName))"
+                                           ng-click="INMEDIKApp.AddConceptToCart(type,true)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Servicios-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Descuento(%): </label>
+                                <div class="col-sm-3">
+                                    <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                    <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                </div>
+                            </div>
+                            @*<div class="form-group">
+                                    <label class="control-label col-sm-3 ">Cantidad: </label>
+                                    <div class="col-sm-3">
+                                        <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.allMedicsList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            @*<div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>*@
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar" ng-disabled="!INMEDIKApp.valid[type] || !INMEDIKApp.ConceptsSelecteds[type].medicId" ng-click="INMEDIKApp.AddConceptToCart(type,true)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Examenes-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Descuento(%): </label>
+                                <div class="col-sm-3">
+                                    <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                    <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.allMedicsList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            @*<div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>*@
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar" ng-disabled="!INMEDIKApp.valid[type] || !INMEDIKApp.ConceptsSelecteds[type].medicId" ng-click="INMEDIKApp.AddConceptToCart(type,true)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <div class="col-xs-12">
+                            <table class="table table-bordered table-hover table-responsive" ng-if="INMEDIKApp.AddedConcepts.length > 0">
+                                <tr class="text-center">
+                                    <td>Concepto</td>
+                                    <td>Cantidad</td>
+                                    <td>Quitar</td>
+                                </tr>
+                                <tr ng-repeat="concept in INMEDIKApp.AddedConcepts">
+                                    <td>{{concept.name}}</td>
+                                    <td>{{concept.quantity}}</td>
+                                    <td><button ng-click="INMEDIKApp.AddedConcepts.splice($index,1);" class="btn btn-danger btn-xs col-xs-12"><i class="fa fa-times" aria-hidden="true"></i></button></td>
+                                </tr>
+                            </table>
+                            <table class="table table-bordered table-hover table-responsive" ng-if="INMEDIKApp.AddedConcepts.length <= 0">
+                                <tr class="text-center">
+                                    <td><i>Ningún concepto agregado.</i></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <input type="button" class="btn btn-default pull-right" value="Agregar" data-toggle="modal" data-target="#PreAddModal"
+                                   ng-disabled="INMEDIKApp.AddedConcepts.length <= 0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <button class="btn btn-default btn-xs" type="button" data-toggle="collapse" data-target="#collapseBody">Ver material utilizado anteriormente</button>
+        </div>
+        <div class="panel-body collapse" id="collapseBody">
+            <div class="col-md-12">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <div class="col-xs-12" ng-if="INMEDIKApp.LoadingMaterial">
+                            <div class="progress progress-striped active">
+                                <div class="progress-bar" style="width: 100%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12" ng-if="!INMEDIKApp.LoadingMaterial">
+                           <table class="table table-bordered table-hover table-responsive" ng-if="INMEDIKApp.MaterialInternment.length > 0">
+                                <tr class="text-center">
+                                    <th>Concepto</th>
+                                    <th>Categoría</th>
+                                    <th>Fecha agregado</th>
+                                    <th>Agregado por</th>
+                                </tr>
+                                <tr ng-repeat="item in INMEDIKApp.MaterialInternment">
+                                    <td>{{item.ConceptAux.name}}</td>
+                                    <td>{{item.ConceptAux.categoryAux.name}}</td>
+                                    <td>{{item.sCreated}}</td>
+                                    <td>{{item.EmployeeAux.personAux.fullName}}</td>
+                                </tr>
+                            </table>
+                            <table class="table table-bordered table-hover table-responsive" ng-if="INMEDIKApp.MaterialInternment.length <= 0">
+                                <tr class="text-center">
+                                    <td><i>Ningún concepto agregado anteriormente.</i></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="PreAddModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <li>Esta seguro que desea agregar los productos seleccionados al material utilizado?</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="INMEDIKApp.SaveInternmentMaterial();">Aceptar</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>

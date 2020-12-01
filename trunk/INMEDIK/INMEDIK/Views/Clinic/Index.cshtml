@@ -1,0 +1,621 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/checklist-model.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables", 'btorfs.multiselect', 'checklist-model']);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Clinic = {};
+            dt.Views = [];
+            dt.counties = [];
+            dt.subbmiting = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.warehouses = [];
+            dt.labels = {
+                "itemsSelected": "Elementos seleccionados",
+                "selectAll": "Seleccionar todos",
+                "unselectAll": "Remover todos",
+                "search": "Buscar",
+                "select": "Seleccione...",
+            }
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteElement(' + data + ')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#ClinicForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ClinicForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ClinicForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+
+
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetClinic", "Clinic")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        $("#NewElementModal").modal("show");
+
+                        dt.Clinic = res.data.data;
+                        /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                        dt.FillAddress(dt.Clinic.addressAux);
+                        /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                        dt.UpdateCities(dt.UpdateCounties);
+                        
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id) {
+                dt.Clinic.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("DeleteClinic", "Clinic")',
+                    data: dt.Clinic,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.Clinic = {};
+                dt.address = {};
+                dt.selectedState = undefined;
+                dt.selectedCity = undefined;
+                $("#NewElementModal").modal("show");
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.ClinicForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.Clinic = {};
+                $("#panelBody").collapse('hide')
+                init();
+            });
+            dt.EmailRegExp = /^(([^<>()\[\]\\.,;:\s@@"]+(\.[^<>()\[\]\\.,;:\s@@"]+)*)|(".+"))@@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.Clinic.addressAux = dt.address;
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveClinic", "Clinic")',
+                    data: dt.Clinic,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetClinics", "Clinic")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen clínicas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron clínicas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("addressAux.fullAddress").withTitle("Dirección"),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn).notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Borrar").renderWith(deleteBtn).notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (title != "Editar" && title != "Borrar") {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+
+            /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+            dt.address = {};
+            dt.selectedState = undefined;
+            dt.selectedCity = undefined;
+            dt.states = [];
+            dt.cities = [];
+
+            dt.UpdateCities = function (callback) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCitiesSelect", "City")',
+                    data: dt.selectedState,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.cities = res.data.data;
+                    //dt.selectedCity = undefined;
+                    //dt.address.countyAux = undefined;
+                    if (callback != undefined)
+                        callback();
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+            dt.UpdateCounties = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCountiesSelect", "County")',
+                    data: dt.selectedCity,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.counties = res.data.data;
+                    //dt.address.countyAux = undefined;
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetAllViews", "RolConfiguration")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Views = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehousesSelect", "Warehouse")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.warehouses = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetStatesSelect", "State")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.states = res.data.data;
+                        dt.selectedState = undefined;
+
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                dt.UpdateCities();
+                dt.UpdateCounties();
+            };
+            init();
+            dt.FillAddress = function (Address) {
+                dt.address = Address;
+                dt.selectedCity = dt.address.countyAux.cityAux;
+                dt.selectedState = dt.selectedCity.stateAux;
+            }
+
+            /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Clinic.id">Agregar</span><span ng-show="INMEDIKApp.Clinic.id">Editar</span> Clínica</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="ClinicForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="ClinicForm.name.$touched && ClinicForm.name.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.address.$touched && ClinicForm.address.$error.required"><strong>Dirección</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.postalCode.$touched && ClinicForm.postalCode.$error.required"><strong>Código Postal</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.stateAux.$touched && ClinicForm.stateAux.$error.required"><strong>Estado</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.cityAux.$touched && ClinicForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.countyAux.$touched && ClinicForm.countyAux.$error.required"><strong>Departamento</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.warehouses.$touched && ClinicForm.warehouses.$error.required"><strong>Almacénes</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.email.$touched && ClinicForm.email.$error.email"><strong>Correo</strong>: formato incorrecto</p>
+                    <p ng-show="ClinicForm.rfc.$touched && ClinicForm.rfc.$error.required"><strong>RFC</strong>: Campo obligatorio</p>
+                    <p ng-show="ClinicForm.rfc.$touched && ClinicForm.rfc.$error.pattern"><strong>RFC</strong>: El formato permitido es: AAAA111111--- ó AAA111111--- donde los guiones pueden ser letras o números.</p>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <form class="form-horizontal" name="ClinicForm" id="ClinicForm">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.name.$touched && ClinicForm.name.$invalid)}">
+                                    <label for="name" class="control-label col-md-3">Nombre<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-model="INMEDIKApp.Clinic.name" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="name" required name="name" placeholder="Nombre" maxlength="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.phone.$touched && ClinicForm.phone.$invalid)}">
+                                    <label for="phone" class="control-label col-md-3">Teléfono: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-model="INMEDIKApp.Clinic.phoneNumber" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="phone" name="phone" placeholder="Teléfono" maxlength="50">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.email.$touched && ClinicForm.email.$invalid)}">
+                                    <label for="email" class="control-label col-md-3">Correo: </label>
+                                    <div class="col-md-9">
+                                        <input type="email" class="form-control" ng-model="INMEDIKApp.Clinic.email" ng-blur="INMEDIKApp.GetTouched($event)" id="email" name="email" placeholder="Correo" maxlength="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.rfc.$touched && ClinicForm.rfc.$invalid)}">
+                                    <label for="rfc" class="control-label col-md-3">RFC<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-pattern="/^((([A-Z]|[a-z]| )?)(([A-Z]|[a-z]){3})([0-9]{6})((([A-Z]|[a-z]|[0-9]){3})))?$/"
+                                               ng-model="INMEDIKApp.Clinic.rfc" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required id="rfc" name="rfc" placeholder="RFC" maxlength="50">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.warehouses.$touched && ClinicForm.warehouses.$invalid)}">
+                                    <label for="warehouses" class="control-label col-md-3">Almacénes<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <multiselect ng-model="INMEDIKApp.Clinic.warehouses" show-select-all="true" show-unselect-all="true" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required options="INMEDIKApp.warehouses" display-prop="name" id-prop="id" labels="INMEDIKApp.labels" placeholder="Seleccione..."></multiselect>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.withdrawalAt.$touched && ClinicForm.withdrawalAt.$invalid)}">
+                                    <label for="withdrawalAt" class="control-label col-md-3">Retiro de dinero<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" ng-model="INMEDIKApp.Clinic.withdrawalAt" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="withdrawalAt" name="withdrawalAt" required placeholder="Cantidad " maxlength="20">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>            
+                            <div ng-init="currentForm = ClinicForm">
+                                @Html.Partial("~/Views/Shared/_AddressForm.cshtml")
+                            </div>
+                            <div class="clearfix"></div>    
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group">
+                                    <label for="allowDonations" class="control-label col-md-5">Acepta donaciones: </label>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" ng-model="INMEDIKApp.Clinic.allowDonations" id="allowDonations" name="allowDonations">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left" ng-if="INMEDIKApp.Clinic.allowDonations">
+                                <div class="form-group" ng-class="{'invalid-group': (ClinicForm.minDonation.$touched && ClinicForm.minDonation.$invalid)}">
+                                    <label for="minDonation" class="control-label col-md-3">Cantidad: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" ng-required="INMEDIKApp.Clinic.allowDonations" class="form-control" ng-model="INMEDIKApp.Clinic.minDonation" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="minDonation" name="minDonation" placeholder="Cantidad" maxlength="50">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="col-md-12">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">Menús disponibles para la clínica  <span class="btn btn-info btn-xs pull-right" data-toggle="collapse" data-target="#panelBody"><i class="fa fa-search"></i></span></div>
+                                    <div class="panel-body collapse" id="panelBody">
+                                        <div ng-repeat="view in INMEDIKApp.Views" class="col-md-6">
+                                            <input type="checkbox" checklist-model="INMEDIKApp.Clinic.menuViewAux" checklist-value="view"> <i class="{{view.icon}}"></i> {{view.name}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="ClinicForm.$invalid || INMEDIKApp.subbmiting">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Clínica <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="ClinicTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

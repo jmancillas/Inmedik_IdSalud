@@ -1,0 +1,56 @@
+﻿<div class="col-md-12 no-padding-sides">
+    <div class="col-md-6 no-padding-right">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.usrAccount.$touched && currentForm.usrAccount.$invalid)}">
+            <label for="usrAccount" class="control-label col-md-3">Cuenta de usuario<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.user.account" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="usrAccount" required name="usrAccount" placeholder="Cuenta de usuario" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 no-padding-right">
+    </div>
+    <div class="clearfix"></div>
+    <div class="col-md-6 no-padding-right">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.usrPass.$touched && currentForm.usrPass.$invalid)}">
+            <label for="usrPass" class="control-label col-md-3">Contraseña<span ng-if="!INMEDIKApp.user.id" class="required">*</span>:</label>
+            <div class="col-md-9">
+                <input type="password" class="form-control" 
+                       ng-model="INMEDIKApp.user.password" 
+                       ng-text-change="INMEDIKApp.GetTouched($event)" 
+                       ng-blur="INMEDIKApp.GetTouched($event)" 
+                       ng-required="INMEDIKApp.user.id == 0"
+                       id="usrPass" name="usrPass" placeholder="Contraseña" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.usrPassConfirm.$touched && currentForm.usrPassConfirm.$invalid)}">
+            <label for="usrPassConfirm" class="control-label col-md-3">Confirmar contraseña<span ng-if="!INMEDIKApp.user.id" class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="password" class="form-control" 
+                       ng-model="INMEDIKApp.usrPassConfirm" 
+                       ng-text-change="INMEDIKApp.GetTouched($event)" 
+                       compare-to="INMEDIKApp.user.password"
+                       ng-blur="INMEDIKApp.GetTouched($event)" 
+                       ng-required="INMEDIKApp.user.id == 0"
+                       id="usrPassConfirm" name="usrPassConfirm" placeholder="Contraseña" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="col-md-6 no-padding-right">
+        <div class="form-group " ng-class="{'invalid-group': (currentForm.usrRole.$touched && currentForm.usrRole.$invalid)}">
+            <label for="state" class="control-label col-md-3">Rol<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <select name="usrRole" id="usrRole" class="form-control" 
+                        ng-text-change="INMEDIKApp.GetTouched($event)" 
+                        ng-blur="INMEDIKApp.GetTouched($event)" 
+                        ng-model="INMEDIKApp.selectedRole" 
+                        ng-change="INMEDIKApp.RoleChange()"
+                        ng-options="s.description for s in INMEDIKApp.roles track by s.id">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

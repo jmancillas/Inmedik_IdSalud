@@ -1,0 +1,237 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+        .table tbody > tr > td {
+        padding: 5px !important;
+}
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+
+    <script type="text/javascript">
+        var inactiveTime = 0;
+        var refreshTime = @ViewBag.refreshTime;
+
+        function CheckInactivity(){
+            if(inactiveTime >= refreshTime){
+                location.reload();
+            }
+            else{
+                inactiveTime++;
+            }
+        };
+        $(document).mousemove(function(event){
+            inactiveTime = 0;
+        });
+        $(document).keypress(function (event) {
+            inactiveTime = 0;
+        });
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker']);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http) {
+            var dt = this;
+            dt.subbmiting = false;
+            dt.saveComplete = false;
+            dt.detail = false;
+            dt.errors = [];
+            dt.Cierre = {};
+            dt.Cierre.denominationByCashCloseAux = [];
+            dt.Cierre.expensesAux = [];
+            
+            dt.isDetail = @ViewBag.isDetail;
+            if(dt.isDetail){
+                dt.detail = true;
+                dt.successDetail = @ViewBag.successDetail;
+                if(dt.successDetail){
+                    dt.Cierre = JSON.parse('@Html.Raw(ViewBag.CorteDetalle)');
+                    dt.detail = true;
+                }
+                else{
+                    dt.DetailError = '@Html.Raw(ViewBag.DetailError)';
+                }
+            }
+            dt.DenominationsList = JSON.parse('@Html.Raw(ViewBag.DenominationsList)');
+            dt.regularExpretions = Ut_getRegularExpretions();
+
+
+            dt.SaveElement = function () {
+                var TotalLogico = 0;
+                dt.Cierre.denominationByCashCloseAux.forEach(function (item, idx) {
+                    if (item.Quantity != undefined) {
+                        TotalLogico += (item.Quantity * item.Value);
+                    }
+                });
+
+                dt.Cierre.expensesAux.forEach(function (item, idx) {
+                    if (item.Amount != undefined) {
+                        TotalLogico += item.Amount;
+                    }
+                });
+
+                dt.errors = [];
+                TotalLogico = Math.round(TotalLogico*100)/100;
+                if (TotalLogico != dt.Cierre.FinalCash) {
+                    dt.errors.push("El total ingresado ($ " + dt.Cierre.FinalCash + ") no coincide con la suma de las cantidades ingresadas.");
+                    $("#resultModal").modal("show");
+                }
+                else {
+                    $("#ConfirmSave").modal("show");
+                }
+
+            };
+            dt.ConfirmSave = function () {
+                dt.subbmiting = true;
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveCashClosing", "CashClosing")',
+                    data: dt.Cierre,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.saveComplete = true;
+                        dt.detail = true;
+                        dt.Cierre = res.data.data;
+                        dt.Cierre.calcTotalSell = Math.round((dt.Cierre.TotalSell - dt.Cierre.TotalCancelation)*100)/100;
+                        dt.Cierre.logicTotal = Math.round((dt.Cierre.InitialCash + dt.Cierre.TotalSell - dt.Cierre.TotalCancelation - dt.Cierre.TotalWithdrawal) * 100) / 100;
+                        dt.Cierre.physicalTotal = Math.round((dt.Cierre.TotalCash + dt.Cierre.TotalCrediCard + dt.Cierre.TotalVoucher + dt.Cierre.TotalExpense)*100)/100;
+                        $("#ConfirmSave").modal("hide");
+                        setInterval(CheckInactivity, 1000);
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        dt.subbmiting = false;
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                    dt.subbmiting = false;
+                });
+            }
+            dt.numberWithCommas = function(n) {
+                return Ut_numberWithCommas(n);
+            }
+            function init() {
+            }
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Corte de caja</div>
+        <div class="panel-body">
+            <form class="form-horizontal" name="CorteObjForm" id="CorteObjForm">@*{{INMEDIKApp.isDetail}} - {{INMEDIKApp.successDetail}}*@
+                <div ng-if="INMEDIKApp.isDetail && !INMEDIKApp.successDetail" class="bg-danger col-xs-12"> {{INMEDIKApp.DetailError}}</div>
+                <div ng-if="(INMEDIKApp.isDetail && INMEDIKApp.successDetail ) || !INMEDIKApp.isDetail">
+                    @Html.Partial("~/Views/CashClosing/TemplateDetail.cshtml")
+                </div>
+                <hr />
+
+                <div class="form-group">
+                    <div class="col-xs-12">
+                        <div class="col-xs-12">
+                            <button type="button" class="col-xs-12 col-md-3 btn btn-primary pull-right" data-loading-text="Guardando..."
+                                    ng-click="INMEDIKApp.SaveElement()" ng-if="!INMEDIKApp.detail" ng-disabled="CorteObjForm.$invalid || INMEDIKApp.subbmiting">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="ConfirmSave" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Esta seguro que desea realizar el corte de caja?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="INMEDIKApp.ConfirmSave()" ng-disabled="INMEDIKApp.subbmiting" data-dismiss="modal">Guardar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

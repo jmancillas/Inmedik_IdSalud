@@ -1,0 +1,45 @@
+select 
+purchases.ConceptId, purchases.Price, purchases.supplierName, purchases.QuantityBuy, isnull(Sales.QuantitySold,0) as QuantitySold, Sales.Price, Sales.SoldPrice
+from
+(
+select ConceptId, Price, supplierName, sum(unionres.qty) as QuantityBuy
+from(select 
+ConceptId, Price, sup.Name as supplierName, sum(deliveredtrans.Sended) as qty
+  from 
+AlmSupplierRequestDeliveredTransaction deliveredtrans
+inner join AlmSupplierRequestDelivered delivered on delivered.Id = deliveredtrans.AlmSupplierRequestDeliveredId 
+left join almsupplier sup on sup.id = delivered.AlmSupplierId
+group by ConceptId, Price, sup.Name
+UNION
+select 
+ConceptId,cost, isnull(inv.SupplierName,sup.Name) as supplierName,
+ sum(invtrans.Quantity) qty
+from AlmInvoiceTransaction invtrans
+inner join AlmInvoice inv on inv.id = invtrans.InvoiceId
+left join almsupplier sup on sup.id = inv.SupplierId
+group by ConceptId,cost, inv.SupplierName, sup.Name
+)unionres
+group by ConceptId, Price,supplierName)Purchases
+left join
+(
+	select
+	ConceptId, Price, supplierName, sum(unionbr.qty) as QuantitySold, sum(SoldPrice) as SoldPrice
+	from(
+		select 
+		deliveredtrans.ConceptId, AlmStock.Cost as Price, supplier.Name as supplierName, deliveredtrans.Sended as qty
+		, sum((1 + (Almstock.currIva*concept.Iva)) * deliveredtrans.Price * deliveredtrans.Sended) as SoldPrice
+		from 
+		AlmBranchRequestDeliveredTransaction deliveredtrans
+		inner join AlmBranchRequestDelivered delivered on delivered.Id = deliveredtrans.AlmBranchRequestDeliveredId
+		inner join AlmBranchRequestToDelivery todelivery on todelivery.Id = delivered.AlmBranchRequestToDeliveryId
+		inner join AlmBranchRequestToDeliveryTransaction todeliverytrans on deliveredtrans.AlmBranchRequestToDeliveryTransactionId = todeliverytrans.Id
+		inner join Concept on todeliverytrans.ConceptId = Concept.id
+		left join AlmStock on todeliverytrans.AlmStockId = AlmStock.Id
+		left join AlmSupplier supplier on AlmStock.AlmSupplierId = supplier.Id
+		group by deliveredtrans.ConceptId,AlmStock.Cost, supplier.Name,Sended
+	)unionbr
+	group by ConceptId,Price,supplierName
+)Sales
+on Purchases.ConceptId = Sales.ConceptId
+and Purchases.Price = Sales.Price
+and Purchases.supplierName = Sales.supplierName

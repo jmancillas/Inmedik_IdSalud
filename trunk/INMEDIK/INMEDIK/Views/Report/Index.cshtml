@@ -1,0 +1,129 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .bg-danger {
+            color: #ffffff;
+            background-color: #e87c7c;
+            border-color: #5bc0de;
+        }
+    </style>
+}
+
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/Chart.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-chart.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+
+    <script type="text/javascript" src="~/Scripts/Reports/Productivity.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/ConceptProductivity.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/Rounding.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/CardPaymentReport.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/DonationsReport.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/CountyServices.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/Patients.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/Health.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/CashClosing.js"></script>
+    <script type="text/javascript" src="~/Scripts/Reports/WaitingTimes.js"></script>
+
+    <script>
+        var role = "@ViewBag.currentRole";
+        INMEDIKApp.controller('MainController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.isAdmin = role == "Admin";
+            dt.initPharmasy = false;
+            dt.initConcept = false;
+            dt.initRounding = false;
+            dt.initCardPayments = false;
+            dt.initCountyServices = false;
+            dt.initPatients = false;
+            dt.initHealth = false;
+            dt.initCashClosing = false;
+            dt.initDonations = false;
+            dt.initWaitingTimes = false;
+        });
+    </script>
+
+}
+<div class="container-fluid" ng-controller="MainController as mc">
+    <div class="panel panel-default">
+        <div class="panel-heading"><span id="reportTour">Reportes</span></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <ul id="reportes-tabs" class="nav nav-tabs">
+                    <li class="active"><a id="prod-med-nav"  data-toggle="tab" href="#productividad-tab">Productividad por médico</a></li>
+                    <li><a id="prod-farm-nav" data-toggle="tab" ng-click="mc.initPharmasy = true;" href="#productividad-farmacia-tab">Productividad por farmacia</a></li>
+                    <li><a id="prod-concep-nav" data-toggle="tab" ng-click="mc.initConcept = true;" href="#productividad-concepto-tab">Productividad por concepto</a></li>
+                    @*<li><a id="redondeo-nav" data-toggle="tab" ng-click="mc.initRounding = true;" href="#redondeo-tab">Reporte de redondeo</a></li>
+                    <li><a id="tarjeta-nav" data-toggle="tab" ng-click="mc.initCardPayments = true;" href="#pago-tarjeta-tab">Pagos con tarjeta</a></li>*@
+                    <li ng-if="mc.isAdmin"><a id="servicios-nav"  data-toggle="tab" ng-click="mc.initCountyServices = true;" href="#servicios-colonia-tab">Servicios por departamento</a></li>
+                    <li><a id="pacientes-nav"  data-toggle="tab" ng-click="mc.initPatients = true;" href="#pacientes-tab">Pacientes</a></li>
+                    <li><a id="salubridad-nav"  data-toggle="tab" ng-click="mc.initHealth = true;" href="#salubridad-tab">Salubridad</a></li>
+                    @*<li><a id="cierre-nav"  data-toggle="tab" ng-click="mc.initCashClosing = true;" href="#cash-closing-tab">Cierre de Caja</a></li>
+                    <li><a id="dona-nav"  data-toggle="tab" ng-click="mc.initDonations = true;" href="#donaciones-tab">Donaciones</a></li>*@
+                    @*<li><a id="servicios-nav" data-toggle="tab" ng-click="mc.initWaitingTimes = true;" href="#servicios-tab">Reporte de servicios</a></li>*@
+                </ul>
+                <div class="tab-content">
+                    @Html.Partial("_Productivity")
+                    @Html.Partial("_PharmacyProductivity")
+                    @Html.Partial("_ConceptProductivity")
+                    @Html.Partial("_Rounding")
+                    @Html.Partial("_CardPayment")
+                    @Html.Partial("_CountyServices")
+                    @Html.Partial("_Patients")
+                    @Html.Partial("_HealthReport")
+                    @Html.Partial("_CashClosing")
+                    @Html.Partial("_Donations")
+                    @Html.Partial("_WaitingTimes")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

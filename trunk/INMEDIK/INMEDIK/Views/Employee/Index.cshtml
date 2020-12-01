@@ -1,0 +1,1009 @@
+﻿
+@{
+    ViewBag.Title = "Empleados";
+}
+
+@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/ng-schedule.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .searchButton {
+            margin-bottom: 5px;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/i18n/angular-locale_es-mx.js"></script>
+    <script type="text/javascript" src="~/Scripts/moment-with-locales.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-fileupload/fileUploader.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/checklist-model.js"></script>
+    <script type="text/javascript" src="~/Scripts/ng-schedule.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "akFileUploader", "ui.bootstrap.tpls", "datatables", 'btorfs.multiselect', 'checklist-model', 'ngSchedule']);
+        INMEDIKApp.controller('EmployeeController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder, entityService) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.dtPersonInstance = {};
+            dt.person = [];
+            dt.Employee = {};
+            dt.user = {};
+            dt.address = {};
+            dt.usrPassConfirm = "";
+            dt.roles = [];
+            dt.selectedRole = {};
+            dt.specialties = [];
+            dt.selectedSpecialty = {};
+            dt.clinics = [];
+            dt.EmployeeSchedule = [];
+            dt.Views = [];
+            dt.isDemo = "@ViewBag.isDemo" == "True" ? true : false;
+            dt.subbmiting = false;
+
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.labels = {
+                "itemsSelected": "Elementos seleccionados",
+                "selectAll": "Seleccionar todos",
+                "unselectAll": "Remover todos",
+                "search": "Buscar",
+                "select": "Seleccione...",
+            }
+
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+
+            function scheduleBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadSchedule(' + data + ')" class="btn btn-success btn-xs"><i class="fa fa-calendar"></i></button></div>';
+            }
+
+            function permits(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElementPermits(' + data + ')" class="btn btn-primary btn-xs">Permisos</button></div>';
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                var btnText = 'Desactivar';
+                if (full.deleted) {
+                    btnText = 'Activar';
+                }
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.ToggleElement(' + data + ')" ng-disabled="INMEDIKApp.isDemo" class="btn btn-danger btn-xs">' + btnText + '</button></div>';
+            }
+
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+            dt.datepickerOptions = {
+                datepickerMode: 'year',
+                showWeeks: 'false'
+            };
+            dt.datepickerFormat = 'dd/MM/yyyy';
+            dt.dpOpen = false;
+            dt.OpenDP = function () {
+                dt.dpOpen = true;
+            };
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#EmployeeForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#EmployeeForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#EmployeeForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+
+            dt.LoadSchedule = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetEmployeeSchedule", "Employee")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.EmployeeSchedule.data = res.data.data;
+                        dt.EmployeeSchedule.idUser = id;
+                        $("#scheduleModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.SaveSchedule = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveEmployeeSchedule", "Employee")',
+                    data: { IdEmployee: dt.EmployeeSchedule.idUser, schedule: dt.EmployeeSchedule.data },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        $("#scheduleModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            }
+            dt.SavePermits = function () {
+                dt.subbmiting = true;
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveEmployeeViews", "Employee")',
+                    data: dt.Employee,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        $("#EmployeePermits").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.LoadElementPermits = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetEmployeeViews", "Employee")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Employee = res.data.data;
+                        $("#EmployeePermits").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetEmployee", "Employee")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Employee = res.data.data;
+                        /*-----------------------------------------------PERSON-----------------------------------------------*/
+                        dt.FillPerson(dt.Employee.personAux);
+                        /*-------------------------------------------END PERSON-----------------------------------------------*/
+                        /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                        dt.FillAddress(dt.Employee.personAux.addressAux);
+                        /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                        dt.user = dt.Employee.userAux;
+                        dt.selectedRole = dt.Employee.userAux.rolAux;
+                        dt.selectedSpecialty = dt.Employee.specialtyAux;
+                        $("#NewElementModal").modal("show");
+                        dt.UpdateCities(dt.UpdateCounties);
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.ToggleElement = function (id) {
+                dt.Employee.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("ToggleEmployee", "Employee")',
+                    data: dt.Employee,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.Employee = {
+                    personAux: {},
+                    userAux: {},
+                    specialtyAux: {},
+                    clinicAux: {}
+                };
+                dt.address = {};
+                dt.person = {};
+                dt.user = {};
+                dt.selectedState = undefined;
+                dt.selectedCity = undefined;
+                dt.usrPassConfirm = "";
+                dt.selectedRole = undefined;
+                dt.selectedSpecialty = undefined;
+                $("#NewElementModal").modal("show");
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.EmployeeForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.Employee = {
+                    personAux: {}
+                };
+            });
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                /*-----------------------------------------------USER-----------------------------------------------*/
+                dt.Employee.userAux = dt.user;
+                dt.Employee.userAux.createdBy = 0;
+                dt.Employee.userAux.updatedBy = 0;
+                dt.Employee.userAux.active = true;
+                dt.Employee.userAux.rolAux = dt.selectedRole;
+                /*-----------------------------------------------END USER-----------------------------------------------*/
+                /*-----------------------------------------------PERSON-----------------------------------------------*/
+                dt.Employee.personAux = dt.person;
+                /*-------------------------------------------END PERSON-----------------------------------------------*/
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.Employee.personAux.addressAux = dt.address;
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                /*-----------------------------------------------SPECIALTY-----------------------------------------------*/
+                dt.Employee.specialtyAux = dt.selectedSpecialty;
+                /*-------------------------------------------END SPECIALTY-----------------------------------------------*/
+                entityService.saveForm(dt.Employee, '@Url.Action("SaveEmployee", "Employee")')
+                                    .then(function (res) {
+                                        if (res.data.success) {
+                                            dt.dtInstance.reloadData();
+                                            $("#NewElementModal").modal('hide');
+                                        }
+                                        else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                                            dt.errors[0] = "La sesión ha caducado.";
+                                            $("#resultModal").modal('show');
+                                        }
+                                        else {
+                                            if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                                                dt.errors = res.data.errors;
+                                            }
+                                            else {
+                                                dt.errors[0] = res.data.message;
+                                            }
+                                            $("#resultModal").modal('show');
+                                        }
+                                    }, function errorCallback(res) {
+                                        console.log("error: " + res);
+                                    }).finally(function () {
+                                        dt.subbmiting = false;
+                                    });
+            };
+
+            /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+            dt.address = {};
+            dt.selectedState = undefined;
+            dt.selectedCity = undefined;
+            dt.states = [];
+            dt.cities = [];
+
+            dt.UpdateCities = function (callback) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCitiesSelect", "City")',
+                    data: dt.selectedState,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.cities = res.data.data;
+                    //dt.selectedCity = undefined;
+                    //dt.address.countyAux = undefined;
+                    if (callback != undefined)
+                        callback();
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+            dt.UpdateCounties = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCountiesSelect", "County")',
+                    data: dt.selectedCity,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.counties = res.data.data;
+                    //dt.address.countyAux = undefined;
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            /*-------------------------------------------EmployeeTable-----------------------------------------------*/
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetEmployees", "Employee")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen empleados",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron empleados",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("personAux.name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("personAux.lastName").withTitle("Apellido"),
+                DTColumnBuilder.newColumn("personAux.sex").withTitle("Sexo"),
+                DTColumnBuilder.newColumn("userAux.account").withTitle("Usuario"),
+                DTColumnBuilder.newColumn("userAux.rolAux.description").withTitle("Rol"),
+                DTColumnBuilder.newColumn("active").withTitle("Activo").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("created_string").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("updated_string").withTitle("Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Permisos").renderWith(permits).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("horario").renderWith(scheduleBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Desactivar").renderWith(deleteBtn).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END EmployeeTable-----------------------------------------------*/
+
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetAllViews", "RolConfiguration")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Views = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetStatesSelect", "State")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.states = res.data.data;
+                        dt.selectedState = undefined;
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetSpecialtiesSelect", "Employee")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.specialties = res.data.data;
+                        dt.selectedSpecialty = undefined;
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetRolesSelect", "Employee")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.roles = res.data.data;
+                        dt.selectedRole = undefined;
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetClinicsSelect", "Employee")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.clinics = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+                dt.UpdateCities();
+                dt.UpdateCounties();
+            };
+            init();
+            dt.FillAddress = function (Address) {
+                dt.address = Address;
+                dt.selectedCity = dt.address.countyAux.cityAux;
+                dt.selectedState = dt.selectedCity.stateAux;
+            }
+            dt.FillPerson = function (Person) {
+                dt.person = Person;
+                dt.person.birthDate = moment(Person.birthDate).toDate();
+            }
+
+            /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+        });
+        var compareTo = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    otherModelValue: "=compareTo"
+                },
+                link: function (scope, element, attributes, ngModel) {
+
+                    ngModel.$validators.compareTo = function (modelValue) {
+                        return (modelValue == scope.otherModelValue) ||
+                                (
+                                    (modelValue == "" || modelValue == undefined)
+                                    &&
+                                    (scope.otherModelValue == "" || scope.otherModelValue == undefined)
+                                );
+                    };
+
+                    scope.$watch("otherModelValue", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        INMEDIKApp.directive("compareTo", compareTo);
+
+        INMEDIKApp.factory("entityService",
+               ["akFileUploaderService", function (akFileUploaderService) {
+                   var saveForm = function (formData, url) {
+                       return akFileUploaderService.saveModel(formData, url);
+                   };
+                   return {
+                       saveForm: saveForm
+                   };
+               }]);
+    </script>
+}
+<div class="container-fluid" ng-controller="EmployeeController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Employee.id">Agregar</span><span ng-show="INMEDIKApp.Employee.id">Editar</span> Empleados</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="EmployeeForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="EmployeeForm.code.$touched && EmployeeForm.code.$error.required"><strong>Código</strong>: Campo obligatorio</p>
+
+                    <p ng-show="EmployeeForm.name.$touched && EmployeeForm.name.$error.required"><strong>Nombre(s)</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.lastname.$touched && EmployeeForm.lastname.$error.required"><strong>Apellido(s)</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.sex.$touched && EmployeeForm.sex.$error.required"><strong>Sexo</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.birthdate.$touched && EmployeeForm.birthdate.$error.required"><strong>Fecha de nacimiento</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.birthdate.$touched && !EmployeeForm.birthdate.$error.required && !EmployeeForm.birthdate.$valid"><strong>Fecha de nacimiento</strong>: Formato incorrecto. Intente con formato dd/mm/aaaa</p>
+
+                    <p ng-show="EmployeeForm.address.$touched && EmployeeForm.address.$error.required"><strong>Dirección</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.postalCode.$touched && EmployeeForm.postalCode.$error.required"><strong>Código Postal</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.stateAux.$touched && EmployeeForm.stateAux.$error.required"><strong>Estado</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.cityAux.$touched && EmployeeForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.countyAux.$touched && EmployeeForm.countyAux.$error.required"><strong>Departamento</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.email.$touched && EmployeeForm.email.$error.email"><strong>Correo</strong>: formato incorrecto</p>
+
+                    <p ng-show="EmployeeForm.usrAccount.$touched && EmployeeForm.usrAccount.$error.required"><strong>Cuenta de usuario</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.usrPass.$touched && EmployeeForm.usrPass.$error.required"><strong>Contraseña</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.usrPassConfirm.$touched && EmployeeForm.usrPassConfirm.$error.required"><strong>Confirmar contraseña</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.usrPassConfirm.$touched && EmployeeForm.usrPassConfirm.$error.compareTo && !EmployeeForm.usrPassConfirm.$error.required">
+                        <strong>Confirmar contraseña</strong>: Las contraseñas deben coincidir
+                    </p>
+                    <p ng-show="EmployeeForm.usrRole.$touched && EmployeeForm.usrRole.$error.required"><strong>Rol</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.usrUniversity.$touched && EmployeeForm.usrUniversity.$error.required"><strong>Universidad del doctor</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.usrLicense.$touched && EmployeeForm.usrLicense.$error.required"><strong>Cedula profesional del doctor</strong>: Campo obligatorio</p>
+                    <p ng-show="EmployeeForm.specialty.$touched && EmployeeForm.specialty.$error.required"><strong>Especialidad</strong>: Campo obligatorio</p>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="EmployeeForm" id="EmployeeForm">
+                        <div class="col-md-12 no-padding-sides">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.code.$touched && EmployeeForm.code.$invalid)}">
+                                    <label for="name" class="control-label col-md-3">Código<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-model="INMEDIKApp.Employee.code" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="code" name="code" placeholder="Código" required maxlength="8">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-init="currentForm = EmployeeForm">
+                            @Html.Partial("~/Views/Shared/_PersonForm.cshtml")
+                            <div class="clearfix"></div>
+                        </div>
+                        <div ng-init="currentForm = EmployeeForm">
+                            @Html.Partial("~/Views/Shared/_AddressForm.cshtml")
+                            <div class="clearfix"></div>
+                        </div>
+                        <div ng-init="currentForm = EmployeeForm">
+                            @Html.Partial("~/Views/Shared/_UserForm.cshtml")
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="col-md-12 no-padding-sides">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group " ng-class="{'invalid-group': (EmployeeForm.specialty.$touched && EmployeeForm.specialty.$invalid)}">
+                                    <label for="specialty" class="control-label col-md-3">Especialidad:</label>
+                                    <div class="col-md-9">
+                                        <select ng-required="INMEDIKApp.selectedRole && INMEDIKApp.selectedRole.name == 'Medic'"
+                                                ng-disabled="INMEDIKApp.selectedRole.name != 'Medic'"
+                                                name="specialty" id="specialty" class="form-control"
+                                                ng-text-change="INMEDIKApp.GetTouched($event)"
+                                                ng-blur="INMEDIKApp.GetTouched($event)"
+                                                ng-model="INMEDIKApp.selectedSpecialty"
+                                                ng-options="s.Name for s in INMEDIKApp.specialties track by s.id">
+                                            <option value="">Seleccione...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.usrLicense.$touched && EmployeeForm.usrLicense.$invalid)}">
+                                    <label for="license" class="control-label col-md-3">Cedula:</label>
+                                    <div class="col-md-9">
+                                        <input type="text" placeholder="Cedula Profesional" class="form-control" id="usrLicense" name="usrLicense" ng-model="INMEDIKApp.person.License"
+                                               ng-blur="INMEDIKApp.GetTouched($event)" ng-text-change="INMEDIKApp.GetTouched($event)" ng-disabled="INMEDIKApp.selectedRole.name != 'Medic'" ng-required="INMEDIKApp.selectedRole && INMEDIKApp.selectedRole.name == 'Medic'" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.usrUniversity.$touched && EmployeeForm.usrUniversity.$invalid)}">
+                                    <label for="usrUniversity" class="control-label col-md-3">Institución</label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" placeholder="Institución que otorgo el titulo" id="usrUniversity" name="usrUniversity" ng-model="INMEDIKApp.person.University"
+                                               ng-blur="INMEDIKApp.GetTouched($event)" ng-text-change="INMEDIKApp.GetTouched($event)" ng-disabled="INMEDIKApp.selectedRole.name != 'Medic'" ng-required="INMEDIKApp.selectedRole && INMEDIKApp.selectedRole.name == 'Medic'" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-12 no-padding-sides">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.signature.$touched && EmployeeForm.signature.$invalid)}">
+                                    <label for="signature" class="col-md-3 control-label">Firma: </label>
+                                    <div class="col-md-9">
+                                        <input type="file" name="signature"
+                                               class="form-control" data-ak-file-model="INMEDIKApp.Employee.signature" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Employee.signatureBytes.length > 0" class="col-md-6">
+                                <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.signature.$touched && EmployeeForm.signature.$invalid)}">
+                                    <div class="col-md-12">
+                                        <img style="max-height:50px;" src="data:image/png;base64,{{INMEDIKApp.Employee.signatureBytes}}" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'invalid-group': (EmployeeForm.clinics.$touched && EmployeeForm.clinics.$invalid)}">
+                                <label for="clinics" class="control-label col-md-3">Clínicas: </label>
+                                <div class="col-md-9">
+                                    <multiselect ng-model="INMEDIKApp.Employee.clinicAux" show-select-all="true" show-unselect-all="true" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required options="INMEDIKApp.clinics" display-prop="name" id-prop="id" labels="INMEDIKApp.labels" placeholder="Seleccione..."></multiselect>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="EmployeeForm.$invalid || INMEDIKApp.subbmiting || INMEDIKApp.isDemo">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading"><span id="employeeTour">Empleado</span> <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="EmployeeTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length==0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title">Horario</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="ScheduleForm">
+                        <schedule-picker name="schedule" ng-model="INMEDIKApp.EmployeeSchedule.data" ng-required="true" time-format="HH:mm"></schedule-picker>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveSchedule()" ng-disabled="!ScheduleForm.schedule.$valid || INMEDIKApp.isDemo">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea modificar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Guardar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="EmployeePermits" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Vistas</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="clearfix">
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Menús disponibles para el empleado</div>
+                                <div class="panel-body" id="panelBody">
+                                    <div ng-repeat="view in INMEDIKApp.Views" class="col-md-6">
+                                        <input type="checkbox" checklist-model="INMEDIKApp.Employee.userAux.menuViewAux" checklist-value="view"> <i class="{{view.icon}}"></i> {{view.name}}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="checkbox" ng-model="INMEDIKApp.Employee.canCancel"> <i class="fas fa-trash-alt"></i> Cancelaciones
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" ng-click="INMEDIKApp.SavePermits()" ng-disabled="INMEDIKApp.subbmiting || INMEDIKApp.isDemo" data-dismiss="modal">Guardar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+

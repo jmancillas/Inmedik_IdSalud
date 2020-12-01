@@ -1,0 +1,616 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .carousel-control {
+            display: none;
+        }
+
+        .carousel-indicators {
+            display: none;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+
+    <script type="text/javascript">
+
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker', 'datatables']);
+        INMEDIKApp.filter('smartsearch', ['$filter', function ($filter) {
+            return function (collection, keywords) {
+                if (!keywords) {
+                    return collection;
+                } else {
+                    keywords = keywords.split(" ");
+                    $.each(keywords, function (k, v) {
+                        collection = $filter('filter')(collection, { $: v });
+                    });
+                    return collection;
+                }
+            }
+        }]);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.subbmiting = false;
+            dt.tabClicked = "Consult";
+            dt.DetailObj = {};
+            dt.errors = [];
+            dt.myInterval = 1000;
+            dt.noWrapSlides = false;
+            dt.active = 0;
+            dt.ads = [];
+            dt.ads2show = [];
+
+            dt.regularExpretions = Ut_getRegularExpretions();
+            dt.Lists = {};
+            dt.Lists.Disease = JSON.parse('@Html.Raw(ViewBag.Disease)');
+            dt.Lists.ChronicDisease = JSON.parse('@Html.Raw(ViewBag.ChronicDisease)');
+            dt.Lists.Medics = JSON.parse('@Html.Raw(ViewBag.Medics)');
+            dt.Lists.Status = JSON.parse('@Html.Raw(ViewBag.Status)');
+
+            dt.StatTerm = dt.Lists.Status.filter(function (item) { return item.Name == "Terminado"; })[0];
+            dt.StatEnfe = dt.Lists.Status.filter(function (item) { return item.Name == "Enfermeria"; })[0];
+            dt.StatEnProces = dt.Lists.Status.filter(function (item) { return item.Name == "En proceso"; })[0];
+            dt.PatientId = '@ViewBag.PatientId';
+            dt.RefreshTime = '@ViewBag.RefreshTime';
+
+            var str_save_Consult = '@Url.Action("SaveConsult", "Schedule")';
+            var str_save_Service = '@Url.Action("SaveService", "Schedule")';
+            var str_save_Exam = '@Url.Action("SaveExam", "Schedule")';
+
+            dt.FindConsultsByUser = function (PatientId) {
+                var win = window.open('@Url.Action("Index", "Schedule")?PatientId=' + PatientId, '_blank');
+
+            }
+            dt.LoadDetail = function (CategoryName, id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("LoadDetail", "Schedule")',
+                    data: { CategoryName: CategoryName, id: id },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.DetailObj.dmm = "00000";
+                        dt.DetailObj = res.data.data;
+                        dt.DetailObj.CategoryName = CategoryName;
+
+                        switch (CategoryName) {
+                            case "Consultas":
+
+                                dt.Lists.ChronicDisease.filter(function (item) { item.selected = false; });
+                                $.each(res.data.data.ChronicDiseaseAux, function (idx, item) {
+                                    dt.Lists.ChronicDisease.filter(function (itemCd) {
+                                        if (itemCd.id == item.id) {
+                                            itemCd.selected = true;
+                                        }
+                                    });
+                                });
+                                dt.RefreshTypedKeyWords();
+                                break;
+                        }
+
+                        $("#detailModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            }
+            /*------------------------------------------------------------------------------------------------------*/
+            dt.SaveCheck = function () {
+                switch (dt.DetailObj.CategoryName) {
+                    case "Consultas":
+                        dt.DetailObj.ChronicDiseaseAux = dt.Lists.ChronicDisease.filter(function (item) { return item.selected; });
+                        dt.SaveObj(str_save_Consult);
+                        break;
+                    case "Servicios":
+                        dt.SaveObj(str_save_Service);
+                        break;
+                    case "Exámenes":
+                        dt.SaveObjExam(str_save_Exam);
+                        break;
+                }
+            }
+
+            dt.SaveObj = function (strUrl) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: strUrl,
+                    data: dt.DetailObj,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#detailModal").modal("hide");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                }); 
+            }
+            dt.SaveObjExam = function (strUrl) {
+                if (dt.DetailObj[0].StatusId != dt.StatEnProces.id) {
+                    dt.DetailObj[0].StatusId = dt.StatTerm.id;
+                }
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: strUrl,
+                    data: dt.DetailObj,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#detailModal").modal("hide");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            }
+            /*-------------------------------------------ConsultsTable-----------------------------------------------*/
+            dt.dtOptionsConsults = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetSchedule", "Schedule")",
+                    data: function (d) {
+                        mostrarPantallaCarga();
+                        d.tabClicked = dt.tabClicked;
+                        d.PatientId = dt.PatientId;
+                    }
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('order', [6, 'desc'])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withOption('drawCallback', function (settings) {
+                    $(".ClassTrRed").parent().parent().parent().addClass("bg-danger");
+                    $(".ClassTrRed").toggleClass("btn-danger btn-info");
+                    quitarPantallaCarga();
+                })
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @*Funciones de las columnas*@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+
+            function detalleBtn(data, type, full, meta) {
+                var ClassTrRed = "";
+                var dtNow = moment(meta.settings.json.SysDate, "DD/MM/YYYY hh:mm:ss");
+                var dtCreated = moment(full.stringOrderCreated, "DD/MM/YYYY hh:mm:ss");
+                var dtScheduled = moment(full.stringScheduled, "DD/MM/YYYY hh:mm:ss");
+                if ((dtNow - dtCreated > 600000) && (dtNow > dtScheduled) && full.StatusName == "Enfermeria") {
+                    ClassTrRed = "ClassTrRed";
+                }
+
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadDetail(\'' + full.CategoryName + '\',' + data + ')" class="btn btn-info btn-xs ' + ClassTrRed + '"><i class="fa fa-pencil" aria-hidden="true"></i> Detalle</button></div>';
+            }
+
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsConsults = [
+                DTColumnBuilder.newColumn("id").withTitle("ID").withOption("visible", false),
+                DTColumnBuilder.newColumn("PatientName").withTitle("paciente"),
+                DTColumnBuilder.newColumn("MedicName").withTitle("medico"),
+                DTColumnBuilder.newColumn("StatusName").withTitle("estatus"),
+                DTColumnBuilder.newColumn("CategoryName").withTitle("tipo"),
+                DTColumnBuilder.newColumn("ConceptName").withTitle("concepto"),
+                DTColumnBuilder.newColumn("stringOrderCreated").withTitle("Fecha de venta").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("stringScheduled").withTitle("Fecha programada").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("").renderWith(detalleBtn).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="Buscar ' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            dt.reDrawTable = function (ptabClicked) {
+                dt.tabClicked = ptabClicked;
+                dt.dtInstance.DataTable.draw();
+            }
+            /*-------------------------------------------END ConsultsTable-----------------------------------------------*/
+            /*---------------------------------------------DiseaseTable-------------------------------------------------*/
+            dt.dtOptionsDisease = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetDiseases", "Disease")"
+            })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen enfermedades",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron enfermedades",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsDisease = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("id").withTitle("Agregar").renderWith(AddDiseaseBtn).withClass('notSearchable text-center').notSortable()
+            ];
+            dt.InstanceCallbackDisease = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceDisease = instance;
+                var id = '#' + dt.dtInstanceDisease.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="Buscar ' + title + '" />');
+                    }
+                });
+
+                var tableDisease = dt.dtInstanceDisease.DataTable;
+                // Apply the search
+                tableDisease.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            function AddDiseaseBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.AddDisease(' + data + '); INMEDIKApp.RefreshTypedKeyWords();" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
+            }
+            /*-------------------------------------------END DiseaseTable-----------------------------------------------*/
+            dt.numberWithCommas = function (n) {
+                return Ut_numberWithCommas(n);
+            }
+            dt.AddDisease = function (idElem) {
+                var elem = dt.Lists.Disease.filter(function (a) { return (a.id == idElem); })[0];
+                if (dt.DetailObj.DiseaseAux.indexOf(elem) < 0 && elem != undefined) {
+                    dt.DetailObj.DiseaseAux.push(elem);
+                }
+            }
+
+            dt.RefreshTypedKeyWords = function () {
+                var ArrayKeys = [];
+                var DO = dt.DetailObj;
+
+                var ChronicSelected = dt.Lists.ChronicDisease.filter(function (item) { return item.selected; });
+                $.each(ChronicSelected, function (idx, item) {
+                    $.each(item.name.split(" "), function (idx, name) {
+                        ArrayKeys.push(name.toUpperCase());
+                    });
+                });
+
+                $.each(DO.DiseaseAux, function (idx, item) {
+                    $.each(item.name.split(" "), function (idx, name) {
+                        ArrayKeys.push(name.toUpperCase());
+                    });
+                });
+
+                if (DO.PA != null) {
+                    var PA = DO.PA.split(" ");
+                    $.each(PA, function (idx, item) {
+                        ArrayKeys.push(item.toUpperCase());
+                    });
+                }
+                if (DO.Treatment != null) {
+                    var Treatment = DO.Treatment.split(" ");
+                    $.each(Treatment, function (idx, item) {
+                        ArrayKeys.push(item.toUpperCase());
+                    });
+                }
+                if (DO.PA == null && DO.Treatment == null) {
+                    dt.ads2show = dt.ads;
+                }
+
+                dt.ads2show =
+                    dt.ads.filter(function (item) {
+                        var isIn = false;
+                        $.each(item.keywordAux, function (idx, KeysItem) {
+                            if (ArrayKeys.indexOf(KeysItem.name.toUpperCase()) > -1) {
+                                isIn = true;
+                                return;
+                            }
+                        });
+                        return isIn;
+                    });
+                /*En caso de que ads2Show este vacia o ArrayKeys tambien, se muestran todos los ads*/
+                if (dt.ads2show.length == 0 || ArrayKeys.length == 0) {
+                    dt.ads2show = dt.ads;
+                }
+                dt.active = 0;
+            }
+
+
+            function init() {
+                setInterval(function () { dt.reDrawTable(dt.tabClicked); }, dt.RefreshTime);
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetActiveAds", "Ads")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.ads = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Consultas, exámenes, servicios</div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs">
+                    <li class="active" ng-click="INMEDIKApp.reDrawTable('Consult')"><a data-toggle="tab" href="#Consultas-tab">Consultas, exámenes y servicios</a></li>
+                    <li ng-click="INMEDIKApp.reDrawTable('Agenda')"><a data-toggle="tab" href="#Consultas-tab">Consultas, exámenes y servicios agendados</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Consultas-tab" class="tab-pane fade in active">
+                        <div class="form-horizontal">
+                            <div class="table-responsive">
+                                <table id="ConsultsTable" datatable dt-options="INMEDIKApp.dtOptionsConsults" dt-columns="INMEDIKApp.dtColumnsConsults" dt-instance="INMEDIKApp.InstanceCallback" class="table-bordered compact"></table>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div id="Agenda-tab" class="tab-pane fade">
+                            <div class="form-horizontal">
+                                <div class="table-responsive">
+                                    <table id="ConsultsTable" datatable dt-options="INMEDIKApp.dtOptionsConsults" dt-columns="INMEDIKApp.dtColumnsConsults" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                                </div>
+                            </div>
+                        </div>*@
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="detailModal" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog" ng-class="INMEDIKApp.DetailObj.CategoryName == 'Consultas' ? 'modal-lg':''">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">{{INMEDIKApp.DetailObj.CategoryName}}</h4>
+                </div>
+                <div class="modal-body">
+                    @Html.Partial("~/Views/Schedule/TemplateDetail.cshtml")
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="INMEDIKApp.SaveCheck()" ng-if="INMEDIKApp.DetailObj.StatusAux.Name != 'Terminado'">Guardar</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="DiseaseModal" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Padecimientos</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="DiseaseTable" datatable dt-options="INMEDIKApp.dtOptionsDisease" dt-columns="INMEDIKApp.dtColumnsDisease" dt-instance="INMEDIKApp.InstanceCallbackDisease" class="table-hover table-bordered compact"></table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

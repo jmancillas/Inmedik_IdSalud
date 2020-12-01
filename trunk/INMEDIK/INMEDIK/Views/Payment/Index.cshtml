@@ -1,0 +1,693 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script src="~/Scripts/pdfmake/pdfmake.js"></script>
+    <script src="~/Scripts/pdfmake/vfs_fonts.js"></script>
+    <script src="~/Scripts/pdfmake/creacionesDePDF.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('PaymentController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.subbmiting = false;
+            dt.openingOrder = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.CanPay = false;
+            dt.aheads = [];
+            dt.isReception = false;
+            dt.valid = [];
+
+            dt.Parameters = JSON.parse('@Html.Raw(ViewBag.Parameters)');
+            dt.PaymentTypes = JSON.parse('@Html.Raw(ViewBag.PaymentTypes)');
+            dt.Clinics = JSON.parse('@Html.Raw(ViewBag.ClinicRes)');
+            dt.Order = {};
+            dt.ConceptsSelecteds = [];
+            dt.ClinicsL = [];
+            $.each(dt.Clinics, function () {
+                dt.ClinicsL.push({ id: this.id, name: this.name });
+            });
+
+            dt.Cart = {};
+            dt.Cart.TotalOrder = 0;
+            dt.Cart.Concepts = [];
+            dt.Cart.Patient = {};
+            dt.Cart.Order = {};
+            dt.Cart.Order.donationAux = {};
+            dt.Cart.Payments = [];
+            dt.Cart.prevPayments = [];
+            dt.Cart.pendingPayment = 0;
+            dt.Cart.Order.DoYouWantToRound = 'false';
+            dt.Cart.Order.donationAux.DoYouWantToDonate = 'false';
+
+            dt.Ut_numberWithCommas = function (n) {
+                return Ut_numberWithCommas(n);
+            }
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function moneyFormat(data, type, full, meta) {
+                var num = '$' + data.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+                return num;
+            }
+            function openOrder(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-disabled="INMEDIKApp.openingOrder" ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.openOrder(' + data + ');" class="btn btn-info btn-xs" title="Ver"><i class="fas fa-edit"></i></button></div>';
+            };
+
+            dt.resetCart = function () {
+                dt.Cart = {};
+                dt.Cart.TotalOrder = 0;
+                dt.Cart.Concepts = [];
+                dt.Cart.Patient = {};
+                dt.Cart.Order = {};
+                dt.Cart.Order.donationAux = {};
+                dt.Cart.pendingPayment = 0;
+                dt.Cart.Payments = [];
+                dt.Cart.prevPayments = [];
+                dt.Cart.Order.DoYouWantToRound = 'false';
+                dt.Cart.Order.donationAux.DoYouWantToDonate = 'false';
+            };
+            dt.setConceptSelected = function (item, type) {
+                dt.ConceptsSelecteds[type] = {};
+                dt.ConceptsSelecteds[type] = item;
+                dt.ConceptsSelecteds[type].quantity = 1;
+                dt.ConceptsSelecteds[type].medicId = item.MedicId;
+                dt.ConceptsSelecteds[type].subTotal = Math.round(item.price * 100) / 100;
+                dt.ConceptsSelecteds[type].IVA = (item.iva ? (item.price * (dt.Parameters.Tax / 100)).toFixed(2) : 0);
+                @*Se hace divicion entre 1 para que el navegador sepa que es un numero y no un string lo que se quiere sumar (no se usa ToNumber porque explorer no jala)*@
+                dt.ConceptsSelecteds[type].Total = Math.round(((dt.ConceptsSelecteds[type].IVA * 1) + (dt.ConceptsSelecteds[type].subTotal * 1)) * 100) / 100;
+                dt.ConceptsSelecteds[type].stock = item.stockAux;
+                dt.ConceptsSelecteds[type].Comodin = "00000000";
+                dt.valid[type] = true;
+                dt.ConceptsSelecteds[type].ClinicId = dt.ClinicsL.filter(function (item) { return (item.id == dt.Parameters.clinicId); })[0];
+
+                if (type == 'Productos' && item.stockAux <= 0) {
+                    dt.valid[type] = false;
+                }
+                if (type != 'Productos') {
+                    dt.ConceptsSelecteds[type].stock = 1;
+                }
+            }
+            dt.openOrder = function (id) {
+                dt.resetCart();
+                dt.openingOrder = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetOrder", "Payment")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.openingOrder = false;
+                    if (res.data.success) {
+                        dt.Order = res.data.data;
+                        dt.Cart.Order.patientId = dt.Order.PatientId;
+                        dt.Cart.Patient = dt.Order.patientAux;
+                        if (dt.Order.OrderConceptAux != undefined) {
+                            $.each(dt.Order.OrderConceptAux, function () {
+                                var pendingType = this.ConceptAux.categoryName;
+                                dt.setConceptSelected(this.ConceptAux, this.ConceptAux.categoryName);
+
+                                dt.ConceptsSelecteds[this.ConceptAux.categoryName].quantity = this.Quantity;
+                                dt.ConceptsSelecteds[pendingType].medicName = this.Medicname;
+                                dt.ConceptsSelecteds[pendingType].medicDecree = this.Decree;
+                                dt.ConceptsSelecteds[pendingType].medicId = this.MedicId;
+                                dt.ConceptsSelecteds[pendingType].scheduled = this.Scheduled;
+                                dt.ConceptsSelecteds[pendingType].ClinicId = {};
+                                dt.ConceptsSelecteds[pendingType].ClinicId.id = this.ClinicId;
+
+                                dt.AddConceptToCart(this.ConceptAux.categoryName, false);
+                            });
+                        }
+                        if (dt.Order.orderPackageAux != undefined && dt.Order.orderPackageAux.packageAux.name != null) {
+
+                            var pendingType = dt.Order.orderPackageAux.packageAux.categoryName;
+                            dt.setConceptSelected(dt.Order.orderPackageAux.packageAux, dt.Order.orderPackageAux.packageAux.categoryName);
+
+                            dt.ConceptsSelecteds[dt.Order.orderPackageAux.packageAux.categoryName].quantity = dt.Order.orderPackageAux.packageAux.Quantity;
+                            dt.ConceptsSelecteds[pendingType].ClinicId = {};
+                            dt.ConceptsSelecteds[pendingType].ClinicId.id = dt.Order.orderPackageAux.clinicAux.id;
+
+                            dt.AddConceptToCart(dt.Order.orderPackageAux.packageAux.categoryName, false);
+                        }
+                        if (dt.Order.paymentAux != undefined) {
+                            $.each(dt.Order.paymentAux, function () {
+                                var paymentObj = {
+                                    id: this.id,
+                                    PaymentTypeId: this.PaymentTypeId,
+                                    PaymentTypeName: this.PaymentTypeAux.Name,
+                                    Amount: this.Amount,
+                                    Commission: this.Commission
+                                };
+                                dt.Cart.prevPayments.push(paymentObj);
+                            });
+                            dt.setOrderTotal();
+                        }
+                        dt.Cart.Order.donationAux.Amount = dt.Parameters.minDonation;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                    dt.openingOrder = false;
+                });
+            };
+
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetPendingOrders", "Payment")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('order', [6, 'desc'])
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen pagos pendientes",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron pagos pendientes",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("Órden").withOption("visible", false),
+                DTColumnBuilder.newColumn("Ticket").withTitle("Ticket"),
+                DTColumnBuilder.newColumn("orderPackageAux.clinicAux.name").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("orderPackageAux.medic.personAux.fullName").withTitle("Empleado"),
+                DTColumnBuilder.newColumn("orderPackageAux.patientAux.personAux.fullName").withTitle("Paciente"),
+                DTColumnBuilder.newColumn("Total").withTitle("Total").renderWith(Ut_numberWithCommas),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Fecha"),
+                DTColumnBuilder.newColumn("id").withTitle("Ver").notSortable().renderWith(openOrder).withClass('notSearchable'),
+
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        if ($(this).hasClass('numericSearch')) {
+                            $(this).html('<input type="number" class="form-control" placeholder="' + title + '" />');
+                        }
+                        else {
+                            $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                        }
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            dt.CheckWithdrawal = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("WithdrawalNeeded", "Reception")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        if (res.data.isNeeded) {
+                            mostrarPantallaCarga();
+                            window.location.href = '@Url.Action("Index", "Withdrawal")';
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            dt.saveOrder = function () {
+                //dt.Paying = true;
+                @*se quita la donacion de el total ya que no es parte de algun concepto comercializable y no es algo que se re grese en alguna cancelacion*@
+                if (dt.Cart.Order.donationAux != undefined && dt.Cart.Order.donationAux.DoYouWantToDonate == "true") {
+                    dt.Cart.TotalOrder -= dt.Cart.Order.donationAux.Amount;
+                    dt.Cart.Order.Donation = dt.Cart.Order.donationAux.Amount;
+                }
+
+                dt.Cart.Promotions = [];
+                $.each(dt.Cart.Concepts, function () {
+                    if (this.isInPromotion) {
+                        var promo = {
+                            ConceptId: this.conceptId,
+                            TextPromotion: this.promotion,
+                            AmountSaved: this.totalUnit * this.quantity - this.total
+                        };
+                        dt.Cart.Promotions.push(promo);
+                    }
+                });
+                @*si el total que se esta pagando es superior al total de la venta, se le resta al efectivo para que asi se guarde en base de datos la cantidad
+                de efectivo que ingreso a la caja registradora*@
+                mostrarPantallaCarga();
+
+                dt.Cart.Order.Total = dt.Cart.TotalOrder;
+                dt.Cart.Order.id = dt.Order.id;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("AddPayments", "Payment")',
+                    data: {
+                        payments: dt.Cart.Payments,
+                        order: dt.Cart.Order
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.idOrderJustSaved = res.data.data.id;
+                        dt.PaymentsJustSaved = dt.Cart.Payments;
+                        $.each(dt.PaymentsJustSaved, function () {
+                            this.PaymentTypeAux = {
+                                Name: this.PaymentTypeName
+                            };
+                        });
+                        dt.resetCart();
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.needsWithdrawal)
+                        {
+                            window.location.href = res.data.url;
+                        }
+                        else {
+                            $("#resultModal").modal('show');
+                        }
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        
+                    }
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            }
+            dt.setOrderTotal = function () {
+                var isJustAPack = true;
+                var hasPayment = false;
+
+                dt.Cart.Order.Total = 0;
+                dt.Cart.Order.Iva = 0;
+
+                $.each(dt.Cart.Concepts, function () {
+                    dt.Cart.Order.Total += this.total;
+                    dt.Cart.Order.Iva += (this.IVA * this.quantity);
+
+                    if (this.categoryName != 'Paquetes')
+                        isJustAPack = false;
+                });
+                dt.Cart.Order.SubTotal = dt.Cart.Order.Total - dt.Cart.Order.Iva;
+
+                dt.Cart.Order.Commission = 0;
+                dt.Cart.Order.TotalPayed = 0;
+
+                $.each(dt.Cart.Payments, function (idx, item) {
+                    //if (this.Amount == undefined) {
+                    //    this.Amount = 0;
+                    //}
+                    if (this.Amount > 0) {
+                        hasPayment = true;
+                    }
+                    dt.Cart.Order.TotalPayed += this.Amount;
+                    if (this.PaymentTypeName == 'Tarjeta') {
+                        dt.Cart.Payments[idx].Commission = (this.Amount * dt.Parameters.CardCommission / 100).toFixed(2)
+                    }
+
+                    dt.Cart.Order.Commission += this.Commission / 1;
+                    //dt.Cart.Order.Total += this.Commission / 1;
+                });
+                $.each(dt.Cart.prevPayments, function (idx, item) {
+                    if (this.Amount == undefined) {
+                        this.Amount = 0;
+                    }
+                    dt.Cart.Order.TotalPayed += this.Amount;
+                    if (this.PaymentTypeName == 'Tarjeta') {
+                        dt.Cart.prevPayments[idx].Commission = (this.Amount * dt.Parameters.CardCommission / 100).toFixed(2)
+                    }
+
+                    dt.Cart.Order.Commission += this.Commission / 1;
+                    //dt.Cart.Order.Total += this.Commission / 1;
+                });
+
+                if (dt.Cart.Order.DoYouWantToRound == "true") {
+                    dt.Cart.Order.Rounding = (Math.ceil(dt.Cart.Order.Total) - dt.Cart.Order.Total).toFixed(2);
+                    dt.Cart.Order.Total = Math.ceil(dt.Cart.Order.Total);
+                } else {
+                    dt.Cart.Order.Rounding = (0).toFixed(2);
+                }
+
+                if (dt.Cart.Order.donationAux != undefined && dt.Cart.Order.donationAux.DoYouWantToDonate == "true") {
+                    dt.Cart.Order.Total += dt.Cart.Order.donationAux.Amount;
+                }
+
+
+                dt.Cart.TotalOrder = (dt.Cart.Order.Total + dt.Cart.Order.Commission).toFixed(2);
+                dt.Cart.Order.Commission = (dt.Cart.Order.Commission).toFixed(2);
+                dt.Cart.Order.Total = (dt.Cart.Order.Total).toFixed(2);
+                dt.Cart.Order.Change = (dt.Cart.Order.TotalPayed - dt.Cart.Order.Total).toFixed(2);
+                dt.Cart.pendingPayment = ((dt.Cart.Order.Total - dt.Cart.Order.TotalPayed) < 0 ? 0 : (dt.Cart.Order.Total - dt.Cart.Order.TotalPayed)).toFixed(2);
+
+                dt.CanPay = (!dt.isReception && hasPayment) && (dt.Cart.Concepts.length > 0 && (dt.Cart.Order.Change >= 0 || isJustAPack) && dt.Cart.Patient.id != undefined);
+            };
+            dt.getOrder = function (toPrint, idOrder) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("getOrderToCancel", "Order")',
+                    data: { idOrder: idOrder },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        var unRepitedConcepts = [];
+                        $.each(res.data.data.OrderConceptAux, function (idx, item) {
+                            var itExist = [];
+                            itExist = unRepitedConcepts.filter(function (fitem) {
+                                return item.orderId == fitem.orderId;
+                            });
+                            if (itExist.length == 0) {
+                                unRepitedConcepts.push(item);
+                            }
+                            else {
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].quantity += item.quantity;
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].total += item.total;
+                            }
+                        });
+
+                        res.data.data.OrderConceptAux = unRepitedConcepts;
+
+                        if (toPrint) {
+                            res.data.data.paymentAux = dt.PaymentsJustSaved;
+                            PrintTicketOrder(res.data.data);
+                        }
+                        else {
+                            dt.OrderToCancel = res.data.data;
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            };
+            dt.AddConceptToCart = function (type, updateCartDb) {
+                var idxFinded;
+                var TotalQuantity = dt.Cart.Concepts.filter(function (data, idx) {
+                    if (data.conceptId == dt.ConceptsSelecteds[type].id) {
+                        idxFinded = idx;
+                        return true;
+                    }
+                    else
+                        return false;
+                }).length;
+
+                if (TotalQuantity <= 0 || type != 'Productos') {
+                    if (dt.ConceptsSelecteds[type].quantity == undefined) {
+                        dt.ConceptsSelecteds[type].quantity = 1;
+                    };
+
+                    for (var i = 0; i < dt.Order.orderPackageAuxList.length; i++) {
+                        if (dt.Order.orderPackageAuxList[i].packageAux.iva) {
+                            var objConcept = {
+                                name: dt.Order.orderPackageAuxList[i].packageAux.name,
+                                conceptId: dt.Order.orderPackageAuxList[i].packageAux.id,
+                                quantity: 1,
+                                price: dt.Order.orderPackageAuxList[i].packageAux.price,
+                                cost: dt.Order.orderPackageAuxList[i].packageAux.cost,
+                                total: dt.Order.orderPackageAuxList[i].packageAux.price * 1.16,
+                                totalUnit: dt.Order.orderPackageAuxList[i].packageAux.price * 1.16,
+                                totalCombo: 0,
+                                totalPromo: 0,
+                                totalOther: 0,
+                                medicId: dt.Order.orderPackageAuxList[i].medicId,
+                                scheduled: moment(dt.Order.orderPackageAuxList[i].scheduled).toDate(),
+                                isInPromotion: false,
+                                isInCombo: false,
+                                comboApp: 0,
+                                quantityDisp: 0,
+                                IVA: dt.Order.orderPackageAuxList[i].packageAux.price * 0.16,
+                                ClinicId: dt.Order.orderPackageAuxList[i].clinicAux.id,
+                                categoryName: dt.Order.orderPackageAuxList[i].packageAux.categoryName
+                            };
+                            dt.Cart.Concepts.push(objConcept);
+                        }
+
+                        else {
+                            var objConcept = {
+                                name: dt.Order.orderPackageAuxList[i].packageAux.name,
+                                conceptId: dt.Order.orderPackageAuxList[i].packageAux.id,
+                                quantity: 1,
+                                price: dt.Order.orderPackageAuxList[i].packageAux.price,
+                                cost: dt.Order.orderPackageAuxList[i].packageAux.cost,
+                                total: dt.Order.orderPackageAuxList[i].packageAux.price,
+                                totalUnit: dt.Order.orderPackageAuxList[i].packageAux.price,
+                                totalCombo: 0,
+                                totalPromo: 0,
+                                totalOther: 0,
+                                medicId: dt.Order.orderPackageAuxList[i].medicId,
+                                scheduled: moment(dt.Order.orderPackageAuxList[i].scheduled).toDate(),
+                                isInPromotion: false,
+                                isInCombo: false,
+                                comboApp: 0,
+                                quantityDisp: 0,
+                                IVA: 0,
+                                ClinicId: dt.Order.orderPackageAuxList[i].clinicAux.id,
+                                categoryName: dt.Order.orderPackageAuxList[i].packageAux.categoryName
+                            };
+                            dt.Cart.Concepts.push(objConcept);
+                        }
+                    }
+                }
+                else {
+                    @*Aqui solo entran los productos ya que son los unicos que se acumulan*@
+                    dt.Cart.Concepts[idxFinded].quantity = dt.Cart.Concepts[idxFinded].quantity + dt.ConceptsSelecteds[type].quantity;
+                    dt.Cart.Concepts[idxFinded].total = dt.Cart.Concepts[idxFinded].totalUnit * dt.Cart.Concepts[idxFinded].quantity;
+                }
+                @*en caso de que sean productos, revizamos si tienen promocion para aplicarla*@
+                if (type == 'Productos' && dt.ConceptsSelecteds[type].productAux.sale_first != 0 && dt.ConceptsSelecteds[type].productAux.sale_second != 0) {
+                    var idxUse = (idxFinded != undefined ? idxFinded : dt.Cart.Concepts.length - 1);
+                    var totalCombos = Math.floor(dt.Cart.Concepts[idxUse].quantity / dt.ConceptsSelecteds[type].productAux.sale_first);
+                    var totalSinCombo = dt.Cart.Concepts[idxUse].quantity % dt.ConceptsSelecteds[type].productAux.sale_first;
+                    var totalACobrar = totalCombos * dt.ConceptsSelecteds[type].productAux.sale_second + totalSinCombo;
+
+                    dt.Cart.Concepts[idxUse].isInPromotion = (totalACobrar * dt.Cart.Concepts[idxUse].price != dt.Cart.Concepts[idxUse].total);
+                    dt.Cart.Concepts[idxUse].total = totalACobrar * dt.Cart.Concepts[idxUse].price;
+                }
+
+                dt.ConceptsSelecteds[type] = {};
+                dt.aheads[type] = "";
+                dt.valid[type] = false;
+
+                if (updateCartDb)
+                    dt.UpdateTemporalCart();
+
+                dt.setOrderTotal();
+            }
+            dt.AddPaymentType = function () {
+                var PaymentTypeAlreadyAdded = false;
+                var totalPagos = 0;
+                if (dt.PaymentTypeSelected.Name == "Efectivo" || dt.PaymentTypeSelected.Name == "Vale") {
+                    $.each(dt.Cart.Payments, function (idx, item) {
+                        if (dt.PaymentTypeSelected.Name == item.PaymentTypeName) {
+                            PaymentTypeAlreadyAdded = true;
+                        }
+                        totalPagos += item.Amount;
+                    });
+                }
+                if (!PaymentTypeAlreadyAdded) {
+                    var paymentObj = {
+                        id: 0,
+                        PaymentTypeId: dt.PaymentTypeSelected.id,
+                        PaymentTypeName: dt.PaymentTypeSelected.Name,
+                        Amount: 0,
+                        Commission: 0,
+                        OrderId: dt.Order.id
+                    };
+
+                    dt.Cart.Payments.push(paymentObj);
+                    dt.setOrderTotal();
+                }
+                dt.PaymentTypeSelected = undefined;
+            }
+            function init() {
+
+            };
+            init();
+
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="PaymentController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Ventas con pagos pendientes</div>
+        <div class="panel-body">
+            <div class="col-md-6">
+                <div class="table-responsive">
+                    <table id="pendingTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+            <div class="col-md-6" style="border-left: 1px solid #dddddd;">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#Carrito-tab">Venta</a></li>
+                    <li ng-if="INMEDIKApp.idOrderJustSaved" ng-click="INMEDIKApp.getOrder(true,INMEDIKApp.idOrderJustSaved)"><a>Imprimir ticket</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Carrito-tab" class="tab-pane fade in active">
+                        @Html.Partial("~/Views/Reception/Cart.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

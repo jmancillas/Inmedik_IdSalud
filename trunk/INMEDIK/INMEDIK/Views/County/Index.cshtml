@@ -1,0 +1,409 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('CountyController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.County = {};
+            dt.cities = [];
+            dt.subbmiting = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteElement(' + data + ')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#CountyForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#CountyForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#CountyForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCounty", "County")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.County = res.data.data;
+                        $("#NewElementModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id) {
+                dt.County.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("DeleteCounty", "County")',
+                    data: dt.County,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.County = {};
+                $("#NewElementModal").modal("show");
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.CountyForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.County = {};
+            });
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveCounty", "County")',
+                    data: dt.County,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetCountys", "County")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen colonias",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron colonias",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("cityAux.name").withTitle("Municipio"),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn),
+                DTColumnBuilder.newColumn("id").withTitle("Borrar").renderWith(deleteBtn)
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (title != "Editar" && title != "Borrar") {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCitiesSelectAll", "City")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.cities = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            init();
+
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="CountyController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.County.id">Agregar</span><span ng-show="INMEDIKApp.County.id">Editar</span>Departamento</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="CountyForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="CountyForm.name.$touched && CountyForm.name.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                    <p ng-show="CountyForm.cityAux.$touched && CountyForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="CountyForm">
+                        <div class="form-group" ng-class="{'invalid-group': (CountyForm.name.$touched && CountyForm.name.$invalid)}">
+                            <label for="name" class="control-label col-md-3">Nombre<span class="required">*</span>: </label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" ng-model="INMEDIKApp.County.name" ng-blur="INMEDIKApp.GetTouched($event)" id="name" required name="name" placeholder="Nombre" maxlength="50">
+                            </div>
+                        </div>
+                        <div class="form-group " ng-class="{'invalid-group': (CountyForm.cityAux.$touched && CountyForm.cityAux.$invalid)}">
+                            <label for="state" class="control-label col-md-3">Municipio<span class="required">*</span>: </label>
+                            <div class="col-md-9">
+                                <select name="cityAux" id="cityAux" class="form-control" ng-model="INMEDIKApp.County.cityAux" required ng-options="ct.name for ct in INMEDIKApp.cities track by ct.id">
+                                    <option value="">Seleccione...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="CountyForm.$invalid || INMEDIKApp.subbmiting">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Colonia <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="CountyTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+

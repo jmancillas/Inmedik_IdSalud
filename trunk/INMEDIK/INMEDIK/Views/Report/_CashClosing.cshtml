@@ -1,0 +1,60 @@
+﻿<div id="cash-closing-tab" ng-if="mc.initCashClosing" class="tab-pane fade in" ng-controller="CashClosingController as cc" ng-init="cc.StartController('@Url.Action("GetEmployeesSelect", "Employee")','@Url.Action("GetClinicsSelectCurrentUser", "Clinic")');cc.InitTable('@Url.Action("GetCashClosingReport","Report")', 'Usuario'); cc.ccURLDetail = '@Url.Action("GetCashClosingDetail", "Report")'">
+    <div class="form-horizontal" ng-if="cc.Ready">
+        <div class="form-group col-md-3">
+            <label for="warehouses" class="control-label col-md-3">Clínicas: </label>
+            <div class="col-md-9">
+                <multiselect ng-model="cc.Filters.clinics" ng-change="cc.ApplyFilters()" show-select-all="true" show-unselect-all="true" options="cc.clinics" display-prop="name" id-prop="id" labels="cc.labels" placeholder="Seleccione..."></multiselect>
+            </div>
+        </div>
+        <div class="form-group col-md-4">
+            <label class="col-md-4 control-label">Empleado</label>
+            <div class="col-md-8">
+                <select class="form-control" ng-model="cc.Filters.medicId" ng-options="ct.id as ct.personAux.fullName for ct in cc.medics track by ct.id" ng-change="cc.ApplyFilters()">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group col-md-3">
+            <label class="control-label col-sm-4 ">Fecha inicio: </label>
+            <div class="col-sm-8">
+                <input class="form-control" date-change="cc.ApplyFilters" date-time ng-model="cc.Filters.dateStart" id="pickerMaxSelectorPStart" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+            </div>
+        </div>
+        <div class="form-group col-md-3">
+            <label class="control-label col-sm-4 ">Fecha fin: </label>
+            <div class="col-sm-8">
+                <input class="form-control" date-change="cc.ApplyFilters" date-time ng-model="cc.Filters.dateEnd" id="pickerMaxSelectorPEnd" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+            </div>
+        </div>
+        <div class="form-group col-md-2">
+            <button class="btn btn-primary" ng-click="cc.clearFilters()"><i class="far fa-eraser"></i> Limpiar filtros</button>
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-md-12 no-padding-sides">
+            <div class="table-responsive">
+                <table id="CashClosingTable" datatable dt-options="cc.dtOptions" dt-columns="cc.dtColumns" dt-instance="cc.InstanceCallback" class="table-bordered compact"></table>
+            </div>
+        </div>
+    </div>
+    <div id="modalCashInfo" class="modal modal-info fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Detalles</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div ng-init="INMEDIKApp = cc">
+                            @Html.Partial("~/Views/CashClosing/TemplateDetail.cshtml")
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

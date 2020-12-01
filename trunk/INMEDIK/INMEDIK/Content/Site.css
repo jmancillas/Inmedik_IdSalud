@@ -1,0 +1,71 @@
+﻿.btn-header-right {
+    margin-top: 8px;
+    margin-left: 8px;
+}
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.no-margin-bottom {
+    margin-bottom: 0px !important;
+}
+
+.form-control {
+    width: 100% !important;
+}
+
+.no-padding-sides {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.no-padding-left {
+    padding-left: 0px;
+}
+
+.no-padding-right {
+    padding-right: 0px;
+}
+
+input[type=checkbox], input[type=radio] {
+    margin-top: 11px !important;
+}
+
+span.required {
+    color: red;
+}
+
+.invalid-group > label {
+    color: #f86c6b;
+}
+
+.invalid-group > div > select {
+    border-color: #f86c6b;
+}
+
+.invalid-group > div > div.ui-select-container.ng-invalid > div > span.ui-select-toggle {
+    border-color: #f86c6b !important;
+}
+
+.header-title {
+    font-size: 14px;
+    margin-top: 5px;
+    margin-bottom: 0px;
+}
+
+.borderless-header-cell {
+    border-top: 1px solid Transparent !important;
+    border-left: 1px solid Transparent !important;
+}
+
+.borderless-footer-cell {
+    border-left: 1px solid Transparent !important;
+    border-bottom: 1px solid Transparent !important;
+    border-right: 1px solid Transparent !important;
+}

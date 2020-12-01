@@ -1,0 +1,2253 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewPatientModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        .btn.active {
+            background-color: #eeeeee;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .searchButton {
+            margin-bottom: 5px;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .anchorColumn {
+            width: 10%;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/i18n/angular-locale_es-mx.js"></script>
+    <script type="text/javascript" src="~/Scripts/moment-with-locales.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script src="~/Scripts/pdfmake/pdfmake.js"></script>
+    <script src="~/Scripts/pdfmake/vfs_fonts.js"></script>
+    <script src="~/Scripts/pdfmake/creacionesDePDF.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker', 'datatables']);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http, $timeout, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+
+            $.fn.dataTable.ext.errMode = 'throw';
+
+            dt.consultInCart = 0;
+            dt.consultToDelete = {};
+            dt.consultToDelete.id = 0;
+            dt.allMedicsList = JSON.parse('@Html.Raw(ViewBag.MedicList)');
+            dt.SpecialtiesList = JSON.parse('@Html.Raw(ViewBag.SpecialtiesList)');
+            dt.PaymentTypes = JSON.parse('@Html.Raw(ViewBag.PaymentTypes)');
+            dt.Clinics = JSON.parse('@Html.Raw(ViewBag.ClinicRes)');
+            dt.pendingCart = JSON.parse('@Html.Raw(ViewBag.pendingCart)');
+            dt.Parameters = JSON.parse('@Html.Raw(ViewBag.Parameters)');
+            dt.publicPatient = JSON.parse('@Html.Raw(ViewBag.publicPatient)');
+
+            dt.CartConcepts = [];
+            dt.CartPromotions = [];
+
+            dt.PaymentTypeSelected = undefined;
+            dt.subbmiting = false;
+            dt.ConceptsSelecteds = [];
+            dt.valid = [];
+            dt.aheads = [];
+            dt.namePatient = "";
+            dt.CanPay = false;
+            dt.CanPayLater = false;
+            dt.OrderToCancel = {};
+            dt.OrderToPrint = {};
+            dt.isReception = true;
+            dt.hasConsults = false;
+
+            dt.Employee = {};
+            dt.Employee.canCancel = {};
+            dt.EmployeeAux = {};
+
+            dt.Cart = {};
+            dt.Cart.TotalOrder = 0;
+            dt.Cart.Concepts = [];
+            dt.Cart.Patient = {};
+            dt.Cart.Order = {};
+            dt.Cart.Order.donationAux = {};
+            dt.Cart.Payments = [];
+            dt.Cart.Promotions = [];
+            dt.Cart.Promotions.conceptAux = [];
+            dt.Cart.PromotionsApp = [];
+            dt.Cart.PromotionsApp.conceptAux = [];
+            dt.Cart.PromotionList = [];
+            dt.Cart.Order.DoYouWantToRound = 'false';
+            dt.Cart.Order.donationAux.DoYouWantToDonate = 'false';
+
+            dt.dtInstance = {};
+
+            dt.openSearchPatient = false;
+            dt.FormTouchedAndInvalid = false;
+
+            dt.reservedConsultsExist = false;
+
+            dt.errors = [];
+            dt.ClinicsL = [];
+            $.each(dt.Clinics, function () {
+                dt.ClinicsL.push({ id: this.id, name: this.name });
+            });
+
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+            dt.datepickerOptions = {
+                datepickerMode: 'year',
+                showWeeks: 'false'
+            };
+            dt.datepickerFormat = 'dd/MM/yyyy';
+            dt.dpOpen = false;
+            dt.OpenDP = function () {
+                dt.dpOpen = true;
+            };
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+
+            dt.Ut_numberWithCommas = function (n) {
+                //*Corrección de redondeo para el campo de pago en el carrito de comnpras
+                n = Math.round(n * 100) / 100;
+
+                return Ut_numberWithCommas(n);
+            }
+            dt.GetMedicsBySpecialty = function (type) {ng
+                dt.MedicsBySpecList = dt.allMedicsList.filter(function (item) { return (item.specialtyId == dt.ConceptsSelecteds[type].idSpecialty); });
+            }
+            dt.PayingLater = function () {
+                dt.Cart.Payments = [];
+                dt.setOrderTotal();
+                dt.CanPay = dt.CanPayLater;
+            }
+            dt.setClientSelected = function (item, updateCartDb) {
+                if (item.personAux.fullName == 'PÚBLICO GENERAL') {
+                    dt.resetCart();
+                }
+                else {
+                    dt.Cart.Order.patientId = item.id;
+                    dt.Cart.Patient = item;
+                    if (updateCartDb)
+                        dt.UpdateTemporalCart();
+
+                    dt.setOrderTotal();
+                }
+                dt.consultInCart = 0;
+                //dt.Cart.Concepts.splice(0, dt.Cart.Concepts.length);
+
+            }
+
+            dt.setConceptSelected = function (item, type) {
+                dt.ConceptsSelecteds[type] = {};
+                dt.ConceptsSelecteds[type] = item;
+                dt.ConceptsSelecteds[type].price = Math.round(item.price * 100) / 100;      //**Agregado para correccion de objeto
+                dt.ConceptsSelecteds[type].quantity = 1;
+                dt.ConceptsSelecteds[type].medicId = item.MedicId;
+                dt.ConceptsSelecteds[type].subTotal = Math.round(item.price * 100) / 100; //Math.round((item.price - (item.price * item.discount / 100))*100)/100;
+                //dt.ConceptsSelecteds[type].IVA = (item.iva ? (dt.ConceptsSelecteds[type].subTotal * (dt.Parameters.Tax / 100)).toFixed(2) : 0);
+                dt.ConceptsSelecteds[type].IVA = (item.iva ? (item.price * (dt.Parameters.Tax / 100)).toFixed(2) : 0);
+                @*Se hace division entre 1 para que el navegador sepa que es un numero y no un string lo que se quiere sumar (no se usa ToNumber porque explorer no jala)*@
+                dt.ConceptsSelecteds[type].Total = Math.round(((dt.ConceptsSelecteds[type].IVA * 1) + (dt.ConceptsSelecteds[type].subTotal * 1)) * 100) / 100;
+                dt.ConceptsSelecteds[type].stock = item.stockAux;
+                dt.ConceptsSelecteds[type].Comodin = "00000000";
+                dt.valid[type] = true;
+                dt.ConceptsSelecteds[type].ClinicId = dt.ClinicsL.filter(function (item) { return (item.id == dt.Parameters.clinicId); })[0];
+
+                if (type == 'Productos' && item.stockAux <= 0) {
+                    dt.valid[type] = false;
+                }
+                if (type != 'Productos') {
+                    dt.ConceptsSelecteds[type].stock = 1;
+                }
+
+                dt.GetMedicsBySpecialty(type);
+            }
+
+            dt.createPatient = function () {
+                dt.Patient = {
+                    personAux: {}
+                };
+                dt.address = {};
+                dt.person = {};
+                dt.selectedState = undefined;
+                dt.selectedCity = undefined;
+                $("#NewPatientModal").modal("show");
+            };
+            $("#NewPatientModal").on("hidden.bs.modal", function () {
+                dt.openSearchPatient = false;
+                $scope.PatientForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.newPatient = {
+                    personAux: {}
+                };
+            });
+
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                /*-----------------------------------------------PERSON-----------------------------------------------*/
+                dt.Patient.personAux = dt.person;
+                /*-------------------------------------------END PERSON-----------------------------------------------*/
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.Patient.personAux.addressAux = dt.address;
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SavePatient", "Patient")',
+                    data: dt.Patient,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.setClientSelected(res.data.patient, true);
+                        $("#NewPatientModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            /*-------------------------------------------PersonTable-----------------------------------------------*/
+            dt.dtPersonOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetPersons", "Patient")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRowPerson)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen personas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron personas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtPersonColumns = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("lastName").withTitle("Apellido"),
+                DTColumnBuilder.newColumn("sex").withTitle("Sexo"),
+                DTColumnBuilder.newColumn("email").withTitle("Email"),
+                DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(selectBtn).withClass('notSearchable').notSortable()
+            ];
+            function createdRowPerson(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            function selectBtn(data, type, full, meta) {
+                if (dt.PersonData.indexOf(full) == -1) {
+                    dt.PersonData.push(full);
+                }
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.SetPersonSelected(' + dt.PersonData.indexOf(full) + ')" class="btn btn-info btn-xs">Seleccionar</button></div>';
+            }
+
+            dt.PersonInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.PersonData = [];
+                dt.dtPersonInstance = instance;
+                var id = '#' + dt.dtPersonInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtPersonInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            dt.PersonData = [];
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END PersonTable-----------------------------------------------*/
+
+            /*-------------------------------------------ReservsTable-----------------------------------------------*/
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetConsults", "Reception")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers').withDisplayLength(5)
+                .withOption('lengthMenu', [[5, 10, 20], [5, 10, 20]])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withOption('order', [1, 'desc'])
+                .withLanguage({
+                    "sEmptyTable": "No existen Reservas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron consultas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("PatientAux.personAux.fullName").withTitle("Paciente"),
+                DTColumnBuilder.newColumn("created_string").withTitle("Fecha de Reserva").withClass("notSearchable").withClass("anchorColumn"),
+                DTColumnBuilder.newColumn("id").withTitle("").renderWith(btnPay).notSortable().withClass("anchorColumn"),
+                DTColumnBuilder.newColumn("id").withTitle("").renderWith(btnDel).notSortable().withClass("anchorColumn"),
+            ];
+
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                dt.reservedConsultsExist = true;
+            }
+
+            function btnPay(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.GetConsult(' + data + ');" class="btn btn-success btn-xs">Continuar</button></div>';
+            }
+
+            function btnDel(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteConsult(' + data + ');" class="btn btn-danger btn-xs">Borrar</button></div>'
+            }
+
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + 'ReservTable';
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (title != "" && title != "Fecha de Reserva") {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END ReservsTable-----------------------------------------------*/
+
+            /*-------------------------------------------TIMER Table Reservs-----------------------------------------------*/
+            setInterval(function () {
+                $scope.$apply(function () {
+                    dt.dtInstance.reloadData(null, false);
+                });
+            }, 20000);
+            /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+            dt.address = {};
+            dt.selectedState = undefined;
+            dt.selectedCity = undefined;
+            dt.states = [];
+            dt.cities = [];
+
+            dt.UpdateCities = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCitiesSelect", "City")',
+                    data: dt.selectedState,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.cities = res.data.data;
+                    dt.selectedCity = undefined;
+                    dt.address.countyAux = undefined;
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+            dt.UpdateCounties = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCountiesSelect", "County")',
+                    data: dt.selectedCity,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.counties = res.data.data;
+                    dt.address.countyAux = undefined;
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            dt.ToggleSearch = function () {
+                dt.openSearchPatient = !dt.openSearchPatient;
+            }
+
+            dt.DeleteConsult = function (id) {
+                dt.consultToDelete.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("DeleteTabletCar", "Reception")',
+                    data: dt.consultToDelete,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        //if all register on table is deleted, hide #pestana_Reservas and active classes of pestana_Carrito
+                        if (res.data.alldeleted) {
+
+                            $("#Reservas-tab").removeClass("active");
+                            $("#pestana_Carrito").addClass("active")
+                            $("#Carrito-tab").addClass("active in");
+
+                            dt.reservedConsultsExist = false;
+                        }
+                        else {
+                            dt.dtInstance.reloadData();
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.GetConsult = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetConsult", "Reception")',
+                    params: {
+                        "id": id,
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Cart = res.data.data;
+                        dt.Cart.PromotionList = [];
+                        dt.Cart.TotalOrder = 0;
+                        dt.Cart.Concepts = [];
+                        dt.Cart.Patient = dt.Cart.PatientAux;
+                        dt.Cart.Order = {};
+                        dt.Cart.Order.donationAux = {};
+                        dt.Cart.Payments = [];
+                        dt.Cart.Order.DoYouWantToRound = 'false';
+                        dt.Cart.Order.donationAux.DoYouWantToDonate = 'false';
+
+                        dt.Cart.Order.patientId = dt.Cart.PatientAux.id;
+                        @*ya que la funcion setConceptSelected solo agrega los datos basicos del concepto, aun tenemos que agregar mas cosas*@
+                        @*Los datos que se agregan a continuacion, son los datos que deberia agregar la persona manejando el sistema *@
+
+                        var consCont = dt.Cart.TabletCartConceptAux.length;
+                        var pendingType = dt.Cart.TabletCartConceptAux[0].ConceptAux.categoryName;
+                        var countPending = dt.Cart.TabletCartConceptAux.length;
+
+                        for (var i = 0; i < countPending; i++) {
+                            dt.setConceptSelected(dt.Cart.TabletCartConceptAux[i].ConceptAux, pendingType);
+                        }
+
+                        dt.ConceptsSelecteds[pendingType] = dt.Cart.TabletCartConceptAux;
+                        dt.AddConcept(pendingType, false);
+
+                        //dt.ConceptsSelecteds[pendingType].quantity = dt.Cart.TabletCartConceptAux[0].Quantity;
+                        //dt.ConceptsSelecteds[pendingType].medicName = dt.Cart.TabletCartConceptAux[0].Medicname;
+                        //dt.ConceptsSelecteds[pendingType].medicDecree = dt.Cart.TabletCartConceptAux[0].Decree;
+                        //dt.ConceptsSelecteds[pendingType].medicId = dt.Cart.TabletCartConceptAux[0].MedicId;
+                        //dt.ConceptsSelecteds[pendingType].scheduled = dt.Cart.TabletCartConceptAux[0].Scheduled;
+                        //dt.ConceptsSelecteds[pendingType].ClinicId = {};
+                        //dt.ConceptsSelecteds[pendingType].ClinicId.id = dt.Cart.TabletCartConceptAux[0].ClinicId;
+
+
+
+                        $("#Reservas-tab").removeClass("active");
+                        $("#pestana_Reservas").removeClass("active");
+                        $("#pestana_Carrito").addClass("active");
+                        $("#Carrito-tab").addClass("active in");
+                        dt.namePatient = "";
+                        dt.consultInCart = id;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.SetPersonSelected = function (item) {
+                /*-----------------------------------------------PERSON-----------------------------------------------*/
+                dt.FillPerson(dt.PersonData[item]);
+                /*-------------------------------------------END PERSON-----------------------------------------------*/
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.FillAddress(dt.PersonData[item].addressAux);
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                dt.openSearchPatient = false;
+            };
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#PatientForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#PatientForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#PatientForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.loadClients = function (val) {
+                return $http.post('@Url.Action("GetPatientsList", "Patient")', {
+                    data: val
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+
+            dt.loadConcepts = function (val, cat) {
+                return $http.post('@Url.Action("GetConceptsOfCategory", "Concept")', {
+                    data: JSON.stringify({ typed: val, CategoryName: cat })
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+
+
+            dt.setOrderTotal = function () {
+                var isJustAPack = true;
+                var hasPayment = false;
+
+                dt.Cart.Order.Total = 0;
+                dt.Cart.Order.Iva = 0;
+                dt.hasConsults = false;
+                $.each(dt.Cart.Concepts, function () {
+                    dt.Cart.Order.Total += this.total;
+                    dt.Cart.Order.Iva += (this.IVA * this.quantity);
+                    if (this.categoryName != 'Paquetes') {
+                        isJustAPack = false;
+                        if (this.categoryName == 'Consultas') {
+                            dt.hasConsults = true;
+                        }
+                    }
+                });
+                dt.Cart.Order.Total = Math.round(dt.Cart.Order.Total * 100) / 100
+                dt.Cart.Order.SubTotal = dt.Cart.Order.Total - dt.Cart.Order.Iva;
+
+                dt.Cart.Order.Commission = 0;
+                dt.Cart.Order.TotalPayed = 0;
+                $.each(dt.Cart.Payments, function (idx, item) {
+                    //if (this.Amount == undefined) {
+                    //    this.Amount = 0;
+                    //}
+                    if (this.Amount > 0) {
+                        hasPayment = true;
+                    }
+                    dt.Cart.Order.TotalPayed += this.Amount;
+                    if (this.PaymentTypeName == 'Tarjeta') {
+                        dt.Cart.Payments[idx].Commission = (this.Amount * dt.Parameters.CardCommission / 100).toFixed(2);
+                    }
+                    @*Se hace divicion entre 1 para que el navegador sepa que es un numero y no un string lo que se quiere sumar (no se usa ToNumber porque explorer no jala)*@
+                    dt.Cart.Order.Commission += this.Commission / 1;
+                    //dt.Cart.Order.Total += this.Commission / 1;
+                });
+
+                if (dt.Cart.Order.DoYouWantToRound == "true") {
+                    dt.Cart.Order.Rounding = (Math.ceil(dt.Cart.Order.Total) - dt.Cart.Order.Total).toFixed(2);
+                    dt.Cart.Order.Total = Math.ceil(dt.Cart.Order.Total);
+                } else {
+                    dt.Cart.Order.Rounding = (0).toFixed(2);
+                }
+
+                if (dt.Cart.Order.donationAux != undefined && dt.Cart.Order.donationAux.DoYouWantToDonate == "true") {
+                    dt.Cart.Order.Total += dt.Cart.Order.donationAux.Amount;
+                }
+                dt.Cart.TotalOrder = (dt.Cart.Order.Total + dt.Cart.Order.Commission).toFixed(2);
+                dt.Cart.Order.Commission = (dt.Cart.Order.Commission).toFixed(2);
+                dt.Cart.Order.Total = (dt.Cart.Order.Total).toFixed(2);
+                dt.Cart.Order.Change = (dt.Cart.Order.TotalPayed - dt.Cart.Order.Total).toFixed(2);
+                dt.CanPay = hasPayment && (dt.Cart.Concepts.length > 0 && (dt.Cart.Order.Change >= 0 || isJustAPack) && dt.Cart.Patient.id != undefined);
+            }
+
+            dt.UpdateTemporalCart = function () {
+                if (dt.Cart.Patient.id != undefined) {
+                    $http({
+                        method: 'POST',
+                        url: '@Url.Action("UpdateTemporalCart", "Reception")',
+                        data: dt.Cart,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(function (res) {
+
+                        if (res.data.success) {
+
+                        }
+                        else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                            dt.errors[0] = "La sesión ha caducado.";
+                            $("#resultModal").modal('show');
+                        }
+                        else {
+                            if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                                dt.errors = res.data.errors;
+                            }
+                            else {
+                                dt.errors[0] = res.data.message;
+                            }
+                            $("#resultModal").modal('show');
+                        }
+
+                    }, function errorCallback(res) {
+                        console.log("error: " + res);
+                    });
+                }
+            }
+
+            dt.UpdatePromotions = function () {
+                dt.CartConcepts = [];
+                dt.CartPromotions = [];
+                dt.ApplicablePromotions = [];
+                dt.Cart.PromotionsApp = [];
+                dt.Cart.SavedTotal = 0;
+                //Agrega los conceptos del carrito a otro arreglo separados aunque se repitan
+                angular.forEach(dt.Cart.Concepts, function (concept) {
+                    for (var i = 0; i < concept.quantity; i++) {
+                        dt.CartConcepts.push(angular.copy(concept));
+                    }
+                });
+                //Crea una lista de las promociones que cada concepto tiene sin repeticiones
+                angular.forEach(dt.Cart.Concepts, function (concept) {
+                    angular.forEach(concept.discountList, function (discount) {
+                        if (dt.CartPromotions.map(function (e) { return e.id; }).indexOf(discount.id) == -1) {
+                            dt.CartPromotions.push(discount);
+                        }
+                    });
+                });
+                //Recorre cada una de las promociones encontradas y determina cuales son aplicables con los productos actuales en el carrito
+                angular.forEach(dt.CartPromotions, function (promotion) {
+
+                    //Una promoción es válida hasta que se demuestre lo contrario
+                    dt.ApplicablePromotions.push(promotion);
+                    //Sólo las promos tipo combo ocupan validación
+                    if (promotion.discountTypeAux.code == "Combo") {
+                        dt.tempCartConcepts = [];
+                        angular.copy(dt.CartConcepts, dt.tempCartConcepts);
+
+                        //Ciclo por cada uno de los conceptos que forman parte del combo
+                        for (var i = 0; i < promotion.discountConceptAux.length; i++) {
+                            var discConcept = promotion.discountConceptAux[i];
+                            //Cantidad actual de conceptos en el carrito
+                            var currAmountConcept = dt.tempCartConcepts.length;
+                            //Ciclo por cada uno de los conceptos en el carrito
+                            for (var j = 0; j < dt.tempCartConcepts.length; j++) {
+                                var concept = dt.tempCartConcepts[j];
+                                //Si el concepto de la promoción es encontrado entre los conceptos del carrito
+                                //se quita el concepto de la lista del carrito
+                                if (discConcept.conceptId == concept.conceptId) {
+                                    dt.tempCartConcepts.splice(dt.tempCartConcepts.map(function (e) { return e.conceptId; }).indexOf(concept.conceptId), 1);
+                                    break;
+                                }
+                            }
+                            //Si la cantidad no cambia significa que el concepto no se encontró en el carrito
+                            if (currAmountConcept == dt.tempCartConcepts.length) {
+                                //Promocion no aplicable, uno de los conceptos no estaba en el carrito
+                                dt.ApplicablePromotions.pop();
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                //Ordena por fecha
+                dt.ApplicablePromotions = dt.ApplicablePromotions.sort(function (a, b) {
+                    var aTime = moment(a.sCreated, 'DD/MM/YYYY hh:mm:ss').toDate().getTime();
+                    var bTime = moment(b.sCreated, 'DD/MM/YYYY hh:mm:ss').toDate().getTime();
+                    return aTime - bTime;
+                });
+
+                var appliedPromotionConcepts = [];
+                var tempCartConcepts = [];
+                var totalSaved = 0;
+
+                angular.copy(dt.CartConcepts, tempCartConcepts);
+                //Aplica las promociones hasta que ya no es posible
+                //Recorre las promociones que son posibles de aplicar
+                angular.forEach(dt.ApplicablePromotions, function (promotion) {
+                    var promoApplied = true;
+                    promotion.savedAmount = 0;
+                    var savedByPromo = 0;
+
+                    //Recorre la lista de conceptos dentro de la promoción
+                    do {
+                        var conceptsContainer = [];
+                        for (var i = 0; i < promotion.discountConceptAux.length; i++) {
+                            var discConcept = promotion.discountConceptAux[i];
+
+                            var currAmountConcept = tempCartConcepts.length;
+                            //Ciclo por cada uno de los conceptos en el carrito
+                            for (var j = 0; j < tempCartConcepts.length; j++) {
+                                var concept = tempCartConcepts[j];
+                                //Si el concepto de la promoción es encontrado entre los conceptos del carrito
+                                //se quita el concepto de la lista del carrito
+                                if (discConcept.conceptId == concept.conceptId) {
+                                    var tempConcept = concept;
+                                    //Total unitario del concepto despues de aplicar el porcentaje
+                                    var afterDiscount = Math.round((tempConcept.totalUnit * (1 - (discConcept.percentage / 100))) * 100) / 100;
+                                    //Se acumula lo ahorrado por la promoción
+                                    savedByPromo += tempConcept.totalUnit - afterDiscount;
+                                    //Se acumula el total de ahorro
+                                    totalSaved += tempConcept.totalUnit - afterDiscount;
+                                    //Se reemplaza el total por el total con la promoción
+                                    tempConcept.total = afterDiscount;
+                                    //Se almacena a nivel concepto lo que se ahorró
+                                    tempConcept.savedAmount = tempConcept.totalUnit - afterDiscount;
+                                    //Se agrega a la lista de conceptos con promociones aplicadas
+                                    conceptsContainer.push(tempConcept);
+                                    tempCartConcepts.splice(tempCartConcepts.map(function (e) { return e.conceptId; }).indexOf(concept.conceptId), 1);
+                                    //Si la promoción es tipo combo queremos que pase una vez por cada concepto en el combo no N veces
+                                    if (promotion.discountTypeAux.code == "Combo") {
+                                        break;
+                                    }
+                                    //Reinicia el ciclo por el splice
+                                    j = -1;
+                                }
+                            }
+                            //Si la cantidad no cambia significa que uno de los conceptos de la promoción no se encontró y por ende la promoción no se cumple
+                            if (currAmountConcept == tempCartConcepts.length) {
+                                promoApplied = false;
+                                break;
+                            }
+                        }
+                        //Si la promoción es aplicada correctamente ésta se agrega a la lista de promociones aplicadas
+                        if (promoApplied) {
+                            promotion.savedAmount = Math.round(savedByPromo * 100) / 100
+                            var promotionIdx = dt.Cart.PromotionsApp.map(function (e) { return e.id; }).indexOf(promotion.id);
+                            if (promotionIdx == -1) {
+                                dt.Cart.PromotionsApp.push(promotion);
+                            }
+                            else {
+                                dt.Cart.PromotionsApp[promotionIdx] = promotion;
+                            }
+                            appliedPromotionConcepts = appliedPromotionConcepts.concat(conceptsContainer);
+                        }
+                    } while (promotion.discountTypeAux.code == "Combo" && promoApplied);//Si es promoción debe hacerlo varias veces para asegurarse de que no haya mas instancias
+                });
+                dt.Cart.SavedTotal = Math.round(totalSaved * 100) / 100
+
+                //Se modifica el total de cada concepto segun lo descontado
+                angular.forEach(dt.Cart.Concepts, function (concept) {
+                    var conceptTotal = concept.totalUnit * concept.quantity;
+                    for (var i = 0; i < appliedPromotionConcepts.length; i++) {
+                        if (concept.conceptId == appliedPromotionConcepts[i].conceptId) {
+                            conceptTotal -= appliedPromotionConcepts[i].savedAmount;
+                        }
+                    }
+                    concept.total = conceptTotal;
+                });
+            };
+
+
+            dt.CheckWithdrawal = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("WithdrawalNeeded", "Reception")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        if (res.data.isNeeded) {
+                            mostrarPantallaCarga();
+                            window.location.href = '@Url.Action("Index", "Withdrawal")';
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            dt.AddConceptToCart = function (type, updateCartDb) {
+                var idxFinded;
+                var TotalQuantity = dt.Cart.Concepts.filter(function (data, idx) {
+                    if (data.conceptId == dt.ConceptsSelecteds[type].id) {
+                        idxFinded = idx;
+                        return true;
+                    }
+                    else
+                        return false;
+                }).length;
+                if (type == 'Consultas') {
+                    dt.hasConsults = true;
+                }
+                if (TotalQuantity <= 0 || type != 'Productos') {
+                    if (dt.ConceptsSelecteds[type].quantity == undefined) {
+                        dt.ConceptsSelecteds[type].quantity = 1;
+                    };
+                    var objConcept = {
+                        name: dt.ConceptsSelecteds[type].name,
+                        conceptId: dt.ConceptsSelecteds[type].id,
+                        quantity: dt.ConceptsSelecteds[type].quantity,
+                        discountList: dt.ConceptsSelecteds[type].discountList,
+                        price: dt.ConceptsSelecteds[type].price,
+                        cost: dt.ConceptsSelecteds[type].cost,
+                        total: dt.ConceptsSelecteds[type].Total * dt.ConceptsSelecteds[type].quantity,
+                        totalUnit: dt.ConceptsSelecteds[type].Total,
+                        totalCombo: 0,
+                        totalPromo: 0,
+                        totalOther: 0,
+                        medicname: dt.ConceptsSelecteds[type].medicName,
+                        decree: dt.ConceptsSelecteds[type].medicDecree,
+                        medicId: dt.ConceptsSelecteds[type].medicId,
+                        scheduled: dt.ConceptsSelecteds[type].scheduled,
+                        isInPromotion: false,
+                        isInCombo: false,
+                        comboApp: 0,
+                        quantityDisp: dt.ConceptsSelecteds[type].quantity,
+                        IVA: dt.ConceptsSelecteds[type].IVA,
+                        ClinicId: dt.ConceptsSelecteds[type].ClinicId.id,
+                        categoryName: dt.ConceptsSelecteds[type].categoryName
+                    };
+                    dt.Cart.Concepts.push(objConcept);
+                }
+                else {
+                    @*Aqui solo entran los productos ya que son los unicos que se acumulan*@
+                    for (var i = 0; i < dt.Cart.Concepts.length; i++) {
+                        if (dt.ConceptsSelecteds.Productos.id == dt.Cart.Concepts[i].conceptId) {
+                            dt.Cart.Concepts[i].quantity = dt.Cart.Concepts[idxFinded].quantity + dt.ConceptsSelecteds[type].quantity;//
+                        }
+                        dt.Cart.Concepts[i].quantityDisp = dt.Cart.Concepts[i].quantity;
+                        dt.Cart.Concepts[i].total = dt.Cart.Concepts[i].totalUnit * dt.Cart.Concepts[i].quantity;
+                        dt.Cart.Concepts[i].totalPromo = 0;
+                        dt.Cart.Concepts[i].totalCombo = 0;
+                        dt.Cart.Concepts[i].totalOther = 0;
+                        dt.Cart.Concepts[i].isInCombo = 0;
+                        dt.Cart.Concepts[i].isInPromo = 0;
+                        dt.Cart.Concepts[i].comboApp = 0;
+                    }
+                }
+
+                dt.UpdatePromotions();
+
+                dt.ConceptsSelecteds[type] = {};
+                dt.aheads[type] = "";
+                dt.valid[type] = false;
+
+
+                if (updateCartDb)
+                    dt.UpdateTemporalCart();
+
+                dt.setOrderTotal();
+            }
+            // Se agrega esta funcion por que en la de AddConceptCart que ya existia tronaba en la var de quantity por que los conceptos reservados de la tablet, no tienen cantidad
+            dt.AddConcept = function (type, updateCartDb) {
+
+                if (type == 'Consultas') {
+                    dt.hasConsults = true;
+                }
+                //
+                for (var i = 0; i < dt.ConceptsSelecteds[type].length; i++) {
+                    var objConcept = {
+                        name: dt.ConceptsSelecteds[type][i].ConceptAux.name,
+                        conceptId: dt.ConceptsSelecteds[type][i].ConceptAux.id,
+                        quantity: 1,
+                        discountList: dt.ConceptsSelecteds[type][i].ConceptAux.discountList,
+                        price: dt.ConceptsSelecteds[type][i].ConceptAux.price,
+                        cost: dt.ConceptsSelecteds[type][i].ConceptAux.cost,
+                        total: dt.ConceptsSelecteds[type][i].ConceptAux.Total,
+                        totalUnit: dt.ConceptsSelecteds[type][i].ConceptAux.Total,
+                        medicname: dt.ConceptsSelecteds[type][i].ConceptAux.medicName,
+                        decree: dt.ConceptsSelecteds[type][i].ConceptAux.medicDecree,
+                        medicId: dt.ConceptsSelecteds[type][i].MedicId,
+                        scheduled: dt.ConceptsSelecteds[type][i].ConceptAux.scheduled,
+                        //promotion: dt.ConceptsSelecteds[type].productAux.sale_first + "x" + dt.ConceptsSelecteds[type].productAux.sale_second,
+                        isInPromotion: false,
+                        IVA: dt.ConceptsSelecteds[type][i].ConceptAux.IVA,
+                        ClinicId: dt.ConceptsSelecteds[type][i].ConceptAux.ClinicId.id,
+                        categoryName: dt.ConceptsSelecteds[type][i].ConceptAux.categoryName
+                    };
+                    dt.Cart.Concepts.push(objConcept);
+                }
+
+                @*en caso de que sean productos, revizamos si tienen promocion para aplicarla*@
+                //if (type == 'Productos' && dt.ConceptsSelecteds[type].discountList.length > 0) {
+                //    var tempDiscountList = dt.ConceptsSelecteds[type].discountList;
+                //    for (var i = 0; i < tempDiscountList.length; i++) {
+                //        if (dt.Cart.Promotions.filter(function (data, idx) { return tempDiscountList[i].id == data.id; }).length == 0) {
+                //            dt.Cart.Promotions.push({
+                //                id: tempDiscountList[i].id,
+                //                name: tempDiscountList[i].name,
+                //                conceptId: tempDiscountList[i].discountConceptAux[0].conceptId,
+                //                conceptName: tempDiscountList[i].discountConceptAux[0].conceptAux.name,
+                //                percentage: tempDiscountList[i].discountConceptAux[0].percentage
+                //            });
+                //        }
+                //    }
+                //}
+                dt.UpdatePromotions();
+
+                dt.ConceptsSelecteds[type] = {};
+                dt.aheads[type] = "";
+                dt.valid[type] = false;
+
+                dt.Cart.PatientAux = [];
+                dt.Cart.TabletCartConceptAux = [];
+
+                if (updateCartDb)
+                    dt.UpdateTemporalCart();
+
+                dt.setOrderTotal();
+            }
+
+            dt.AddPaymentType = function () {
+                var PaymentTypeAlreadyAdded = false;
+                var totalPagos = 0;
+                if (dt.PaymentTypeSelected.Name == "Efectivo" || dt.PaymentTypeSelected.Name == "Vale") {
+                    $.each(dt.Cart.Payments, function (idx, item) {
+                        if (dt.PaymentTypeSelected.Name == item.PaymentTypeName) {
+                            PaymentTypeAlreadyAdded = true;
+                        }
+                        totalPagos += item.Amount;
+                    });
+                }
+                if (!PaymentTypeAlreadyAdded) {
+                    var paymentObj = {
+                        id: 0,
+                        PaymentTypeId: dt.PaymentTypeSelected.id,
+                        PaymentTypeName: dt.PaymentTypeSelected.Name,
+                        Amount: 0,
+                        Commission: 0
+                    };
+
+                    dt.Cart.Payments.push(paymentObj);
+                    dt.setOrderTotal();
+                }
+                dt.PaymentTypeSelected = undefined;
+            }
+            dt.ThereIsPromotions = function () {
+                return (dt.Cart.Concepts.filter(function (data, idx) { return data.isInPromotion; }).length > 0);
+            }
+
+            dt.resetCart = function () {
+                dt.namePatient = "";
+                dt.Cart.TotalOrder = 0;
+                dt.Cart.Concepts = [];
+                dt.Cart.Patient = {};
+                dt.Cart.Order = {};
+                dt.Cart.Promotions = [];
+                dt.Cart.PromotionList = [];
+                dt.Cart.Payments = [];
+                dt.PaymentTypeSelected = undefined;
+                dt.subbmiting = false;
+                dt.ConceptsSelecteds = [];
+                dt.valid = [];
+                dt.aheads = [];
+                dt.CanPay = false;
+                dt.Paying = false;
+                dt.isReception = true;
+                dt.consultInCart = 0;
+                dt.Cart.Order.donationAux = {};
+                dt.Cart.Order.donationAux.Amount = dt.Parameters.minDonation;
+                dt.Cart.Order.DoYouWantToRound = 'false';
+                dt.Cart.Order.donationAux.DoYouWantToDonate = 'false';
+
+                if (!angular.equals(dt.publicPatient, {})) {
+                    dt.Cart.Order.patientId = dt.publicPatient.id;
+                    dt.Cart.Patient = dt.publicPatient;
+                }
+                $timeout(function () {
+                    $('a[href="#Pacientes-tab"]').click();
+                });
+                dt.UpdateTemporalCart();
+            }
+
+            dt.saveOrder = function () {
+                dt.Paying = true;
+                @*se quita la donacion de el total ya que no es parte de algun concepto comercializable y no es algo que se re grese en alguna cancelacion*@
+                if (dt.Cart.Order.donationAux != undefined && dt.Cart.Order.donationAux.DoYouWantToDonate == "true") {
+                    dt.Cart.TotalOrder -= dt.Cart.Order.donationAux.Amount;
+                    dt.Cart.Order.Donation = dt.Cart.Order.donationAux.Amount;
+                }
+
+                $.each(dt.Cart.PromotionsApp, function () {
+                    if (this.discountTypeAux.code == "Combo") {
+                        var promo = {
+                            TextPromotion: this.name,
+                            AmountSaved: this.savedAmount
+                        };
+                    }
+                    else {
+                        var promo = {
+                            ConceptId: this.discountConceptAux[0].conceptId,
+                            TextPromotion: this.name,
+                            AmountSaved: this.savedAmount
+                        };
+                    }
+                    dt.Cart.PromotionList.push(promo);
+                });
+                @*si el total que se esta pagando es superior al total de la venta, se le resta al efectivo para que asi se guarde en base de datos la cantidad
+                de efectivo que ingreso a la caja registradora*@
+                mostrarPantallaCarga();
+
+                dt.Cart.Order.Total = dt.Cart.TotalOrder;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("saveOrder", "Reception")',
+                    data: dt.Cart,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    dt.Paying = false;
+                    if (res.data.success) {
+                        dt.idOrderJustSaved = res.data.data;
+                        dt.consultToDelete.id = dt.consultInCart;
+                        dt.ConfirmDelete();
+                        dt.resetCart();
+                        dt.consultInCart = 0;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.needsWithdrawal) {
+                            window.location.href = res.data.url;
+                        }
+                        else {
+                            $("#resultModal").modal('show');
+                        }
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+
+                    }
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    dt.Paying = false;
+                    console.log("error: " + res);
+                });
+            }
+            dt.getTickettoCancel = function (idTicket) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("getTicketToCancel", "Reception")',
+                    data: { idTicket: idTicket },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        var unRepitedConcepts = [];
+                        $.each(res.data.data.OrderConceptAux, function (idx, item) {
+                            var itExist = [];
+                            itExist = unRepitedConcepts.filter(function (fitem) {
+                                return item.conceptId == fitem.conceptId;
+                            });
+                            if (itExist.length == 0) {
+                                unRepitedConcepts.push(item);
+                            }
+                            else {
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].quantity += item.quantity;
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].total += item.total;
+                            }
+                        });
+
+                        res.data.data.OrderConceptAux = unRepitedConcepts;
+                        dt.OrderToCancel = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            };
+            dt.getOrder = function (toPrint, idOrder) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("getOrderToCancel", "Order")',
+                    data: { idOrder: idOrder },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        var unRepitedConcepts = [];
+                        $.each(res.data.data.OrderConceptAux, function (idx, item) {
+                            var itExist = [];
+                            itExist = unRepitedConcepts.filter(function (fitem) {
+                                return item.conceptId == fitem.conceptId;
+                            });
+                            if (itExist.length == 0) {
+                                unRepitedConcepts.push(item);
+                            }
+                            else {
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].quantity += item.quantity;
+                                unRepitedConcepts[unRepitedConcepts.indexOf(itExist[0])].total += item.total;
+                            }
+                        });
+
+                        res.data.data.OrderConceptAux = unRepitedConcepts;
+
+                        if (toPrint) {
+                            PrintTicketOrder(res.data.data);
+                        }
+                        else {
+                            dt.OrderToCancel = res.data.data;
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            };
+            dt.cancelOrder = function () {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("cancelOrderOrder", "Reception")',
+                    data: {
+                        idOrder: dt.OrderToCancel.id,
+                        strPass: dt.contrasena
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.OrderToCancel = {};
+                        dt.errors[0] = "Cancelacion exitosa.";
+                        $("#resultModal").modal('show');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            };
+            dt.getConceptNameForPromo = function (ConceptId) {
+                return dt.OrderToCancel.OrderConceptAux.filter(function (item) { return ConceptId == item.conceptId })[0].ConceptAux.name;
+            }
+
+            dt.totalPayed = function (ArrPayments) {
+                var varToRet = 0;
+                $.each(ArrPayments, function (idx, item) {
+                    varToRet += item.Commission + item.Amount;
+                });
+                return varToRet;
+            }
+
+            function init() {
+                if (dt.pendingCart.PatientAux != null && dt.pendingCart.PatientAux != undefined) {
+                    dt.Cart.Order.patientId = dt.pendingCart.PatientAux.id;
+                    dt.Cart.Patient = dt.pendingCart.PatientAux;
+                }
+                else if (!angular.equals(dt.publicPatient, {})) {
+                    dt.setClientSelected(dt.publicPatient, true);
+                }
+                if (dt.pendingCart.CartConceptAux != undefined) {
+                    $.each(dt.pendingCart.CartConceptAux, function () {
+                        var pendingType = this.ConceptAux.categoryName;
+                        dt.setConceptSelected(this.ConceptAux, this.ConceptAux.categoryName);
+                        @*ya que la funcion setConceptSelected solo agrega los datos basicos del concepto, aun tenemos que agregar mas cosas*@
+                        @*Los datos que se agregan a continuacion, son los datos que deberia agregar la persona manejando el sistema *@
+                        dt.ConceptsSelecteds[this.ConceptAux.categoryName].quantity = this.Quantity;
+                        dt.ConceptsSelecteds[pendingType].medicName = this.Medicname;
+                        dt.ConceptsSelecteds[pendingType].medicDecree = this.Decree;
+                        dt.ConceptsSelecteds[pendingType].medicId = this.MedicId;
+                        dt.ConceptsSelecteds[pendingType].scheduled = this.Scheduled;
+                        dt.ConceptsSelecteds[pendingType].ClinicId = {};
+                        dt.ConceptsSelecteds[pendingType].ClinicId.id = this.ClinicId;
+                        dt.AddConceptToCart(this.ConceptAux.categoryName, false);
+                    });
+                }
+                dt.Cart.Order.donationAux.Amount = dt.Parameters.minDonation;
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetEmployeePermised", "Reception")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.EmployeeAux.canCancel = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetStatesSelect", "State")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.states = res.data.data;
+                        dt.selectedState = undefined;
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                dt.UpdateCities();
+                dt.UpdateCounties();
+                dt.FillAddress = function (Address) {
+                    dt.address = Address;
+                    dt.selectedCity = dt.address.countyAux.cityAux;
+                    dt.selectedState = dt.selectedCity.stateAux;
+                }
+                dt.FillPerson = function (Person) {
+                    dt.person = Person;
+                    dt.person.birthDate = moment(Person.birthDate).toDate();
+                }
+            }
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Recepción
+            <a class="btn btn-default btn-xs pull-right" href="@Url.Action("Index", "ShippingWarehouse")">Envíos a sub-almacen</a>
+            <a class="btn btn-default btn-xs pull-right" href="@Url.Action("ClosingCash", "CashClosing")">Realizar corte de caja</a>
+        </div>
+        <div class="panel-body">
+            <div class="col-md-6">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a id="Pacientes-nav" data-toggle="tab" href="#Pacientes-tab">Pacientes</a></li>
+                    <li><a id="Productos-nav"
+                           ng-click="type = 'Productos';" data-toggle="tab" href="#Productos-tab">Productos</a></li>
+                    <li ng-class="{'disabled': (INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL')}">
+                        <a id="Servicios-nav"
+                           ng-click="type = 'Servicios';"
+                           ng-attr-data-toggle="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : 'tab'}}"
+                           ng-href="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : '#Servicios-tab'}}">Servicios</a>
+                    </li>
+                    <li ng-class="{'disabled': (INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL')}">
+                        <a id="Examenes-nav"
+                           ng-click="type = 'Exámenes';"
+                           ng-attr-data-toggle="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : 'tab'}}"
+                           ng-href="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : '#Examenes-tab'}}">Exámenes</a>
+                    </li>
+                    <li ng-class="{'disabled': (INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL')}">
+                        <a id="Consultas-nav"
+                           ng-click="type = 'Consultas';"
+                           ng-attr-data-toggle="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : 'tab'}}"
+                           ng-href="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : '#Consultas-tab'}}">Consultas</a>
+                    </li>
+                    <li ng-class="{'disabled': (INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL')}">
+                        <a id="Paquetes-nav"
+                           ng-click="type = 'Paquetes';"
+                           ng-attr-data-toggle="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : 'tab'}}"
+                           ng-href="{{(INMEDIKApp.Cart.Patient.personAux.fullName == 'PÚBLICO GENERAL') ? '' : '#Paquetes-tab'}}">Paquetes</a>
+                    </li>
+                    <li>
+                        <a id="Cancelaciones-nav" ng-click="type = 'Cancelaciones';" data-toggle="tab" href="#Cancelaciones-tab">Cancelaciones</a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Pacientes-tab" class="tab-pane fade in active">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="namePatient" class="control-label col-sm-3 ">Nombre o Fólio: </label>
+                                <div class="col-sm-9">
+                                    <div class="input-group">
+                                        <input class="form-control"
+                                               type="text" placeholder="Escribir nombre o fólio de paciente"
+                                               id="namePatient" name="namePatient"
+                                               ng-model="INMEDIKApp.namePatient"
+                                               uib-typeahead="item.personAux.fullName for item in INMEDIKApp.loadClients($viewValue)"
+                                               typeahead-loading="loadingPatients"
+                                               typeahead-editable="false"
+                                               typeahead-no-results="noResultPatients"
+                                               typeahead-on-select="INMEDIKApp.setClientSelected($item,true)"
+                                               autocomplete="off" />
+                                        <span class="input-group-btn"><button class="btn btn-success" ng-click="INMEDIKApp.createPatient()">Nuevo</button></span>
+                                    </div>
+                                    <span class="text-danger" ng-show="noResultPatients">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loadingPatients">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Nombre:</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" value="{{INMEDIKApp.Cart.Patient.personAux.fullName}}" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Fecha de nacimiento:</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" value="{{INMEDIKApp.Cart.Patient.personAux.birthDate_string}}" readonly />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Colonia:</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" value="{{INMEDIKApp.Cart.Patient.personAux.addressAux.countyAux.name}}" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Productos-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre o Código" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                @*<label class="control-label col-sm-3 ">Descuento(%): </label>
+                                    <div class="col-sm-3">
+                                        <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                        <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                        </div>*@
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Cantidad: </label>
+                                <div class="col-sm-3">
+                                    <input type="number" min="1" max="{{INMEDIKApp.ConceptsSelecteds[type].stock}}" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                </div>
+                                <label class="control-label col-sm-3 ">Código: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].productAux.code}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 "></label>
+                                <div class="col-sm-3 text-center" ng-if="INMEDIKApp.ConceptsSelecteds[type].stock <= 0">
+                                    <span class="text-danger">Sin existencia.</span>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Existencia: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" ng-class="INMEDIKApp.ConceptsSelecteds[type].stock <= 0?'ng-touched ng-invalid':''" value="{{INMEDIKApp.ConceptsSelecteds[type].stock}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 "></label>
+                                <div class="col-md-9 text-center" ng-if="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                    <span class="text-danger">Nombre del medico y la cédula obligatorios para este producto.</span>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Nombre del Medico: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" maxlength="50" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicName" ng-required="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Cédula del Medico: </label>
+                                <div class="col-sm-9">
+                                    <input type="number" class="form-control" maxlength="50" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicDecree" ng-required="INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired">
+                                </div>
+
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar"
+                                           ng-disabled="!INMEDIKApp.valid[type] ||
+                                                    (INMEDIKApp.ConceptsSelecteds[type].productAux.licenseRequired &&
+                                                    !(INMEDIKApp.ConceptsSelecteds[type].medicDecree && INMEDIKApp.ConceptsSelecteds[type].medicName))"
+                                           ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.AddConceptToCart(type,true);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Servicios-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                @*<label class="control-label col-sm-3 ">Descuento(%): </label>
+                                    <div class="col-sm-3">
+                                        <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                        <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                        </div>*@
+                            </div>
+                            @*<div class="form-group">
+                                    <label class="control-label col-sm-3 ">Cantidad: </label>
+                                    <div class="col-sm-3">
+                                        <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.allMedicsList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar" ng-disabled="!INMEDIKApp.valid[type] || !INMEDIKApp.ConceptsSelecteds[type].medicId"
+                                           ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.AddConceptToCart(type,true);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Examenes-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                @*<label class="control-label col-sm-3 ">Descuento(%): </label>
+                                    <div class="col-sm-3">
+                                        <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                        <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                        </div>*@
+                            </div>
+                            @*<div class="form-group">
+                                    <label class="control-label col-sm-3 ">Cantidad: </label>
+                                    <div class="col-sm-3">
+                                        <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.allMedicsList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar" ng-disabled="!INMEDIKApp.valid[type] || !INMEDIKApp.ConceptsSelecteds[type].medicId"
+                                           ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.AddConceptToCart(type,true);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Consultas-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                @*<label class="control-label col-sm-3 ">Descuento(%): </label>
+                                    <div class="col-sm-3">
+                                        <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                        <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                        </div>*@
+                            </div>
+                            @*<div class="form-group">
+                                    <label class="control-label col-sm-3 ">Cantidad: </label>
+                                    <div class="col-sm-3">
+                                        <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Especialidad: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-change="INMEDIKApp.GetMedicsBySpecialty(type);"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].idSpecialty" ng-options="ct.id as ct.Name for ct in INMEDIKApp.SpecialtiesList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" ng-if="!INMEDIKApp.MedicsBySpecList.length" value="No se encotraron resultados." readonly />
+                                    <select class="form-control" ng-disabled="!INMEDIKApp.ConceptsSelecteds[type].idSpecialty" ng-if="INMEDIKApp.MedicsBySpecList.length"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.MedicsBySpecList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Fecha y hora: </label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" date-time ng-model="INMEDIKApp.ConceptsSelecteds['Consultas'].scheduled" id="pickerMaxSelector" view="date" format="lll" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].quantity * INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar"
+                                           ng-disabled="!INMEDIKApp.valid[type] ||
+                                           !INMEDIKApp.ConceptsSelecteds[type].idSpecialty ||
+                                           !INMEDIKApp.ConceptsSelecteds[type].medicId"
+                                           ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.AddConceptToCart(type,true);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="Paquetes-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="text" placeholder="Escribir nombre" id="name{{type}}" name="name{{type}}"
+                                           ng-model="INMEDIKApp.aheads[type]"
+                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                           typeahead-loading="loading[type]"
+                                           typeahead-editable="false"
+                                           typeahead-no-results="noResult[type]" class="form-control"
+                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item,type)"
+                                           autocomplete="off" />
+                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Precio: </label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].price)}}" readonly>
+                                </div>
+                                @*<label class="control-label col-sm-3 ">Descuento(%): </label>
+                                    <div class="col-sm-3">
+                                        <input ng-if="INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="{{INMEDIKApp.ConceptsSelecteds[type].discount}}%" readonly>
+                                        <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].discount" type="text" class="form-control" value="" readonly>
+                                        </div>*@
+                            </div>
+                            @*<div class="form-group">
+                                    <label class="control-label col-sm-3 ">Cantidad: </label>
+                                    <div class="col-sm-3">
+                                        <input type="number" min="1" class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].quantity">
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Medico: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" ng-model="INMEDIKApp.ConceptsSelecteds[type].medicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.allMedicsList track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Clinica: </label>
+                                <div class="col-sm-9">
+                                    <select class="form-control"
+                                            ng-model="INMEDIKApp.ConceptsSelecteds[type].ClinicId" ng-options="ct.name for ct in INMEDIKApp.ClinicsL track by ct.id" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <label class="control-label col-sm-3 ">Fecha y hora: </label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" date-time ng-model="INMEDIKApp.ConceptsSelecteds['Paquetes'].scheduled" id="pickerMaxSelector" view="date" format="lll" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 ">Sub Total: </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].subTotal)}}" readonly>
+                                </div>
+                                <div class="clearfix"></div>
+                                <label class="control-label col-sm-3 ">Iva(%): </label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].IVA)}}" readonly>
+                                </div>
+                                <label class="control-label col-sm-3 ">Total: </label>
+                                <div class="col-sm-9">
+                                    <input ng-if="!INMEDIKApp.ConceptsSelecteds[type].Total"
+                                           type="text" class="form-control" value="" readonly>
+
+                                    <input ng-if="INMEDIKApp.ConceptsSelecteds[type].Total"
+                                           type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.ConceptsSelecteds[type].Total)}}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Agregar" ng-disabled="!INMEDIKApp.valid[type] || !INMEDIKApp.ConceptsSelecteds[type].medicId || !INMEDIKApp.ConceptsSelecteds[type].scheduled"
+                                           ng-click="INMEDIKApp.CheckWithdrawal();INMEDIKApp.AddConceptToCart(type,true);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="Cancelaciones-tab" class="tab-pane fade">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="name{{type}}" class="control-label col-sm-2">Buscar: </label>
+                                <div class="col-sm-10">
+                                    <input type="number" class="form-control" placeholder="Escribir numero de Ticket" ng-model="INMEDIKApp.OrderidCancel" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <input type="button" class="btn btn-default pull-right" value="Buscar"
+                                           ng-disabled="!INMEDIKApp.OrderidCancel" ng-click="INMEDIKApp.getTickettoCancel(INMEDIKApp.OrderidCancel)" />
+                                    <input type="button" class="btn btn-default pull-right" value="Cancelar" ng-click="INMEDIKApp.OrderToCancel = {};" />
+                                </div>
+                            </div>
+                            <hr />
+                            <div ng-if="INMEDIKApp.OrderToCancel.patientAux">
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-3">Paciente: </label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" value="{{INMEDIKApp.OrderToCancel.patientAux.personAux.fullName}}" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-xs-12">
+                                        <table class="table table-bordered table-hover table-responsive">
+                                            <thead>
+                                                <tr>
+                                                    <td>Concepto</td>
+                                                    <td>Cantidad</td>
+                                                    <td>Total</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="concept in INMEDIKApp.OrderToCancel.OrderConceptAux">
+                                                    <td>{{concept.ConceptAux.name}}</td>
+                                                    <td>{{concept.quantity}}</td>
+                                                    <td>{{INMEDIKApp.Ut_numberWithCommas(concept.total)}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="form-group" ng-if="INMEDIKApp.OrderToCancel.Promotions.length > 0">
+                                    <div class="col-xs-12">
+                                        <table class="table table-bordered table-hover table-responsive">
+                                            <thead>
+                                                <tr><th class="text-center" colspan="3">Promociones aplicadas</th></tr>
+                                                <tr>
+                                                    <td>Concepto</td>
+                                                    <td>Promo</td>
+                                                    <td>Ahorro</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="promo in INMEDIKApp.OrderToCancel.Promotions">
+                                                    <td>{{INMEDIKApp.getConceptNameForPromo(promo.ConceptId)}}</td>
+                                                    <td>{{promo.TextPromotion}}</td>
+                                                    <td>{{INMEDIKApp.Ut_numberWithCommas(promo.AmountSaved)}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="form-group" ng-if="INMEDIKApp.OrderToCancel.paymentAux">
+                                    <div class="col-xs-12">
+                                        <table class="table table-bordered table-hover table-responsive">
+                                            <thead>
+                                                <tr><th class="text-center" colspan="3">Pagos realizados</th></tr>
+                                                <tr>
+                                                    <td>Tipo pago</td>
+                                                    <td>Comisión</td>
+                                                    <td>Total</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="payment in INMEDIKApp.OrderToCancel.paymentAux">
+                                                    <td>{{payment.PaymentTypeAux.Name}}</td>
+                                                    <td ng-if="payment.Commission == 0">-</td>
+                                                    <td ng-if="payment.Commission > 0">{{INMEDIKApp.Ut_numberWithCommas(payment.Commission)}}</td>
+                                                    <td>{{INMEDIKApp.Ut_numberWithCommas(payment.Amount)}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-3">Donación: </label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.OrderToCancel.Donation)}}" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-3">Redondeo: </label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.OrderToCancel.Rounding)}}" readonly>
+                                            </div>
+                                            <label class="control-label col-sm-3">Iva Total: </label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.OrderToCancel.Iva)}}" readonly>
+                                            </div>
+                                            <label class="control-label col-sm-3">Total Devolución: </label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control"
+                                                       ng-if="INMEDIKApp.OrderToCancel.totalpayed <= INMEDIKApp.OrderToCancel.Total"
+                                                       value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.OrderToCancel.totalpayed)}}" readonly>
+                                                <input type="text" class="form-control"
+                                                       ng-if="INMEDIKApp.OrderToCancel.totalpayed > INMEDIKApp.OrderToCancel.Total"
+                                                       value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.OrderToCancel.Total)}}" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password" class="control-label col-md-3">Contraseña</label>
+                                    <div class="col-md-9">
+                                        <input type="password" class="form-control" id="password" name="password" value="" placeholder="Contraseña" ng-model="INMEDIKApp.contrasena">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <input type="button" class="btn btn-danger pull-right" data-toggle="modal" data-target="#PreCancelModal" value="Continuar" ng-disabled="!INMEDIKApp.contrasena" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-md-6" style="border-left: 1px solid #dddddd;">
+                <ul class="nav nav-tabs">
+                    <li class="active" id="pestana_Carrito"><a data-toggle="tab" href="#Carrito-tab">Carrito de compras</a></li>
+                    <li ng-if="INMEDIKApp.idOrderJustSaved" ng-click="INMEDIKApp.getOrder(true,INMEDIKApp.idOrderJustSaved)"><a>Imprimir ticket</a></li>
+                    <li ng-if="INMEDIKApp.reservedConsultsExist" class="" id="pestana_Reservas"><a data-toggle="tab" href="#Reservas-tab">Consultas Reservadas</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Carrito-tab" class="tab-pane fade in active">
+                        @Html.Partial("~/Views/Reception/Cart.cshtml")
+                    </div>
+                    <div id="Reservas-tab" class="tab-pane">
+                        @Html.Partial("~/Views/Reception/Reservs.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="PreCancelModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    ¿Seguro que desea cancelar la orden?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" ng-click="INMEDIKApp.cancelOrder();">Confirmar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="modal fade" id="NewPatientModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="newPatientModalLabel"><span>Agregar</span> Pacientes</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="PatientForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="PatientForm.name.$touched && PatientForm.name.$error.required"><strong>Nombre(s)</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.lastname.$touched && PatientForm.lastname.$error.required"><strong>Apellido(s)</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.sex.$touched && PatientForm.sex.$error.required"><strong>Sexo</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.birthdate.$touched && PatientForm.birthdate.$error.required"><strong>Fecha de nacimiento</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.birthdate.$touched && !PatientForm.birthdate.$error.required && !PatientForm.birthdate.$valid"><strong>Fecha de nacimiento</strong>: Formato incorrecto. Intente con formato dd/mm/aaaa</p>
+
+                    <p ng-show="PatientForm.address.$touched && PatientForm.address.$error.required"><strong>Dirección</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.postalCode.$touched && PatientForm.postalCode.$error.required"><strong>Código Postal</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.stateAux.$touched && PatientForm.stateAux.$error.required"><strong>Estado</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.cityAux.$touched && PatientForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.countyAux.$touched && PatientForm.countyAux.$error.required"><strong>Colonia</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.email.$touched && PatientForm.email.$error.email"><strong>Correo</strong>: formato incorrecto</p>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="PatientForm" id="PatientForm">
+                        <div class="searchButton pull-right">
+                            <span ng-if="INMEDIKApp.openSearchPatient" ng-click="INMEDIKApp.ToggleSearch()" class="btn btn-default">Regresar <i class="fa fa-arrow-circle-left"></i></span>
+                            <span ng-click="INMEDIKApp.ToggleSearch()" class="btn btn-primary">Búsqueda <i class="fa fa-search"></i></span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div ng-if="INMEDIKApp.openSearchPatient">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Personas</div>
+                                <div class="panel-body">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table id="PersonTable" datatable dt-options="INMEDIKApp.dtPersonOptions" dt-columns="INMEDIKApp.dtPersonColumns" dt-instance="INMEDIKApp.PersonInstanceCallback" class="table-hover table-bordered compact"></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="!INMEDIKApp.openSearchPatient">
+                            <div ng-init="currentForm = PatientForm">
+                                @Html.Partial("~/Views/Shared/_PersonForm.cshtml")
+                                <div class="clearfix"></div>
+                            </div>
+                            <div ng-init="currentForm = PatientForm">
+                                @Html.Partial("~/Views/Shared/_AddressForm.cshtml")
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="col-md-12 no-padding-sides">
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (PatientForm.reference.$touched && PatientForm.reference.$invalid)}">
+                                        <label for="name" class="control-label col-md-3">Referencia: </label>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control" ng-model="INMEDIKApp.Patient.reference" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="name" name="reference" placeholder="Referencia" maxlength="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="PatientForm.$invalid || INMEDIKApp.subbmiting">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+

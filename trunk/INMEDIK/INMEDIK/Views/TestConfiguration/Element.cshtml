@@ -1,0 +1,190 @@
+﻿<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item active">
+        <a ng-click="INMEDIKApp.currentElementKind = 'module';" class="nav-link active" id="module-tab" data-toggle="tab" href="#module" role="tab" aria-controls="module" aria-selected="true">Módulo</a>
+    </li>
+    <li class="nav-item">
+        <a ng-click="INMEDIKApp.currentElementKind = 'field';" class="nav-link" id="field-tab" data-toggle="tab" href="#field" role="tab" aria-controls="field" aria-selected="false">Campo</a>
+    </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade active in" id="module" role="tabpanel" aria-labelledby="module-tab">
+        <form class="form-horizontal" name="ModuleForm" id="ModuleForm">
+            <h4 ng-if="!INMEDIKApp.newElement.module.name">Nuevo módulo</h4>
+            <h4 ng-if="INMEDIKApp.newElement.module.name">{{INMEDIKApp.newElement.module.name}}</h4>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-md-2 no-padding-left">Nombre: </label>
+                    <div class="col-xs-12 col-md-9">
+                        <input class="form-control"
+                               type="text"
+                               required
+                               ng-model="INMEDIKApp.newElement.module.name"
+                               placeholder="Nombre del módulo"
+                               maxlength="100" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-description" class="control-label col-xs-12 col-md-2 no-padding-left">Descripción: </label>
+                    <div class="col-xs-12 col-md-9">
+                        <textarea type="text" class="form-control" ng-model="INMEDIKApp.newElement.module.description" placeholder="Descripción" maxlength="500"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </form>
+    </div>
+    <div class="tab-pane fade" id="field" role="tabpanel" aria-labelledby="field-tab">
+        <form class="form-horizontal" name="FieldForm" id="FieldForm">
+            <h4 ng-if="!INMEDIKApp.newElement.field.tag">Nuevo campo</h4>
+            <h4 ng-if="INMEDIKApp.newElement.field.tag">{{INMEDIKApp.newElement.field.tag}}</h4>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-md-2 no-padding-left">Nombre<span class="required">*</span>: </label>
+                    <div class="col-xs-12 col-md-9">
+                        <input class="form-control"
+                               type="text"
+                               required
+                               ng-model="INMEDIKApp.newElement.field.tag"
+                               placeholder="Nombre del campo"
+                               maxlength="50" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-description" class="control-label col-xs-12 col-md-2 no-padding-left">Descripción: </label>
+                    <div class="col-xs-12 col-md-9">
+                        <textarea type="text" class="form-control" ng-model="INMEDIKApp.newElement.field.description" placeholder="Descripción" maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                        Unidad<span class="required">*</span>
+                        <sup data-toggle="tooltip"
+                             data-placement="top"
+                             title="mL, mg, L, etc...">
+                            ?
+                        </sup>:
+                    </label>
+                    <div class="col-xs-12 col-md-9">
+                        <input class="form-control"
+                               type="text"
+                               required
+                               ng-model="INMEDIKApp.newElement.field.unit"
+                               placeholder="Unidad"
+                               maxlength="50" />
+                    </div>
+                </div>
+                <div class="form-check">
+                    <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                        Campo requerido
+                        <sup data-toggle="tooltip"
+                             data-placement="top"
+                             title="Si el campo es obligatorio o no">
+                            ?
+                        </sup>:
+                    </label>
+                    <div class="col-xs-12 col-md-9">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               ng-model="INMEDIKApp.newElement.field.required"
+                               style="height:20px; width:20px; margin-top:4px!important;" />
+                    </div>
+                </div>
+                <div class="form-group" ng-class="{'invalid-group': (currentForm.address.$touched && currentForm.address.$invalid)}">
+                    <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                        Tipo de campo<span class="required">*</span>:
+                    </label>
+                    <div class="col-xs-12 col-md-9">
+                        <select class="form-control"
+                                ng-model="INMEDIKApp.newElement.field.fieldTypeAux" ng-options="f.name for f in INMEDIKApp.fieldTypes track by f.id"
+                                required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <span class="col-xs-12 col-md-offset-2 col-md-9">
+                        {{INMEDIKApp.newElement.field.fieldTypeAux.description}}
+                    </span>
+                </div>
+                <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Text'">
+                    <div class="form-group">
+                        <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                            Referencia
+                            <sup data-toggle="tooltip"
+                                 data-placement="top"
+                                 title="La referencia determina la validación del campo en el exámen, si no hay referencia el campo es libre y no se valida.">
+                                ?
+                            </sup>:
+                        </label>
+                        <div class="col-xs-12 col-md-9">
+                            <input class="form-control"
+                                   type="text"
+                                   ng-model="INMEDIKApp.newElement.field.reference"
+                                   placeholder="Referencia"
+                                   maxlength="100" />
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Numeric'">
+                    <div class="form-group">
+                        <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                            Rango de valores
+                            <sup data-toggle="tooltip"
+                                 data-placement="top"
+                                 title="Sirve para validar el valor ingresado en el campo, si no se llenan estos campos el valor no se validará en el exámen.">
+                                ?
+                            </sup>:
+                        </label>
+                        <div class="col-xs-12 col-md-9">
+                            <input class="form-control"
+                                   type="number"
+                                   ng-model="INMEDIKApp.newElement.field.lowerLimit"
+                                   placeholder="Límite inferior"
+                                   maxlength="22" />
+                        </div>
+                        <div class="col-xs-12 col-md-offset-2 col-md-9">
+                            <input class="form-control"
+                                   type="number"
+                                   ng-model="INMEDIKApp.newElement.field.upperLimit"
+                                   placeholder="Límite superior"
+                                   maxlength="22" />
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Option'">
+                    <div class="form-group">
+                        <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                            Opciones
+                            <sup data-toggle="tooltip"
+                                 data-placement="top"
+                                 title="Opciones disponibles para responder este campo en el exámen.">
+                                ?
+                            </sup>:
+                        </label>
+                        <span class="btn btn-info btn-sm col-xs-12 col-md-2"
+                                ng-click="INMEDIKApp.newElement.field.fieldOptionAux.push({});">
+                            <span>Agregar opción</span>
+                        </span>
+                        <div class="col-md-offset-6 col-md-2"></div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-offset-2 col-md-10 no-padding-left">
+                            <div ng-repeat="fieldOption in INMEDIKApp.newElement.field.fieldOptionAux" class="no-padding-left col-xs-6 col-md-3">
+                                <div class="input-group">
+                                    <input class="form-control"
+                                           type="text"
+                                           ng-model="fieldOption.value"
+                                           placeholder="Valor"
+                                           maxlength="100" />
+                                    <span class="input-group-btn">
+                                        <button ng-click="INMEDIKApp.removeOption($index)" class="btn btn-danger" type="button">
+                                            Borrar
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </form>
+    </div>
+</div>

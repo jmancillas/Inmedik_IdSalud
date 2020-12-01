@@ -1,0 +1,40 @@
+﻿
+@{
+    ViewBag.Title = "Pay";
+}
+
+<div class="form-group">
+    <label class="control-label col-sm-3">Reservas</label>
+
+    <br />
+    <br />
+
+
+    <div class="form-group">
+        <table ng-if="INMEDIKApp.Cart.Consults.length > 0" class="table table-bordered table-hover table-responsive">
+            <thead>
+                <tr>
+                    <td>Nombre Paciente</td>
+                    <td>Total a Pagar</td>
+                    <td></td>
+
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr ng-repeat="consultas in INMEDIKApp.Cart.Consults">
+
+                    <td>{{consultas.nombrePaciente}}</td>
+                    <td>{{INMEDIKApp.Ut_numberWithCommas(consultas.totalPagar)}}</td>
+
+                    <td><button ng-if="INMEDIKApp.isReception" ng-click="INMEDIKApp.Cart.Consults.splice($index,1); INMEDIKApp.setOrderTotal(); INMEDIKApp.UpdateTemporalCart();" class="btn btn-danger btn-xs col-lg-12 col-xs-12"><i class="fa fa-times" aria-hidden="true"></i></button></td>
+                </tr>
+
+              @*<tr><td colspan="4">{{INMEDIKApp.Cart.Concepts}}</td></tr>*@
+            </tbody>
+        </table>
+
+
+    </div>
+
+</div>

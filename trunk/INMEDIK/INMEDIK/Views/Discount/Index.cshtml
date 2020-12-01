@@ -1,0 +1,731 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/checklist-model.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker', "datatables", 'btorfs.multiselect', 'checklist-model']);
+        INMEDIKApp.controller('DiscountController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Discount = {
+                discountConceptAux: []
+            };
+            dt.Views = [];
+            dt.counties = [];
+            dt.aheads = "";
+            dt.discountTypes = JSON.parse('@Html.Raw(ViewBag.discountTypes)');
+            dt.clinics = JSON.parse('@Html.Raw(ViewBag.clinics)');
+            dt.Parameters = JSON.parse('@Html.Raw(ViewBag.Parameters)');
+            dt.subbmiting = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.warehouses = [];
+            dt.notValid = false;
+            dt.addProduct = false;
+            dt.labels = {
+                "itemsSelected": "Clínicas seleccionadas",
+                "selectAll": "Seleccionar todos",
+                "unselectAll": "Remover todos",
+                "search": "Buscar",
+                "select": "Seleccione...",
+            }
+            dt.alreadyHasDirectDiscount = function (item) {
+                if (dt.Discount.discountTypeAux.code == "Direct") {
+                    for (var i = 0; i < item.discountList.length ; i++) {
+                        for (var j = 0; j < item.discountList[i].clinicList.length; j++) {
+                            for (var k = 0; k < dt.Discount.clinicList.length; k++) {
+                                if (item.discountList[i].clinicList[j].id == dt.Discount.clinicList[k].id) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            };
+            dt.getItemPrice = function (item) {
+                if (dt.Discount.discountTypeAux.code != "Direct") {
+                    for (var i = 0; i < item.discountList.length ; i++) {
+                        for (var j = 0; j < item.discountList[i].clinicList.length; j++) {
+                            for (var k = 0; k < dt.Discount.clinicList.length; k++) {
+                                if (item.discountList[i].clinicList[j].id == dt.Discount.clinicList[k].id
+                                    &&
+                                        (
+                                            moment(item.discountList[i].sStartDate, 'DD/MM/YYYY hh:mm:ss')
+                                            <= moment(dt.Discount.startDate)
+                                            &&
+                                            moment(item.discountList[i].sEndDate, 'DD/MM/YYYY hh:mm:ss')
+                                            >= moment(dt.Discount.endDate)
+                                        )
+                                    ) {
+                                    return Math.round((item.price -
+                                    (   item.price *
+                                        (
+                                            item.discountList[i].discountConceptAux[0].percentage / 100
+                                        )
+                                    )) * 100) / 100;
+                                    
+                                }
+                            }
+                        }
+                    }
+                }
+                return item.price;
+            };
+            dt.setConceptSelected = function (item) {
+                dt.notValid = false;
+                //if (dt.Discount.discountTypeAux.code == "Direct" ||
+                //dt.Discount.discountTypeAux.code == "Percentage") {
+                //dt.Discount.discountConceptAux = [];
+                //}
+                //Valida que si el descuento es del tipo directo que no se pueda agregar un producto que ya tiene este tipo de descuento
+                dt.notValid = dt.alreadyHasDirectDiscount(item);
+                
+                if (!dt.notValid) {
+                    //Si el descuento que se esta creando es del tipo direct se utiliza el precio base maximo
+                    //En caso contrario se debe calcular el precio base con el descuento direct que tenga el producto
+                    item.price = dt.getItemPrice(item);
+                    dt.Discount.discountConceptAux.push(
+                        {
+                            conceptAux: item
+                        }
+                    );
+                    dt.addProduct = false;
+                    dt.aheads = "";
+                }
+
+
+            };
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteElement(' + data + ')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+
+            dt.loadConcepts = function (val) {
+                return $http.post('@Url.Action("GetConceptsOfProducts", "Discount")', {
+                    data: JSON.stringify({ typed: val })
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+            $('#NewElementModal').on('hidden.bs.modal', function () {
+                dt.Discount = {};
+                dt.notValid = false;
+            })
+            dt.DiscountTypeChanged = function () {
+                dt.Discount.discountConceptAux = [];
+                dt.Discount.clinicList = [];
+            };
+            dt.dateChanged = function () {
+                dt.Discount.discountConceptAux = [];
+            }
+            dt.clinicsChanged = function () {
+                dt.Discount.discountConceptAux = [];
+            }
+            dt.ConceptPercentageChanged = function (index) {
+                var thisConcept = dt.Discount.discountConceptAux[index];
+                var conceptAux = thisConcept.conceptAux;
+                //if (thisConcept.percentage < 100) {
+                thisConcept.resultPrice = conceptAux.iva ?
+                    Math.round(((conceptAux.price - (Math.round((conceptAux.price * (thisConcept.percentage / 100)) * 100) / 100)) * (1 + (dt.Parameters.Tax / 100))) * 100) / 100
+                    :
+                    Math.round((conceptAux.price - (Math.round((conceptAux.price * (thisConcept.percentage / 100)) * 100) / 100)) * 100) / 100;
+                //}
+                //else {
+                //    thisConcept.resultPrice = conceptAux.iva ?
+                //        Math.round((((Math.round((conceptAux.price * (thisConcept.percentage / 100)) * 100) / 100)) * (1 + (dt.Parameters.Tax / 100))) * 100) / 100
+                //        :
+                //        (Math.round((conceptAux.price * (thisConcept.percentage / 100)) * 100) / 100);
+                //}
+            };
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#DiscountForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#DiscountForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#DiscountForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#DiscountForm multiselect").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.LoadElement = function (id) {
+                dt.notValid = false;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetDiscount", "Discount")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        $("#NewElementModal").modal("show");
+
+                        dt.Discount = JSON.parse(res.data.data);
+                        for (var i = 0; i < dt.Discount.discountConceptAux.length; i++) {
+                            dt.ConceptPercentageChanged(i);
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id) {
+                dt.Discount.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("DeleteDiscount", "Discount")',
+                    data: {
+                        id: dt.Discount.id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.Discount = {
+                    discountConceptAux: []
+                };
+
+                $("#NewElementModal").modal("show");
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.DiscountForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.Discount = {
+                    discountConceptAux: []
+                };
+                $("#panelBody").collapse('hide')
+                init();
+            });
+
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveDiscount", "Discount")',
+                    data: dt.Discount,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetDiscounts", "Discount")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen descuentos",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron descuentos",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("DiscountName").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("DiscountDescription").withTitle("Descripción"),
+                DTColumnBuilder.newColumn("DiscountTypeDescription").withTitle("Tipo"),
+                DTColumnBuilder.newColumn("ClinicName").withTitle("Clinica"),
+                DTColumnBuilder.newColumn("Percentage").withTitle("Descuento"),
+                DTColumnBuilder.newColumn("sStartDate").withTitle("Fecha inicio").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sEndDate").withTitle("Fecha fin").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Borrar").renderWith(deleteBtn).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            function init() {
+
+            };
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="DiscountController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Discount.id">Agregar</span><span ng-show="INMEDIKApp.Discount.id">Editar</span> Descuento</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="DiscountForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-md-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="DiscountForm.name.$touched && DiscountForm.name.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                    <p ng-show="DiscountForm.discountTypeAux.$touched && DiscountForm.discountTypeAux.$error.required"><strong>Tipo</strong>: Campo obligatorio</p>
+                    <p ng-show="DiscountForm.singleClinic.$touched && DiscountForm.singleClinic.$error.required"><strong>Clínica</strong>: Campo obligatorio</p>
+                    <p ng-show="DiscountForm.clinicList.$touched && DiscountForm.clinicList.$error.required"><strong>Clínicas</strong>: Campo obligatorio</p>
+                    <p ng-show="DiscountForm.startDate.$touched && !DiscountForm.startDate.$error.required && !DiscountForm.startDate.$valid"><strong>Fecha inicio</strong>: Formato incorrecto. Intente con formato dd/mm/aaaa</p>
+                    <p ng-show="DiscountForm.endDate.$touched && !DiscountForm.endDate.$error.required && !DiscountForm.endDate.$valid"><strong>Fecha fin</strong>: Formato incorrecto. Intente con formato dd/mm/aaaa</p>
+                    <p ng-show="DiscountForm.startDate.$touched && DiscountForm.startDate.$error.required"><strong>Fecha inicio</strong>: Campo obligatorio</p>
+                    <p ng-show="DiscountForm.endDate.$touched && DiscountForm.endDate.$error.required"><strong>Fecha fin</strong>: Campo obligatorio</p>
+                </div>
+                <div class="alert alert-danger" ng-show="INMEDIKApp.notValid">
+                    <p>
+                        El concepto que intentó agregar ya tiene un descuento tipo "Porcentaje sucursal"
+                        <br /> en una de las sucursales seleccionadas.
+                    </p>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <form class="form-horizontal" name="DiscountForm" id="DiscountForm">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (DiscountForm.name.$touched && DiscountForm.name.$invalid)}">
+                                    <label for="name" class="control-label col-md-3">Nombre<span class="required">*</span>: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-model="INMEDIKApp.Discount.name" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="name" required name="name" placeholder="Nombre" maxlength="50">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group " ng-class="{'invalid-group': (DiscountForm.discountTypeAux.$touched && DiscountForm.discountTypeAux.$invalid)}">
+                                    <label for="discountType" class="control-label col-md-3">Tipo<span class="required">*</span>:</label>
+                                    <div class="col-md-9">
+                                        <select name="discountTypeAux" id="discountTypeAux" class="form-control"
+                                                required
+                                                ng-text-change="INMEDIKApp.GetTouched($event)"
+                                                ng-change="INMEDIKApp.DiscountTypeChanged()"
+                                                ng-blur="INMEDIKApp.GetTouched($event)"
+                                                ng-model="INMEDIKApp.Discount.discountTypeAux"
+                                                ng-options="s.description for s in INMEDIKApp.discountTypes track by s.id">
+                                            <option value="">Seleccione...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Discount.discountTypeAux.code == 'Direct'">
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (DiscountForm.clinicList.$touched && DiscountForm.clinicList.$invalid)}">
+                                        <label for="clinicList" class="control-label col-md-3">Clínicas<span class="required">*</span>: </label>
+                                        <div class="col-md-9">
+                                            <multiselect ng-model="INMEDIKApp.Discount.clinicList"
+                                                         show-select-all="true"
+                                                         show-unselect-all="true"
+                                                         ng-text-change="INMEDIKApp.GetTouched($event)"
+                                                         ng-blur="INMEDIKApp.GetTouched($event)"
+                                                         required
+                                                         options="INMEDIKApp.clinics"
+                                                         name="clinicList"
+                                                         id="clinicList"
+                                                         tabindex="0"
+                                                         display-prop="name" id-prop="id" labels="INMEDIKApp.labels" placeholder="Seleccione..."></multiselect>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Discount.discountTypeAux.code != 'Direct'">
+                                <div class="col-md-6 no-padding-right">
+                                    <label for="singleClinic" class="control-label col-md-3">Clínica<span class="required">*</span>:</label>
+                                    <div class="col-md-9">
+                                        <select name="singleClinic" id="singleClinic" class="form-control"
+                                                required
+                                                ng-text-change="INMEDIKApp.GetTouched($event)"
+                                                ng-change="INMEDIKApp.clinicsChanged()"
+                                                ng-blur="INMEDIKApp.GetTouched($event)"
+                                                ng-model="INMEDIKApp.Discount.clinicList[0]"
+                                                ng-options="s.name for s in INMEDIKApp.clinics track by s.id">
+                                            <option value="">Seleccione...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Discount.discountTypeAux.code != 'Direct'">
+                                <div class="form-group col-md-3" ng-class="{'invalid-group': (DiscountForm.startDate.$touched && DiscountForm.startDate.$invalid)}">
+                                    <label class="control-label col-sm-4 ">Fecha inicio<span class="required">*</span>: </label>
+                                    <div class="col-sm-8">
+                                        <input class="form-control"
+                                               ng-text-change="INMEDIKApp.GetTouched($event)"
+                                               ng-blur="INMEDIKApp.GetTouched($event)"
+                                               date-time
+                                               ng-change="INMEDIKApp.dateChanged()"
+                                               ng-model="INMEDIKApp.Discount.startDate"
+                                               id="startDate"
+                                               name="startDate"
+                                               required
+                                               view="date"
+                                               min-view="date"
+                                               format="DD/MM/YYYY"
+                                               style="background-color: #ffffff !important; cursor: pointer !important;">
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-3 no-padding-right" ng-class="{'invalid-group': (DiscountForm.endDate.$touched && DiscountForm.endDate.$invalid)}">
+                                    <label class="control-label col-sm-4 ">Fecha fin<span class="required">*</span>: </label>
+                                    <div class="col-sm-8">
+                                        <input class="form-control"
+                                               ng-text-change="INMEDIKApp.GetTouched($event)"
+                                               ng-blur="INMEDIKApp.GetTouched($event)"
+                                               date-time
+                                               ng-change="INMEDIKApp.dateChanged()"
+                                               ng-model="INMEDIKApp.Discount.endDate"
+                                               id="endDate"
+                                               required
+                                               name="endDate"
+                                               view="date"
+                                               min-view="date"
+                                               format="DD/MM/YYYY"
+                                               style="background-color: #ffffff !important; cursor: pointer !important;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name" class="control-label col-md-3 no-padding-left">Descripción: </label>
+                                    <div class="col-md-9">
+                                        <textarea type="text" class="form-control" ng-model="INMEDIKApp.Discount.description" id="description" name="description" placeholder="Descripción" maxlength="500"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <!--<div ng-if="( INMEDIKApp.Discount.discountTypeAux.code == 'Percentage'  && INMEDIKApp.Discount.clinicList.length > 0 && INMEDIKApp.Discount.startDate && INMEDIKApp.Discount.endDate) || (INMEDIKApp.Discount.discountTypeAux.code == 'Direct' && INMEDIKApp.Discount.clinicList.length > 0)">-->
+                               <div ng-if="( INMEDIKApp.Discount.clinicList.length > 0 && INMEDIKApp.Discount.startDate && INMEDIKApp.Discount.endDate) || (INMEDIKApp.Discount.discountTypeAux.code == 'Direct' && INMEDIKApp.Discount.clinicList.length > 0)">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">Productos</div>
+                                    <div class="panel-body" id="panelBody">
+
+                                        <span style="font-size:15px;">Descuento tipo {{INMEDIKApp.Discount.discountTypeAux.description}}</span>
+                                        <p ng-if="INMEDIKApp.Discount.discountTypeAux.code == 'Percentage'">
+                                            Seleccione un producto e ingrese el porcentaje a aplicar.
+                                        </p>
+                                        @*<p ng-if="INMEDIKApp.Discount.discountTypeAux.code == 'Combo'">
+                               Añada los productos que son parte del combo e ingrese el porcentaje a aplicar sobre cada producto.
+                           </p>*@
+                                        <div ng-if="INMEDIKApp.Discount.discountTypeAux.code == 'Direct'">
+                                            <p>
+                                                Seleccione un producto e ingrese el porcentaje a aplicar.<br />
+                                                El porcentaje se aplicará sobre el precio de venta máximo al público del producto y
+                                                el resultado se usará como el precio base del producto en las sucursales seleccionadas.
+                                            </p>
+                                            <p>Éste descuento no será visible en el ticket.</p>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <button type="button" ng-click="INMEDIKApp.addProduct = !INMEDIKApp.addProduct" ng-if="!INMEDIKApp.addProduct" class="btn btn-primary pull-left">+ Agregar</button>
+                                                <label ng-if="INMEDIKApp.addProduct" for="name-producto" class="control-label col-sm-2">Buscar: </label>
+                                                <div class="col-sm-4">
+                                                    <input ng-if="INMEDIKApp.addProduct" type="text" placeholder="Escribir nombre o Código" id="name-producto" name="name-producto"
+                                                           ng-model="INMEDIKApp.aheads"
+                                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue)"
+                                                           typeahead-loading="loading"
+                                                           typeahead-editable="false"
+                                                           typeahead-no-results="noResult" class="form-control"
+                                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item)"
+                                                           autocomplete="off" />
+                                                    <span class="text-danger" ng-show="noResult">No se encontro coincidencias</span>
+                                                    <span class="text-primary" ng-show="loading">Buscando...</span>
+                                                </div>
+                                            </div>
+                                            <div ng-repeat="discconcept in INMEDIKApp.Discount.discountConceptAux">
+                                                <div class="col-md-6">
+                                                    <div class="panel panel-default">
+                                                        <div class="panel-heading" style="font-weight:bold">{{discconcept.conceptAux.name}} </div>
+                                                        <div class="panel-body">
+                                                            @*<div class="form-group col-sm-12">
+                                            <label for="conceptCost" class="control-label col-sm-3">Costo: </label>
+                                            <input class="col-sm-9" id="conceptCost" name="conceptCost"
+                                                   disabled
+                                                   readonly ng-model="discconcept.conceptAux.cost" />
+                                        </div>*@
+                                                            <div class="form-group col-sm-12">
+                                                                <label for="conceptPrice" class="control-label col-sm-3">Precio: </label>
+                                                                <input class="col-sm-9" id="conceptPrice" name="conceptPrice"
+                                                                       disabled
+                                                                       readonly ng-model="discconcept.conceptAux.price" />
+                                                            </div>
+                                                            <div class="form-group col-sm-12">
+                                                                <label class="control-label col-sm-3">IVA: </label>
+                                                                <span class="col-sm-9">{{discconcept.conceptAux.iva ? "Sí" : "No"}}</span>
+                                                            </div>
+                                                            <div class="form-group col-sm-12">
+                                                                <label for="conceptPercentage" class="control-label col-sm-3">Porcentaje: </label>
+                                                                <div class="input-group">
+                                                                    <input class="col-sm-9 form-control" id="conceptPercentage" name="conceptPercentage"
+                                                                           required
+                                                                           ng-change="INMEDIKApp.ConceptPercentageChanged($index)"
+                                                                           ng-model="discconcept.percentage" />
+                                                                    <span class="input-group-addon">%</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-sm-12">
+                                                                <label for="conceptResult" class="control-label col-sm-3">Precio resultado: </label>
+                                                                <input class="col-sm-9" id="conceptResult" name="conceptResult"
+                                                                       disabled
+                                                                       readonly ng-model="discconcept.resultPrice" />
+                                                            </div>
+                                                            <span class="btn btn-danger pull-right"
+                                                                  ng-click="INMEDIKApp.Discount.discountConceptAux.splice($index,1)">Borrar</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()"
+                            ng-disabled="!(INMEDIKApp.Discount.discountConceptAux.length > 0)
+                            || INMEDIKApp.notValid
+                            || DiscountForm.$invalid || INMEDIKApp.subbmiting">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Descuentos y ofertas <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="DiscountTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,822 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .table-5px tbody > tr > td {
+            padding-top: 5px !important;
+            padding-bottom: 5px !important;
+        }
+
+        sup {
+            border-bottom: 1px dotted #000;
+            text-decoration: none;
+        }
+
+            sup:hover {
+                cursor: pointer;
+            }
+
+        .form-head-section {
+            margin-bottom: 5px;
+        }
+
+        .sorting-handle {
+            cursor: move;
+            padding: 15px;
+        }
+
+        #TableModuleField td {
+            padding: 2px !important;
+        }
+
+        .fieldList-container .control-label {
+            text-align: left !important;
+        }
+
+        .element-ref {
+            color: #565353;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/sortable.js"></script>
+    <script type="text/javascript" src="~/Scripts/testController.js"></script>
+
+    <script type="text/javascript">
+
+    </script>
+}
+<div class="container-fluid" ng-controller="TestController as INMEDIKApp"
+     ng-init="INMEDIKApp.StartController('@Url.Action("GetFieldTypes", "TestConfiguration")');
+     INMEDIKApp.InitTableForms('@Url.Action("GetForms", "TestConfiguration")');
+     INMEDIKApp.InitTableModules('@Url.Action("GetModules", "TestConfiguration")');
+     INMEDIKApp.InitTableFields('@Url.Action("GetFields", "TestConfiguration")');
+     INMEDIKApp.SetUrls('@Url.Action("SaveForm", "TestConfiguration")',
+     '@Url.Action("SaveModule", "TestConfiguration")',
+     '@Url.Action("SaveField", "TestConfiguration")',
+     '@Url.Action("GetForm", "TestConfiguration")',
+     '@Url.Action("GetModule", "TestConfiguration")',
+     '@Url.Action("GetField", "TestConfiguration")',
+     '@Url.Action("DeleteForm", "TestConfiguration")',
+     '@Url.Action("DeleteModule", "TestConfiguration")',
+     '@Url.Action("DeleteField", "TestConfiguration")');
+     ">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Formularios para examenes de laboratorios
+            <a ng-show="!INMEDIKApp.creating" class="btn btn-default btn-xs pull-right"
+               style="margin-left: 10px;"
+               href="@Url.Action("Laboratory", "LaboratoryXray")">
+                <span>Regresar a laboratorios</span>
+            </a>
+            <button ng-show="!INMEDIKApp.creating" class="btn btn-success btn-xs pull-right"
+                    ng-click="INMEDIKApp.NewForm()">
+                <span>Crear Nuevo</span>
+            </button>
+            <button ng-show="INMEDIKApp.creating" class="btn btn-default btn-xs pull-right"
+                    style="margin-left: 10px;"
+                    ng-click="INMEDIKApp.ResetForm()">
+                <span>Cancelar</span>
+            </button>
+            <button ng-show="INMEDIKApp.creating" ng-disabled="INMEDIKApp.submittingForm || Formfrm.$invalid" class="btn btn-success btn-xs pull-right" ng-click="INMEDIKApp.SaveForm()">
+                <span>Guardar formulario</span>
+            </button>
+        </div>
+        <div class="panel-body">
+            <div ng-show="!INMEDIKApp.creating" class="col-md-12">
+                <div class="table-responsive">
+                    <table id="Table" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-bordered compact"></table>
+                </div>
+            </div>
+            <form ng-show="INMEDIKApp.creating" name="Formfrm" id="Formfrm" class="col-md-12">
+                <div class="form-container">
+                    <div class="form-head-section col-md-12">
+                        <div class="form-group">
+                            <label for="form-name" class="control-label col-xs-12 col-md-2 no-padding-left">Nombre<span class="required">*</span>: </label>
+                            <div class="col-xs-12 col-md-9">
+                                <input class="form-control"
+                                       type="text"
+                                       id="form-name"
+                                       required
+                                       ng-model="INMEDIKApp.form.name"
+                                       placeholder="Nombre del formulario"
+                                       maxlength="100" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-description" class="control-label col-xs-12 col-md-2 no-padding-left">Descripción: </label>
+                            <div class="col-xs-12 col-md-9">
+                                <textarea type="text" class="form-control" ng-model="INMEDIKApp.form.description" id="form-description" name="form-description" placeholder="Descripción" maxlength="500"></textarea>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-12">
+                            <span class="btn btn-info btn-sm pull-left"
+                                  ng-click="INMEDIKApp.NewElement()">
+                                <span>Agregar elemento</span>
+                            </span>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="form-content-section col-md-12">
+                        <div class="clearfix"></div>
+                        <div ui-sortable="INMEDIKApp.sortableOptions" class="col-md-11" ng-model="INMEDIKApp.form.elementList">
+                            <div ng-repeat="element in INMEDIKApp.form.elementList">
+                                <div class="row">
+                                    <div ng-if="element.field.id != undefined">
+                                        <div ng-if="element.field.fieldTypeAux.code == 'Text'">
+                                            <div class="form-group col-md-8">
+                                                <label class="control-label col-xs-12 col-md-4">
+                                                    {{element.field.tag}}
+                                                    <sup ng-if="element.field.description"
+                                                         uib-tooltip="{{element.field.description}}">
+                                                        ?
+                                                    </sup>
+                                                    <span ng-if="element.field.required" class="required">*</span>:
+                                                </label>
+                                                <div class="input-group col-xs-12 col-md-8">
+                                                    <input class="form-control"
+                                                           type="text"
+                                                           placeholder="Resultado"
+                                                           @*ng-required="element.field.required"*@ />
+                                                    <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                </div>
+                                                <label class="col-md-4 element-ref"
+                                                       ng-if="element.field.reference">
+                                                    Referencia: {{element.field.reference}}
+                                                </label>
+                                            </div>
+                                            <span>
+                                                Requerido:
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       ng-model="element.field.required"
+                                                       style="height:20px; width:20px; margin-top:4px!important;" />
+                                            </span>
+                                            <span class="btn btn-sm btn-danger"
+                                                  ng-click="INMEDIKApp.removeElement($index)">
+                                                Borrar
+                                            </span>
+                                            <span class="sorting-handle">
+                                                <i class="fa fa-arrows-alt-v"></i>
+                                            </span>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                        <div ng-if="element.field.fieldTypeAux.code == 'Numeric'">
+                                            <div class="form-group col-md-8">
+                                                <label class="control-label col-xs-12 col-md-4">
+                                                    {{element.field.tag}}
+                                                    <sup ng-if="element.field.description"
+                                                         uib-tooltip="{{element.field.description}}">
+                                                        ?
+                                                    </sup>
+                                                    <span ng-if="element.field.required" class="required">*</span>:
+                                                </label>
+                                                <div class="input-group col-xs-12 col-md-8">
+                                                    <input class="form-control"
+                                                           type="number"
+                                                           placeholder="Resultado"
+                                                           @*ng-required="element.field.required"*@ />
+                                                    <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                </div>
+                                                <label class="col-md-4 element-ref"
+                                                       ng-if="element.field.lowerLimit || element.field.upperLimit">
+                                                    Rango: {{element.field.lowerLimit}} - {{element.field.upperLimit}}
+                                                </label>
+                                            </div>
+                                            <span>
+                                                Requerido:
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       ng-model="element.field.required"
+                                                       style="height:20px; width:20px; margin-top:4px!important;" />
+                                            </span>
+                                            <span class="btn btn-sm btn-danger"
+                                                  ng-click="INMEDIKApp.removeElement($index)">
+                                                Borrar
+                                            </span>
+                                            <span class="sorting-handle">
+                                                <i class="fa fa-arrows-alt-v"></i>
+                                            </span>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                        <div ng-if="element.field.fieldTypeAux.code == 'Option'">
+                                            <div class="form-group col-md-8">
+                                                <label class="control-label col-xs-12 col-md-4">
+                                                    {{element.field.tag}}
+                                                    <sup ng-if="element.field.description"
+                                                         uib-tooltip="{{element.field.description}}">
+                                                        ?
+                                                    </sup>
+                                                    <span ng-if="element.field.required" class="required">*</span>:
+                                                </label>
+                                                <div class="input-group col-xs-12 col-md-8">
+                                                    <select class="form-control"
+                                                            ng-model="element.field.value"
+                                                            @*ng-required="element.field.required"*@
+                                                            ng-options="fo.value for fo in element.field.fieldOptionAux">
+                                                        <option value="">Seleccione...</option>
+                                                    </select>
+                                                    <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                </div>
+                                            </div>
+                                            <span>
+                                                Requerido:
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       ng-model="element.field.required"
+                                                       style="height:20px; width:20px; margin-top:4px!important;" />
+                                            </span>
+                                            <span class="btn btn-sm btn-danger"
+                                                  ng-click="INMEDIKApp.removeElement($index)">
+                                                Borrar
+                                            </span>
+                                            <span class="sorting-handle">
+                                                <i class="fa fa-arrows-alt-v"></i>
+                                            </span>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+                                    <div ng-if="element.module.id != undefined">
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading">
+                                                {{element.module.name}}
+                                                <span class="pull-right">
+
+                                                    <span class="btn btn-sm btn-danger"
+                                                          ng-click="INMEDIKApp.removeElement($index)">
+                                                        Borrar
+                                                    </span>
+                                                    <span class="sorting-handle">
+                                                        <i class="fa fa-arrows-alt-v"></i>
+                                                    </span>
+                                                </span>
+
+                                            </div>
+                                            <div class="panel-body">
+                                                <span ng-if="element.module.description.length > 0">{{element.module.description}}</span>
+                                                <div class="fieldList-container">
+                                                    <div ng-repeat="field in element.module.fieldList">
+                                                        <div ng-if="field.fieldTypeAux.code == 'Text'">
+                                                            <div class="form-group col-md-8">
+                                                                <label class="control-label col-xs-12 col-md-4">
+                                                                    {{field.tag}}
+                                                                    <sup ng-if="field.description"
+                                                                         uib-tooltip="{{field.description}}">
+                                                                        ?
+                                                                    </sup>
+                                                                    <span ng-if="field.required" class="required">*</span>:
+                                                                </label>
+                                                                <div class="input-group col-xs-12 col-md-8">
+                                                                    <input class="form-control"
+                                                                           type="text"
+                                                                           placeholder="Resultado"
+                                                                           @*ng-required="field.required"*@ />
+                                                                    <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                </div>
+                                                                <label class="col-md-4 element-ref"
+                                                                       ng-if="field.reference">
+                                                                    Referencia: {{field.reference}}
+                                                                </label>
+                                                            </div>
+                                                            <div class="clearfix"></div>
+                                                        </div>
+                                                        <div ng-if="field.fieldTypeAux.code == 'Numeric'">
+                                                            <div class="form-group col-md-8">
+                                                                <label class="control-label col-xs-12 col-md-4">
+                                                                    {{field.tag}}
+                                                                    <sup ng-if="field.description"
+                                                                         uib-tooltip="{{field.description}}">
+                                                                        ?
+                                                                    </sup>
+                                                                    <span ng-if="field.required" class="required">*</span>:
+                                                                </label>
+                                                                <div class="input-group col-xs-12 col-md-8">
+                                                                    <input class="form-control"
+                                                                           type="number"
+                                                                           placeholder="Resultado"
+                                                                           @*ng-required="field.required"*@ />
+                                                                    <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                </div>
+                                                                <label class="col-md-4 element-ref"
+                                                                       ng-if="field.lowerLimit || field.upperLimit">
+                                                                    Rango: {{field.lowerLimit}} - {{field.upperLimit}}
+                                                                </label>
+                                                            </div>
+                                                            <div class="clearfix"></div>
+                                                        </div>
+                                                        <div ng-if="field.fieldTypeAux.code == 'Option'">
+                                                            <div class="form-group col-md-8">
+                                                                <label class="control-label col-xs-12 col-md-4">
+                                                                    {{field.tag}}
+                                                                    <sup ng-if="field.description"
+                                                                         uib-tooltip="{{field.description}}">
+                                                                        ?
+                                                                    </sup>
+                                                                    <span ng-if="field.required" class="required">*</span>:
+                                                                </label>
+                                                                <div class="input-group col-xs-12 col-md-8">
+                                                                    <select class="form-control"
+                                                                            ng-model="field.value"
+                                                                            @*ng-required="field.required"*@
+                                                                            ng-options="fo.value for fo in field.fieldOptionAux">
+                                                                        <option value="">Seleccione...</option>
+                                                                    </select>
+                                                                    <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="clearfix"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="NewElementModal" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Agregar elemento</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="FieldForm.$invalid && INMEDIKApp.FieldFormTouchedAndInvalid && INMEDIKApp.currentElementKind == 'field'">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="FieldForm.fieldName.$touched && FieldForm.fieldName.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                    <p ng-show="FieldForm.fieldUnit.$touched && FieldForm.fieldUnit.$error.required"><strong>Unidad</strong>: Campo obligatorio</p>
+                    <p ng-show="FieldForm.fieldType.$touched && FieldForm.fieldType.$error.required"><strong>Tipo de campo</strong>: Campo obligatorio</p>
+                </div>
+                <div class="alert alert-danger" ng-show="ModuleForm.$invalid && INMEDIKApp.ModuleFormTouchedAndInvalid && INMEDIKApp.currentElementKind == 'module'">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="ModuleForm.moduleName.$touched && ModuleForm.moduleName.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item active">
+                            <a ng-click="INMEDIKApp.currentElementKind = 'module';" class="nav-link active" id="module-tab" data-toggle="tab" href="#module" role="tab" aria-controls="module" aria-selected="true">Módulo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a ng-click="INMEDIKApp.currentElementKind = 'field';" class="nav-link" id="field-tab" data-toggle="tab" href="#field" role="tab" aria-controls="field" aria-selected="false">Campo</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade active in" id="module" role="tabpanel" aria-labelledby="module-tab">
+                            <form class="form-horizontal" name="ModuleForm" id="ModuleForm">
+                                <div ng-show="!INMEDIKApp.creatingModule">
+                                    <div class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.creatingModule = true;">Nuevo módulo</div>
+                                    <div class="clearfix"></div>
+                                    <div class="table-responsive">
+                                        <table id="TableModule" datatable dt-options="INMEDIKApp.dtOptionsMod" dt-columns="INMEDIKApp.dtColumnsMod" dt-instance="INMEDIKApp.InstanceCallbackMod" class="table-bordered compact"></table>
+                                    </div>
+                                </div>
+                                <div ng-show="INMEDIKApp.creatingModule">
+                                    <h4 ng-if="!INMEDIKApp.newElement.module.name">Nuevo módulo</h4>
+                                    <h4 ng-if="INMEDIKApp.newElement.module.name">{{INMEDIKApp.newElement.module.name}}</h4>
+                                    <div class="col-md-12">
+                                        <div class="form-group" ng-class="{'invalid-group': (ModuleForm.moduleName.$touched && ModuleForm.moduleName.$invalid)}">
+                                            <label class="control-label col-xs-12 col-md-2 no-padding-left">Nombre<span class="required">*</span>: </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <input class="form-control"
+                                                       type="text"
+                                                       required
+                                                       name="moduleName"
+                                                       id="moduleName"
+                                                       ng-text-change="INMEDIKApp.GetTouchedModule($event)"
+                                                       ng-blur="INMEDIKApp.GetTouchedModule($event)"
+                                                       ng-model="INMEDIKApp.newElement.module.name"
+                                                       placeholder="Nombre del módulo"
+                                                       maxlength="100" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="form-description" class="control-label col-xs-12 col-md-2 no-padding-left">Descripción: </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <textarea type="text" class="form-control" ng-model="INMEDIKApp.newElement.module.description" placeholder="Descripción" maxlength="500"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <div class="col-md-12">
+                                            <span class="btn btn-info btn-sm pull-left"
+                                                  ng-click="INMEDIKApp.showFields = !INMEDIKApp.showFields;">
+                                                <span ng-if="!INMEDIKApp.showFields">Agregar campos</span>
+                                                <span ng-if="INMEDIKApp.showFields">Ocultar campos</span>
+                                            </span>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <div ui-sortable="INMEDIKApp.sortableOptions" ng-model="INMEDIKApp.newElement.module.fieldList" class="fieldList-container">
+                                            <div ng-repeat="field in INMEDIKApp.newElement.module.fieldList">
+                                                <div ng-if="field.fieldTypeAux.code == 'Text'">
+                                                    <div class="form-group col-md-8">
+                                                        <label class="control-label col-xs-12 col-md-4">
+                                                            {{field.tag}}
+                                                            <sup ng-if="field.description"
+                                                                 uib-tooltip="{{field.description}}">
+                                                                ?
+                                                            </sup>
+                                                            <span ng-if="field.required" class="required">*</span>:
+                                                        </label>
+                                                        <div class="input-group col-xs-12 col-md-8">
+                                                            <input class="form-control"
+                                                                   type="text"
+                                                                   placeholder="Resultado"
+                                                                   @*ng-required="field.required"*@ />
+                                                            <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                        </div>
+                                                        <label class="col-md-4 element-ref"
+                                                               ng-if="field.reference">
+                                                            Referencia: {{field.reference}}
+                                                        </label>
+                                                    </div>
+                                                    <span>
+                                                        Requerido:
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               ng-model="field.required"
+                                                               style="height:20px; width:20px; margin-top:4px!important;" />
+                                                    </span>
+                                                    <span class="btn btn-sm btn-danger"
+                                                          ng-click="INMEDIKApp.removeField($index)">
+                                                        Borrar
+                                                    </span>
+                                                    <span class="sorting-handle">
+                                                        <i class="fa fa-arrows-alt-v"></i>
+                                                    </span>
+                                                    <div class="clearfix"></div>
+                                                </div>
+                                                <div ng-if="field.fieldTypeAux.code == 'Numeric'">
+                                                    <div class="form-group col-md-8">
+                                                        <label class="control-label col-xs-12 col-md-4">
+                                                            {{field.tag}}
+                                                            <sup ng-if="field.description"
+                                                                 uib-tooltip="{{field.description}}">
+                                                                ?
+                                                            </sup>
+                                                            <span ng-if="field.required" class="required">*</span>:
+                                                        </label>
+                                                        <div class="input-group col-xs-12 col-md-8">
+                                                            <input class="form-control"
+                                                                   type="number"
+                                                                   placeholder="Resultado"
+                                                                   @*ng-required="field.required"*@ />
+                                                            <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                        </div>
+                                                        <label class="col-md-4 element-ref"
+                                                               ng-if="field.lowerLimit || field.upperLimit">
+                                                            Rango: {{field.lowerLimit}} - {{field.upperLimit}}
+                                                        </label>
+                                                    </div>
+                                                    <span>
+                                                        Requerido:
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               ng-model="field.required"
+                                                               style="height:20px; width:20px; margin-top:4px!important;" />
+                                                    </span>
+                                                    <span class="btn btn-sm btn-danger"
+                                                          ng-click="INMEDIKApp.removeField($index)">
+                                                        Borrar
+                                                    </span>
+                                                    <span class="sorting-handle">
+                                                        <i class="fa fa-arrows-alt-v"></i>
+                                                    </span>
+                                                    <div class="clearfix"></div>
+                                                </div>
+                                                <div ng-if="field.fieldTypeAux.code == 'Option'">
+                                                    <div class="form-group col-md-8">
+                                                        <label class="control-label col-xs-12 col-md-4">
+                                                            {{field.tag}}
+                                                            <sup ng-if="field.description"
+                                                                 uib-tooltip="{{field.description}}">
+                                                                ?
+                                                            </sup>
+                                                            <span ng-if="field.required" class="required">*</span>:
+                                                        </label>
+                                                        <div class="input-group col-xs-12 col-md-8">
+                                                            <select class="form-control"
+                                                                    ng-model="field.value"
+                                                                    @*ng-required="field.required"*@
+                                                                    ng-options="fo.value for fo in field.fieldOptionAux">
+                                                                <option value="">Seleccione...</option>
+                                                            </select>
+                                                            <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span>
+                                                        Requerido:
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               ng-model="field.required"
+                                                               style="height:20px; width:20px; margin-top:4px!important;" />
+                                                    </span>
+                                                    <span class="btn btn-sm btn-danger"
+                                                          ng-click="INMEDIKApp.removeField($index)">
+                                                        Borrar
+                                                    </span>
+                                                    <span class="sorting-handle">
+                                                        <i class="fa fa-arrows-alt-v"></i>
+                                                    </span>
+                                                    <div class="clearfix"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="btn btn-default pull-right" ng-click="INMEDIKApp.ResetModule();">Cancelar</div>
+                                        <div class="btn btn-default pull-right"
+                                             ng-click="INMEDIKApp.SaveModule()"
+                                             ng-disabled="(INMEDIKApp.currentElementKind=='module' && ModuleForm.$invalid) || INMEDIKApp.newElement.module.fieldList.length < 1 || INMEDIKApp.submittingElement">
+                                            Guardar
+                                        </div>
+                                    </div>
+                                    <div class="clearfix"></div>
+                                    <div ng-show="INMEDIKApp.showFields" class="table-responsive">
+                                        <table id="TableModuleField" datatable dt-options="INMEDIKApp.dtOptionsMField" dt-columns="INMEDIKApp.dtColumnsMField" dt-instance="INMEDIKApp.InstanceCallbackMField" class="table-bordered table-condensed compact"></table>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="field" role="tabpanel" aria-labelledby="field-tab">
+                            <form class="form-horizontal" name="FieldForm" id="FieldForm">
+                                <div ng-show="!INMEDIKApp.creatingField">
+                                    <div class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.creatingField = true;">Nuevo campo</div>
+                                    <div class="clearfix"></div>
+                                    <div class="table-responsive">
+                                        <table id="TableField" datatable dt-options="INMEDIKApp.dtOptionsField" dt-columns="INMEDIKApp.dtColumnsField" dt-instance="INMEDIKApp.InstanceCallbackField" class="table-bordered compact"></table>
+                                    </div>
+                                </div>
+                                <div ng-show="INMEDIKApp.creatingField">
+                                    <h4 ng-if="!INMEDIKApp.newElement.field.tag">Nuevo campo</h4>
+                                    <h4 ng-if="INMEDIKApp.newElement.field.tag">{{INMEDIKApp.newElement.field.tag}}</h4>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group" ng-class="{'invalid-group': (FieldForm.fieldName.$touched && FieldForm.fieldName.$invalid)}">
+                                            <label class="control-label col-xs-12 col-md-2 no-padding-left">Nombre<span class="required">*</span>: </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <input class="form-control"
+                                                       type="text"
+                                                       name="fieldName"
+                                                       id="fieldName"
+                                                       required
+                                                       ng-text-change="INMEDIKApp.GetTouchedField($event)"
+                                                       ng-blur="INMEDIKApp.GetTouchedField($event)"
+                                                       ng-model="INMEDIKApp.newElement.field.tag"
+                                                       placeholder="Nombre del campo"
+                                                       maxlength="50" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="form-description" class="control-label col-xs-12 col-md-2 no-padding-left">Descripción: </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <textarea type="text" class="form-control" ng-model="INMEDIKApp.newElement.field.description" placeholder="Descripción" maxlength="500"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                Unidad
+                                                <sup uib-tooltip="mL, mg, L, etc...">
+                                                    ?
+                                                </sup>:
+                                            </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <input class="form-control"
+                                                       name="fieldUnit"
+                                                       id="fieldUnit"
+                                                       type="text"
+                                                       ng-model="INMEDIKApp.newElement.field.unit"
+                                                       placeholder="Unidad"
+                                                       maxlength="50" />
+                                            </div>
+                                        </div>
+                                        @*<div class="form-check">
+                                                <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                    Campo requerido
+                                                    <sup uib-tooltip="Si el campo es obligatorio o no">
+                                                        ?
+                                                    </sup>:
+                                                </label>
+                                                <div class="col-xs-12 col-md-9">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           ng-model="INMEDIKApp.newElement.field.required"
+                                                           style="height:20px; width:20px; margin-top:4px!important;" />
+                                                </div>
+                                            </div>*@
+                                        <div class="form-group" ng-class="{'invalid-group': (FieldForm.fieldType.$touched && FieldForm.fieldType.$invalid)}">
+                                            <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                Tipo de campo<span class="required">*</span>:
+                                            </label>
+                                            <div class="col-xs-12 col-md-9">
+                                                <select class="form-control"
+                                                        name="fieldType"
+                                                        id="fieldType"
+                                                        ng-text-change="INMEDIKApp.GetTouchedField($event)"
+                                                        ng-blur="INMEDIKApp.GetTouchedField($event)"
+                                                        ng-model="INMEDIKApp.newElement.field.fieldTypeAux"
+                                                        ng-options="f.name for f in INMEDIKApp.fieldTypes track by f.id"
+                                                        required>
+                                                    <option value="">Seleccione...</option>
+                                                </select>
+                                            </div>
+                                            <span class="col-xs-12 col-md-offset-2 col-md-9">
+                                                {{INMEDIKApp.newElement.field.fieldTypeAux.description}}
+                                            </span>
+                                        </div>
+                                        <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Text'">
+                                            <div class="form-group">
+                                                <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                    Referencia
+                                                    <sup uib-tooltip="La referencia determina la validación del campo en el exámen, si no hay referencia el campo es libre y no se valida.">
+                                                        ?
+                                                    </sup>:
+                                                </label>
+                                                <div class="col-xs-12 col-md-9">
+                                                    <input class="form-control"
+                                                           type="text"
+                                                           ng-model="INMEDIKApp.newElement.field.reference"
+                                                           placeholder="Referencia"
+                                                           maxlength="100" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Numeric'">
+                                            <div class="form-group">
+                                                <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                    Rango de valores
+                                                    <sup uib-tooltip="Sirve para validar el valor ingresado en el campo, si no se llenan estos campos el valor no se validará en el exámen.">
+                                                        ?
+                                                    </sup>:
+                                                </label>
+                                                <div class="col-xs-12 col-md-9">
+                                                    <input class="form-control"
+                                                           type="number"
+                                                           ng-model="INMEDIKApp.newElement.field.lowerLimit"
+                                                           placeholder="Límite inferior"
+                                                           maxlength="22" />
+                                                </div>
+                                                <div class="col-xs-12 col-md-offset-2 col-md-9">
+                                                    <input class="form-control"
+                                                           type="number"
+                                                           ng-model="INMEDIKApp.newElement.field.upperLimit"
+                                                           placeholder="Límite superior"
+                                                           maxlength="22" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div ng-show="INMEDIKApp.newElement.field.fieldTypeAux.code=='Option'">
+                                            <div class="form-group">
+                                                <label class="control-label col-xs-12 col-md-2 no-padding-left">
+                                                    Opciones
+                                                    <sup uib-tooltip="Opciones disponibles para responder este campo en el exámen.">
+                                                        ?
+                                                    </sup>:
+                                                </label>
+                                                <span class="btn btn-info btn-xs col-xs-12 col-md-2"
+                                                      ng-click="INMEDIKApp.newElement.field.fieldOptionAux.push({});">
+                                                    <span>Agregar opción</span>
+                                                </span>
+                                                <div class="col-md-offset-6 col-md-2"></div>
+                                                <div class="clearfix"></div>
+                                                <div class="col-md-offset-2 col-md-10 no-padding-left">
+                                                    <div ng-repeat="fieldOption in INMEDIKApp.newElement.field.fieldOptionAux" class="no-padding-left col-xs-6 col-md-3">
+                                                        <div class="input-group">
+                                                            <input class="form-control"
+                                                                   type="text"
+                                                                   ng-model="fieldOption.value"
+                                                                   placeholder="Valor"
+                                                                   maxlength="100" />
+                                                            <span class="input-group-btn">
+                                                                <button ng-click="INMEDIKApp.removeOption($index)" class="btn btn-danger" type="button">
+                                                                    Borrar
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="btn btn-default pull-right" ng-click="INMEDIKApp.ResetField()">Cancelar</div>
+                                        <div class="btn btn-default pull-right"
+                                             ng-click="INMEDIKApp.SaveField()"
+                                             ng-disabled="(INMEDIKApp.currentElementKind=='field' && FieldForm.$invalid) || INMEDIKApp.submittingElement">Guardar</div>
+                                    </div>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </form>
+                        </div>
+                    </div>
+                    <hr />
+                </div>
+                <div class="modal-footer">
+                    @*<button type="button" class="btn btn-default" data-dismiss="modal" ng-click="INMEDIKApp.AddElement()"
+                                ng-disabled="(INMEDIKApp.currentElementKind=='field' && FieldForm.$invalid) || (INMEDIKApp.currentElementKind=='module' && ModuleForm.$invalid) || INMEDIKApp.submittingElement">
+                            Agregar
+                        </button>*@
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

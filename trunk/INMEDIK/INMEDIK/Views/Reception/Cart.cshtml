@@ -1,0 +1,265 @@
+﻿<div class="form-horizontal" id="Cart">
+    <div class="form-group">
+        <label class="control-label col-sm-3">Paciente:</label>
+        <div class="col-sm-9">
+            <input class="form-control" @*ng-class="INMEDIKApp.Cart.Patient.id != undefined ? 'form-control-success' : 'form-control-danger'"*@
+                   value="{{INMEDIKApp.Cart.Patient.personAux.fullName}}" readonly />
+        </div>
+    </div>
+    <hr />
+    <div ng-if="INMEDIKApp.Cart.Concepts.length > 0">
+        <div class="form-group">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                        <td class="text-center">Concepto</td>
+                        <td class="text-center">Cantidad</td>
+                        <td class="text-center">Total</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="concept in INMEDIKApp.Cart.Concepts">
+                        <td class="text-center">{{concept.name}}</td>
+                        <td class="text-center">{{concept.quantity}}</td>
+                        <td class="text-center">{{INMEDIKApp.Ut_numberWithCommas(concept.total)}}</td>
+                        <td>
+                            <button ng-if="INMEDIKApp.isReception" ng-click="INMEDIKApp.Cart.Concepts.splice($index,1); INMEDIKApp.setOrderTotal(); INMEDIKApp.UpdateTemporalCart(); INMEDIKApp.UpdatePromotions();" class="btn btn-danger btn-xs col-xs-12"><i class="fa fa-times" aria-hidden="true"></i></button>
+                        </td>
+                    </tr>
+                    @*<tr><td colspan="4">{{INMEDIKApp.Cart.Concepts}}</td></tr>*@
+                </tbody>
+            </table>
+        </div>
+        <div class="form-group" ng-if="INMEDIKApp.Cart.PromotionsApp.length > 0">
+            <span>Promociones aplicadas: </span>
+            <div style="font-size:12px;">
+                <table class="table table-condensed table-bordered table-hover table-responsive">
+                    <thead>
+                        <tr>
+                            <th>
+                                Nombre
+                            </th>
+                            <th>
+                                Ahorro
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="promotion in INMEDIKApp.Cart.PromotionsApp">
+                            <td>{{promotion.name}}</td>
+                            <td style="text-align:center">
+                                {{INMEDIKApp.Ut_numberWithCommas(promotion.savedAmount)}}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td style="padding: 10px 18px!important;"><strong>Total</strong></td>
+                            <td style="padding: 10px 18px!important; text-align:center;">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.SavedTotal)}}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+        <hr />
+        <div class="form-group">
+            <label class="control-label col-sm-3">Total Comisión:</label>
+            <div class="col-sm-3">
+                <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.Commission)}}" readonly />
+            </div>
+            <label class="control-label col-sm-3">Redondeo:</label>
+            <div class="col-sm-3">
+                <input ng-if="INMEDIKApp.Cart.Order.DoYouWantToRound == 'true'" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.Rounding)}}" readonly />
+                <input ng-if="INMEDIKApp.Cart.Order.DoYouWantToRound == 'false'" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas('0.00')}}" readonly />
+            </div>
+            <div class="clearfix"></div>
+            <label class="control-label col-sm-3">Donacion:</label>
+            <div class="col-sm-3">
+                <input ng-if="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate == 'true'" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.donationAux.Amount)}}" readonly />
+                <input ng-if="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate == 'false'" class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas('0.00')}}" readonly />
+            </div>
+            <label class="control-label col-sm-3">Sub Total:</label>
+            <div class="col-sm-3">
+                <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.SubTotal)}}" readonly />
+            </div>
+            <div class="clearfix"></div>
+            <label class="control-label col-sm-3">Iva Total:</label>
+            <div class="col-sm-3">
+                <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.Iva)}}" readonly />
+            </div>
+            <label class="control-label col-sm-3">Total:</label>
+            <div class="col-sm-3">
+                <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.TotalOrder) == '$NaN'?  INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.SubTotal + INMEDIKApp.Cart.Order.Iva): INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.TotalOrder)}}" readonly />
+            </div>
+            <label class="control-label col-sm-3">Total Pago:</label>
+            <div class="col-sm-3">
+                <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.TotalPayed)}}" readonly />
+            </div>
+            <div>
+                <label class="control-label col-sm-3">Cambio:</label>
+                <div class="col-sm-3">
+                    <input class="form-control" ng-class="INMEDIKApp.Cart.Order.Change >= 0 ? 'form-control-success' : 'form-control-danger'"
+                           value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.Change) != '$NaN'? INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.Order.Change): INMEDIKApp.Ut_numberWithCommas(0) }}" readonly />
+                </div>
+            </div>
+            <div ng-if="!INMEDIKApp.isReception">
+                <label class="control-label col-sm-3">Pendiente:</label>
+                <div class="col-sm-3">
+                    <input class="form-control"
+                           value="{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Cart.pendingPayment)}}" readonly />
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            @*<div ng-if="INMEDIKApp.isReception && INMEDIKApp.hasConsults">
+                    <label for="canPayLater" class="control-label col-md-3">Paga al finalizar: </label>
+                    <div class="col-md-7">
+                        <input style="width:20px; height:20px;" type="checkbox" ng-change="INMEDIKApp.PayingLater()" ng-model="INMEDIKApp.CanPayLater" id="canPayLater" name="canPayLater">
+                    </div>
+                </div>*@
+            <label class="control-label col-sm-3">Agregar tipo de pago: </label>
+            <div class="col-sm-9">
+                <select class="form-control" ng-change="INMEDIKApp.AddPaymentType(); INMEDIKApp.setOrderTotal();"
+                        ng-model="INMEDIKApp.PaymentTypeSelected" ng-options="ct.Name for ct in INMEDIKApp.PaymentTypes track by ct.id"
+                        required>
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+            <div class="clearfix"></div>
+            <form id="form_payment" name="form_payment">
+                <table class="table table-bordered table-hover table-responsive">
+                    <tbody>
+                        <tr ng-repeat="payment in INMEDIKApp.Cart.prevPayments">
+                            <td>{{payment.PaymentTypeName}}</td>
+                            <td colspan="{{(payment.PaymentTypeName == 'Tarjeta' ? 1 : 2)}}">
+          
+                                <input readonly min="0" class="form-control" ng-model="payment.Amount" required type="number" ng-change="INMEDIKApp.setOrderTotal();">
+                            </td>
+                            <td ng-if="payment.PaymentTypeName == 'Tarjeta'">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon3">Comisión</span>
+                                    <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(payment.Commission)}}" readonly>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr ng-repeat="payment in INMEDIKApp.Cart.Payments">
+                            <td>{{payment.PaymentTypeName}}</td>
+                            <td colspan="{{(payment.PaymentTypeName == 'Tarjeta' ? 1 : 3)}}">
+                                @*<input class="form-control" ng-model="payment.Amount" required type="number" ng-pattern="/^[0-9]+(\.[0-9]{1,2})?$/" ng-change="INMEDIKApp.setOrderTotal();">*@
+             
+                                <input ng-if="payment.PaymentTypeName == 'Tarjeta'" max="{{payment.FixedChange}}" min="0.00" class="form-control" ng-model="payment.Amount" required type="number" ng-pattern="/^[0-9]+(\.[0-9]{1,2})?$/" ng-change="INMEDIKApp.setOrderTotal();">
+                                <input ng-if="payment.PaymentTypeName != 'Tarjeta'" min="0.00" class="form-control" ng-model="payment.Amount" required type="number" ng-pattern="/^[0-9]+(\.[0-9]{1,2})?$/" ng-change="INMEDIKApp.setOrderTotal();">
+                               
+                            </td>
+                            <td ng-if="payment.PaymentTypeName == 'Tarjeta'">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon3">Comisión</span>
+                                    <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(payment.Commission) == '$NaN' ? INMEDIKApp.Ut_numberWithCommas(0): INMEDIKApp.Ut_numberWithCommas(payment.Commission) }}" readonly>
+                                </div>
+                            </td>
+                            <td ng-if="payment.PaymentTypeName == 'Tarjeta'">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon3">Pago</span>
+                                    <input class="form-control" value="{{INMEDIKApp.Ut_numberWithCommas(payment.Amount*1+payment.Commission*1)}}" readonly>
+                                </div>
+                            </td>
+                            <td ng-if="payment.PaymentTypeName == 'Tarjeta'">
+                                <div class="input-group">
+                                    <input required class="form-control" type="text" ng-model="payment.NumOperation" placeholder="Num. voucher" maxlength="20" title="Número de voucher" />
+                                </div>
+                            </td>
+                            <td><span ng-click="INMEDIKApp.Cart.Payments.splice($index,1); INMEDIKApp.setOrderTotal();" class="btn btn-danger btn-xs col-xs-12"><i class="fa fa-times" aria-hidden="true"></i></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+            <div class="clearfix"></div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-12">
+                <div class="progress progress-striped active" ng-if="INMEDIKApp.Paying">
+                    <div class="progress-bar" style="width: 100%;">
+                    </div>
+                </div>
+                <input type="button" class="btn btn-default pull-right" value="Pagar" data-toggle="modal" data-target="#PrePayModal"
+                       ng-disabled="!INMEDIKApp.CanPay || form_payment.$invalid" ng-if="!INMEDIKApp.Paying">
+                @*<input type="button" class="btn btn-default pull-right" value="Pagar" data-toggle="modal" data-target="#PrePayModal"
+                       ng-disabled="!INMEDIKApp.CanPay">*@
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="PrePayModal" class="modal modal-primary fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Importante</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                    <div class="form-group col-xs-12">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <label>Desea redondear</label>
+                            </span>
+                            <div class="btn-group-justified radioBtn text-center" style="border: #eeeeee solid 1px;">
+                                <a class="btn btn-radio btn-sm" style="border-radius: 0px; padding: 7px 10px;" value="true"
+                                   ng-model="INMEDIKApp.Cart.Order.DoYouWantToRound"
+                                   ng-click="INMEDIKApp.Cart.Order.DoYouWantToRound = 'true'; INMEDIKApp.setOrderTotal();"
+                                   ng-class="INMEDIKApp.Cart.Order.DoYouWantToRound == 'true'? 'active':''">Si</a>
+
+                                <a class="btn btn-radio btn-sm" style="border-radius: 0px; padding: 7px 10px;" value="false"
+                                   ng-model="INMEDIKApp.Cart.Order.DoYouWantToRound"
+                                   ng-click="INMEDIKApp.Cart.Order.DoYouWantToRound = 'false'; INMEDIKApp.setOrderTotal();"
+                                   ng-class="INMEDIKApp.Cart.Order.DoYouWantToRound == 'false'? 'active':''">No</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-12" ng-if="INMEDIKApp.Parameters.AllowDonations && INMEDIKApp.isReception && INMEDIKApp.Cart.TotalOrder <= INMEDIKApp.Cart.Order.TotalPayed">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <label>Desea donar</label>
+                            </span>
+                            <div class="btn-group-justified radioBtn text-center" style="border: #eeeeee solid 1px;">
+                                <a class="btn btn-radio btn-sm" style="border-radius: 0px; padding: 7px 10px;" value="true"
+                                   ng-model="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate"
+                                   ng-click="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate = 'true'; INMEDIKApp.setOrderTotal();"
+                                   ng-class="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate == 'true'? 'active':''">Si</a>
+
+                                <a class="btn btn-radio btn-sm" style="border-radius: 0px; padding: 7px 10px;" value="false"
+                                   ng-model="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate"
+                                   ng-click="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate = 'false'; INMEDIKApp.setOrderTotal();"
+                                   ng-class="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate == 'false'? 'active':''">No</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-12" ng-if="INMEDIKApp.Cart.Order.donationAux.DoYouWantToDonate == 'true'">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <label>Cantidad a donar: $</label>
+                            </span>
+                            <div class="btn-group-justified">
+                                <input type="number" class="form-control col-xs-12"
+                                       min="{{INMEDIKApp.Parameters.minDonation}}"
+                                       ng-model="INMEDIKApp.Cart.Order.donationAux.Amount"
+                                       ng-change="INMEDIKApp.setOrderTotal();" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button ng-if="!INMEDIKApp.CanPay" type="button" class="btn btn-default" data-dismiss="modal">Continuar</button>
+                <button ng-if="INMEDIKApp.CanPay" type="button" class="btn btn-default" data-dismiss="modal" ng-disabled="INMEDIKApp.Paying" onclick="$('#PrePayModal').modal('hide');" ng-click="INMEDIKApp.saveOrder();">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+

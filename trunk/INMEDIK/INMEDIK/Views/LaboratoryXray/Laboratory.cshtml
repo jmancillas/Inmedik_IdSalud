@@ -1,0 +1,814 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        select.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .table-5px tbody > tr > td {
+            padding-top: 5px !important;
+            padding-bottom: 5px !important;
+        }
+
+        .forms-container .control-label {
+            text-align: left !important;
+        }
+
+        .sorting-handle {
+            cursor: move;
+            padding: 15px;
+        }
+
+        .element-ref {
+            color: #565353;
+        }
+
+        .field-element:hover {
+            background-color: #e4f3ff;
+        }
+
+        .reference-alert {
+            color: #dca13b;
+            font-weight: bold;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/sortable.js"></script>
+    <script src="~/Scripts/pdfmake/pdfmake.js"></script>
+    <script src="~/Scripts/pdfmake/vfs_fonts.js"></script>
+    <script type="text/javascript" src="~/Scripts/pdfmake/formulariolab.js"></script>
+
+    <script type="text/javascript">
+
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker', 'datatables', 'ui.sortable']);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.labDetail = false;
+            dt.subbmiting = false;
+            dt.tabClicked = "Consult";
+            dt.DetailObj = {};
+            dt.FileToDelete = {};
+            dt.errors = [];
+            dt.forms = [];
+            dt.TrForFiles = [];
+            dt.Files2Upload = [];
+            dt.regularExpretions = Ut_getRegularExpretions();
+            dt.Lists = {};
+            dt.isAdmin = '@ViewBag.Rol' == "Admin";
+            dt.Lists.Status = JSON.parse('@Html.Raw(ViewBag.Status)');
+            dt.StatTerm = dt.Lists.Status.filter(function (item) { return item.Name == "Terminado"; })[0];
+
+            dt.AddTest = function () {
+                $("#detailModal").modal('show');
+            };
+            dt.removeForm = function ($index) {
+                dt.forms.splice($index, 1);
+            };
+            dt.printform = function ($index) {
+                PrintFormjs(dt.forms[$index]);
+            }
+
+            dt.sortableOptions = {
+                handle: '.sorting-handle'
+            };
+
+            dt.AddForm = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetForm", "LaboratoryXray")',
+                    data: { id: id },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        var datosPersonales = {
+                            field: null,
+                            module: {
+                                description: 'Datos personales del paciente',
+                                name: 'Datos personales',
+                                id: 0,
+                                fieldList: [{
+                                    
+                                    id: 0,
+                                    tag: 'Nombre',
+                                    description: 'Nombre del paciente',
+                                    value: dt.DetailObj.ExamAux.PatientAux.personAux.fullName,
+                                    //disabled: true,
+                                    fieldTypeId: 1,
+                                    fieldTypeAux: {
+                                        id: 1,
+                                        code: "Text",
+                                        name: 'Texto',
+                                        description: 'Texto libre'
+                                    }
+                                },
+                                {
+                                    id: 1,
+                                    tag: 'Edad',
+                                    description: 'Edad del paciente',
+                                    value: dt.DetailObj.Age,
+                                    //disabled: true,
+                                  
+                                    fieldTypeId: 1,
+                                    fieldTypeAux: {
+                                        id: 1,
+                                        code: "Text",
+                                        name: 'Texto',
+                                        description: 'Texto libre'
+                                    }
+                                },
+                                {
+                                    id: 2,
+                                    tag: 'Fecha',
+                                    description: 'Fecha del estudio',
+                                    fieldTypeId: 1,
+                                    fieldTypeAux: {
+                                        id: 1,
+                                        code: "Text",
+                                        name: 'Texto',
+                                        description: 'Texto libre'
+                                    }
+                                },
+                                {
+                                    id: 3,
+                                    tag: 'Médico',
+                                    description: 'Nombre del doctor',
+                                    value: dt.DetailObj.ExamAux.MedicAux.personAux.fullName,
+                                    fieldTypeId: 1,
+                                    fieldTypeAux: {
+                                        id: 1,
+                                        code: "Text",
+                                        name: 'Texto',
+                                        description: 'Texto libre'
+                                    }
+                                }
+                                ]
+                            }
+                        }
+                        var nuevoElementList = [];
+                        nuevoElementList.push(datosPersonales);
+                        res.data.data.elementList = nuevoElementList.concat(res.data.data.elementList);
+                        dt.forms.push(res.data.data);
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.submittingForm = false;
+                });
+            };
+            dt.OpenConfiguration = function () {
+                window.location.href = "@Url.Action("Index", "TestConfiguration")";
+            }
+            dt.LoadDetail = function (id) {
+                mostrarPantallaCarga();
+                dt.forms = [];
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetLaboratoryById", "LaboratoryXray")',
+                    data: { id: id },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.DetailObj = res.data.data;
+                        if (dt.DetailObj.formDataAux.JsonString != null && dt.DetailObj.formDataAux.JsonString.length > 0) {
+                            dt.forms = JSON.parse(dt.DetailObj.formDataAux.JsonString);
+                        };
+                        dt.isFinishedByLoad = (dt.DetailObj.StatusId == dt.StatTerm.id);
+                        dt.isFinished = dt.isFinishedByLoad;
+                        dt.Files2Upload = [];
+                        dt.TrForFiles = [];
+                        dt.labDetail = true;
+                        //$("#detailModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            }
+            /*------------------------------------------------------------------------------------------------------*/
+            dt.SaveObj = function () {
+                mostrarPantallaCarga();
+                dt.DetailObj.formDataAux.JsonString = JSON.stringify(dt.forms);
+                if (dt.isFinished) {
+                    dt.DetailObj.StatusId = dt.StatTerm.id;
+                }
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveLaboratory", "LaboratoryXray")',
+                    data: dt.DetailObj,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+
+                        dt.dtInstance.reloadData();
+
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                    quitarPantallaCarga();
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                });
+            }
+            /*-------------------------------------------Table-----------------------------------------------*/
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetExamByDepartment", "LaboratoryXray")",
+                    data: function (d) {
+                        d.ExamDepartment = 'LAB';
+                    }
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('infoCallback', function (settings) {
+                })
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @*Funciones de las columnas*@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            function detalleBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadDetail(' + data + ')" class="btn btn-info btn-xs">Detalle</button></div>';
+            }
+
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+
+                DTColumnBuilder.newColumn("MedicName").withTitle("Medico"),
+                DTColumnBuilder.newColumn("PatientName").withTitle("Paciente"),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Fecha"),
+                DTColumnBuilder.newColumn("StatusName").withTitle("Terminado"),
+                DTColumnBuilder.newColumn("ConceptName").withTitle("Concepto"),
+                DTColumnBuilder.newColumn("id").withTitle("Detalle").renderWith(detalleBtn).withClass('notSearchable text-center').notSortable(),
+
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END Table-----------------------------------------------*/
+
+            /*-------------------------------------------TemplatesTable-----------------------------------------------*/
+            dt.dtOptionsForm = DTOptionsBuilder.newOptions()
+               .withOption("ajax", {
+                   dataType: "json",
+                   type: "POST",
+                   url: "@Url.Action("GetForms", "LaboratoryXray")",
+               })
+           .withDataProp("data")
+           .withPaginationType('full_numbers')
+           .withOption('infoCallback', function (settings) {
+           })
+           .withOption('createdRow', createdRow)
+           .withOption('serverSide', true)
+           .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+           .withLanguage({
+               "sEmptyTable": "No existen registros",
+               "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+               "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+               "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+               "sInfoPostFix": "",
+               "sInfoThousands": ",",
+               "sLengthMenu": "Mostrando _MENU_ entradas",
+               "sLoadingRecords": "Cargando...",
+               "sProcessing": "Procesando...",
+               "sSearch": "Buscar:",
+               "sZeroRecords": "No se encontraron registros",
+               "oPaginate": {
+                   "sFirst": "Primero",
+                   "sLast": "Ultimo",
+                   "sNext": "Siguiente",
+                   "sPrevious": "Anterior"
+               },
+               "oAria": {
+                   "sSortAscending": ": ascendiente",
+                   "sSortDescending": ": descendiente"
+               }
+           });
+            function detalleBtnForm(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" style="width:70px!important;" ng-click="INMEDIKApp.AddForm(' + data + ')" class="btn btn-default btn-sm">Agregar</button>' +
+                '</div>';
+            }
+
+
+            dt.dtColumnsForm = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("description").withTitle("Descripción"),
+                DTColumnBuilder.newColumn("id").withTitle("Detalle").renderWith(detalleBtnForm).withClass('notSearchable text-center').notSortable(),
+            ];
+            dt.InstanceCallbackForm = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceForm = instance;
+                var id = '#' + dt.dtInstanceForm.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceForm.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END TemplatesTable-----------------------------------------------*/
+            dt.numberWithCommas = function (n) {
+                return Ut_numberWithCommas(n);
+            }
+
+            function init() {
+            }
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Laboratorio
+            <button ng-if="!INMEDIKApp.labDetail && INMEDIKApp.isAdmin" class="btn btn-success btn-xs pull-right" ng-click="INMEDIKApp.OpenConfiguration()">
+                <span>Configurar exámenes</span>
+            </button>
+            <button ng-if="INMEDIKApp.labDetail" ng-click="INMEDIKApp.labDetail = false;"
+                    class="pull-right btn btn-default btn-xs">
+                Regresar
+            </button>
+            <button ng-if="INMEDIKApp.labDetail"
+                    class="btn btn-success btn-xs pull-right"
+                    ng-disabled="FormTest.$invalid-required"
+                    ng-click="INMEDIKApp.SaveObj()">
+                <span>Guardar</span>
+            </button>
+        </div>
+        <div ng-if="!INMEDIKApp.labDetail" class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="Table" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+        <div ng-show="INMEDIKApp.labDetail" class="col-md-12">
+
+            <div class="clearfix"></div>
+            @Html.Partial("~/Views/LaboratoryXray/TemplateDetail.cshtml")
+            <hr />
+            <div class="clearfix"></div>
+            <div class="form-group text-center bg-primary">
+                <label class="col-xs-12">Favor de no marcar estudio como terminado si hay estudios pendientes por realizar o subir resultados.</label>
+            </div>
+            <div class="form-group">
+                <label class="col-xs-12 col-md-1">Terminar</label>
+                <input type="checkbox"
+                       style="height:20px; width:20px;"
+                       ng-model="INMEDIKApp.isFinished"
+                       ng-disabled="INMEDIKApp.isFinishedByLoad" />
+
+            </div>
+
+            <form id="FormTest" name="FormTest" class="form-horizontal">
+                <span ng-click="INMEDIKApp.AddTest()"
+                      class="btn btn-sm btn-info">Agregar examen</span>
+                <div ui-sortable="INMEDIKApp.sortableOptions" ng-model="INMEDIKApp.forms" class="forms-container">
+                    <div ng-repeat="form in INMEDIKApp.forms" class="form-container">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                {{form.name}}                                 <span class="pull-right">
+                                    <span ng-click="INMEDIKApp.printform($index)"
+                                          class="btn btn-xs btn-info">
+                                        Imprimir
+                                    </span>
+                                    <span class="btn btn-xs btn-danger"
+                                          ng-click="INMEDIKApp.removeForm($index)">
+                                        Borrar
+                                    </span>
+                                    <span class="sorting-handle">
+                                        <i class="fa fa-arrows-alt-v"></i>
+                                    </span>
+                                </span>
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <span class="col-md-12">{{form.description}}</span>
+                            <div class="clearfix"></div>
+                            <div class="form-content-section col-md-12">
+                                <div class="clearfix"></div>
+
+                                <div ng-repeat="element in form.elementList">
+                                    <div class="row">
+                                        <div class="field-element" ng-if="element.field.id != undefined">
+                                            <div ng-if="element.field.fieldTypeAux.code == 'Text'">
+                                                <div class="form-group col-md-8">
+                                                    <label class="control-label col-xs-12 col-md-4">
+                                                        {{element.field.tag}}
+                                                        <sup ng-if="element.field.description"
+                                                             uib-tooltip="{{element.field.description}}">
+                                                            ?
+                                                        </sup>
+                                                        <span ng-if="element.field.required" class="required">*</span>:
+                                                    </label>
+                                                    <div class="input-group col-xs-12 col-md-8">
+                                                        <input class="form-control"
+                                                               type="text"
+                                                               placeholder="Resultado"
+                                                               ng-model="element.field.value"
+                                                               ng-required="element.field.required"
+                                                               
+                                                              />
+                                                       
+                                                        <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                    </div>
+                                                    <div ng-if="element.field.reference">
+                                                        <label class="col-md-4 element-ref">
+                                                            Referencia: {{element.field.reference}}
+                                                        </label>
+                                                        <span ng-if="element.field.reference != element.field.value"
+                                                              class="col-md-8 reference-alert">
+                                                            Valor no coincide con referencia!
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div ng-if="element.field.fieldTypeAux.code == 'Numeric'">
+                                                <div class="form-group col-md-8">
+                                                    <label class="control-label col-xs-12 col-md-4">
+                                                        {{element.field.tag}}
+                                                        <sup ng-if="element.field.description"
+                                                             uib-tooltip="{{element.field.description}}">
+                                                            ?
+                                                        </sup>
+                                                        <span ng-if="element.field.required" class="required">*</span>:
+                                                    </label>
+                                                    <div class="input-group col-xs-12 col-md-8">
+                                                        <input class="form-control"
+                                                               type="number"
+                                                               placeholder="Resultado"
+                                                               ng-model="element.field.value"
+                                                               ng-required="element.field.required" />
+                                                        <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                    </div>
+                                                    <div ng-if="element.field.lowerLimit || element.field.upperLimit">
+                                                        <label class="col-md-4 element-ref">
+                                                            Rango: {{element.field.lowerLimit}} - {{element.field.upperLimit}}
+                                                        </label>
+                                                        <span ng-if="(element.field.lowerLimit && element.field.value < element.field.lowerLimit) || (element.field.value > element.field.upperLimit && element.field.upperLimit)"
+                                                              class="col-md-8 reference-alert">
+                                                            Valor fuera de rango!
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div ng-if="element.field.fieldTypeAux.code == 'Option'">
+                                                <div class="form-group col-md-8">
+                                                    <label class="control-label col-xs-12 col-md-4">
+                                                        {{element.field.tag}}
+                                                        <sup ng-if="element.field.description"
+                                                             uib-tooltip="{{element.field.description}}">
+                                                            ?
+                                                        </sup>
+                                                        <span ng-if="element.field.required" class="required">*</span>:
+                                                    </label>
+                                                    <div class="input-group col-xs-12 col-md-8">
+                                                        <select class="form-control"
+                                                                ng-model="element.field.value"
+                                                                ng-required="element.field.required"
+                                                                ng-options="fo.value for fo in element.field.fieldOptionAux">
+                                                            <option value="">Seleccione...</option>
+                                                        </select>
+                                                        <span ng-if="element.field.unit" class="input-group-addon">{{element.field.unit}}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="clearfix"></div>
+                                            </div>
+                                        </div>
+                                        <div style="padding:5px;" ng-if="element.module.id != undefined">
+                                            <div class="panel panel-default">
+                                                <div class="panel-heading">
+                                                    {{element.module.name}}
+
+                                                </div>
+                                                <div class="panel-body">
+                                                    <span ng-if="element.module.description.length > 0">{{element.module.description}}</span>
+                                                    <div class="fieldList-container">
+                                                        <div class="field-element" ng-repeat="field in element.module.fieldList">
+                                                            <div ng-if="field.fieldTypeAux.code == 'Text'">
+                                                                <div class="form-group col-md-8">
+                                                                    <label class="control-label col-xs-12 col-md-4">
+                                                                        {{field.tag}}
+                                                                        <sup ng-if="field.description"
+                                                                             uib-tooltip="{{field.description}}">
+                                                                            ?
+                                                                        </sup>
+                                                                        <span ng-if="field.required" class="required">*</span>:
+                                                                    </label>
+                                                                    <div class="input-group col-xs-12 col-md-8">
+                                                                        <input class="form-control"
+                                                                               type="text"
+                                                                               ng-model="field.value"
+                                                                               placeholder="Resultado"
+                                                                               ng-required="field.required"
+                                                                               ng-readonly="field.disabled == true" />
+                                                                        <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                    </div>
+                                                                    <div ng-if="field.reference">
+                                                                        <label class="col-md-4 element-ref">
+                                                                            Referencia: {{field.reference}}
+                                                                        </label>
+                                                                        <span ng-if="field.reference != field.value"
+                                                                              class="col-md-8 reference-alert">
+                                                                            Valor no coincide con referencia!
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="clearfix"></div>
+                                                            </div>
+                                                            <div ng-if="field.fieldTypeAux.code == 'Numeric'">
+                                                                <div class="form-group col-md-8">
+                                                                    <label class="control-label col-xs-12 col-md-4">
+                                                                        {{field.tag}}
+                                                                        <sup ng-if="field.description"
+                                                                             uib-tooltip="{{field.description}}">
+                                                                            ?
+                                                                        </sup>
+                                                                        <span ng-if="field.required" class="required">*</span>:
+                                                                    </label>
+                                                                    <div class="input-group col-xs-12 col-md-8">
+                                                                        <input class="form-control"
+                                                                               type="number"
+                                                                               placeholder="Resultado"
+                                                                               ng-model="field.value"
+                                                                               ng-required="field.required" />
+                                                                        <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                    </div>
+                                                                    <div ng-if="field.lowerLimit || field.upperLimit">
+                                                                        <label class="col-md-4 element-ref">
+                                                                            Rango: {{field.lowerLimit}} - {{field.upperLimit}}
+                                                                        </label>
+                                                                        <span ng-if="(field.lowerLimit && field.value < field.lowerLimit) || (field.value > field.upperLimit && field.upperLimit)"
+                                                                              class="col-md-8 reference-alert">
+                                                                            Valor fuera de rango!
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="clearfix"></div>
+                                                            </div>
+                                                            <div ng-if="field.fieldTypeAux.code == 'Option'">
+                                                                <div class="form-group col-md-8">
+                                                                    <label class="control-label col-xs-12 col-md-4">
+                                                                        {{field.tag}}
+                                                                        <sup ng-if="field.description"
+                                                                             uib-tooltip="{{field.description}}">
+                                                                            ?
+                                                                        </sup>
+                                                                        <span ng-if="field.required" class="required">*</span>:
+                                                                    </label>
+                                                                    <div class="input-group col-xs-12 col-md-8">
+                                                                        <select class="form-control"
+                                                                                ng-model="field.value"
+                                                                                ng-required="field.required"
+                                                                                ng-options="fo.value for fo in field.fieldOptionAux">
+                                                                            <option value="">Seleccione...</option>
+                                                                        </select>
+                                                                        <span ng-if="field.unit" class="input-group-addon">{{field.unit}}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="clearfix"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    <div id="detailModal" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Laboratorio</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="Table" datatable dt-options="INMEDIKApp.dtOptionsForm" dt-columns="INMEDIKApp.dtColumnsForm" dt-instance="INMEDIKApp.InstanceCallbackForm" class="table-bordered compact"></table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDeleteFile" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Borrar archivo</h4>
+                </div>
+                <div class="modal-body">
+                    Esta seguro de que desea borrar el archivo <b>{{INMEDIKApp.FileToDelete.OriginalName}}</b>?<br />
+                    <b class="text-danger">Esta acción no se podra deshacer.</b>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" ng-click="INMEDIKApp.DeleteFile()">Borrar</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

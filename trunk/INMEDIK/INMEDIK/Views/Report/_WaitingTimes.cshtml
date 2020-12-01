@@ -1,0 +1,65 @@
+﻿<div id="servicios-tab" ng-if="mc.initWaitingTimes" class="tab-pane fade in" ng-controller="WaitingTimesController as pc" ng-init="pc.StartController('@Url.Action("GetClinicsSelectCurrentUser", "Clinic")','@Url.Action("GetWaitingTimesGraph" , "Report")');pc.InitTable('@Url.Action("GetWaitingTimesReport","Report")')">
+    <div class="form-horizontal" ng-if="pc.Ready">
+        <div class="form-group col-md-3">
+            <label for="warehouses" class="control-label col-md-3">Clínicas: </label>
+            <div class="col-md-9">
+                <select class="form-control" ng-model="pc.Filters.clinic" ng-options="ct as ct.name for ct in pc.clini track by ct.id" required>
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group col-md-3">
+            <label class="control-label col-sm-4 ">Fecha: </label>
+            <div class="col-sm-8">
+                <input class="form-control" date-time ng-model="pc.Filters.dateStart" id="pickerMaxSelectorPStart" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+            </div>
+        </div>
+        <div class="form-group col-md-2">
+            <button class="btn btn-primary" ng-click="pc.ApplyFilters();pc.LoadGraph()"><i class="far fa-search"></i> Buscar</button>
+        </div>
+        <div class="clearfix"></div>
+        <div>
+            <div>
+                <label ng-show="pc.LoadGraph" class="control-label">TAP Recepción</label>
+                <canvas id="line" class="chart chart-line" chart-data="data"
+                        chart-labels="labels" chart-series="series" chart-options="options" chart-click="onClick"
+                        chart-colors="colors" height="70"></canvas>
+            </div>
+            <br />
+            <div>
+                <label class="control-label">TEP Recepción-Enfermería</label>
+                <canvas id="line2" class="chart chart-line" chart-data="data1"
+                        chart-labels="labels" chart-series="series1" chart-options="options1" chart-click="onClick"
+                        chart-colors="colors" height="70"></canvas>
+            </div>
+            <br />
+            <div>
+                <label class="control-label">TAP Enfermería</label>
+                <canvas id="line3" class="chart chart-line" chart-data="data2"
+                        chart-labels="labels" chart-series="series2" chart-options="options2" chart-click="onClick"
+                        chart-colors="colors" height="70"></canvas>
+            </div>
+            <br />
+            <div>
+                <label class="control-label">TEP Enfermería-Consulta</label>
+                <canvas id="line4" class="chart chart-line" chart-data="data3"
+                        chart-labels="labels" chart-series="series3" chart-options="options3" chart-click="onClick"
+                        chart-colors="colors" height="70"></canvas>
+            </div>
+            <br />
+            <div>
+                <label class="control-label">TAP Consulta</label>
+                <canvas id="line5" class="chart chart-line" chart-data="data4"
+                        chart-labels="labels" chart-series="series4" chart-options="options4" chart-click="onClick"
+                        chart-colors="colors" height="70"></canvas>
+            </div>
+            <br />
+        </div>
+        <div class="col-md-12 no-padding-sides">
+            <div class="table-responsive">
+                    <label class="control-label">Tiempos de espera</label><div ng-show="pc.loading"><span class="fa fa-spinner fa-spin"></span>Cargando...</div>
+                        <table id="ServiceWaitingTimesReportTable" datatable dt-options="pc.dtOptions" dt-columns="pc.dtColumns" dt-instance="pc.InstanceCallback" class="table-bordered compact"></table>
+                    </div>
+                </div>
+            </div>
+        </div>

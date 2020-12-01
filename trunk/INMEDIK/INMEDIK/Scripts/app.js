@@ -1,0 +1,1 @@
+﻿var INMEDIKApp = angular.module('INMEDIKApp', []);

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>INMEDI-K | Facturación</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/inmedik.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato|Raleway|Roboto" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Navegación</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="images/logo-inmedik.PNG" class="logo logo-responsive" /></a>
+
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                
+                <p align="right" class="hidden-sm-down.hidden-xl-up" style="margin-top: 20px;"><a href="http://inmedik.cubolegal.com/LaboratoryXray/PatientResults" class="btn btn-primary btn-responsive role="button"><img src="images/flask.png" style="padding-right: 5px;" /> Resultados de <b>Laboratorio</b></a> <a href="http://inmedik.cubolegal.com/" class="btn btn-primary btn-responsive" role="button"><img src="images/user.png" style="padding-right: 5px;" /> Acceso a <b>Empleados</b></a></p>
+                
+                <ul class="nav navbar-nav navbar-left">
+					<li>
+                        <a href="index.html">Inicio</a>
+                    </li>
+                    <li>
+                        <a href="quienes-somos.html">Quiénes Somos</a>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Nuestros Servicios <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="laboratorio.html">Laboratorio</a>
+                            </li>
+                            <li>
+                                <a href="ecografia.html">Ecografías</a>
+                            </li>
+                            <li>
+                                <a href="rayosx.html">Rayos X</a>
+                            </li>
+                            <li>
+                                <a href="urgencias.html">Urgencias Médicas</a>
+                            </li>
+                            <li>
+                                <a href="maternidad.html">Maternidad</a>
+                            </li>
+                            <li>
+                                <a href="optica.html">Óptica</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Nuestras Especialidades <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="pediatria.html">Pediatría</a>
+                            </li>
+                            <li>
+                                <a href="medicina-interna.html">Medicina Interna</a>
+                            </li>
+                            <li>
+                                <a href="medicina-familiar.html">Mediina Familiar</a>
+                            </li>
+                            <li>
+                                <a href="cirugia-general.html">Cirugía General</a>
+                            </li>
+                            <li>
+                                <a href="urologia.html">Urología</a>
+                            </li>
+                            <li>
+                                <a href="traumatologia.html">Traumatología</a>
+                            </li>
+                            <li>
+                                <a href="ginecologia-obstetricia.html">Ginecología y Obstetricia</a>
+                            </li>
+                            <li>
+                                <a href="radiologia.html">Radiología</a>
+                            </li>
+                            <li>
+                                <a href="dentista.html">Dentista</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="ubicacion.html">Ubicación</a>
+                    </li>
+                    <li>
+                        <a href="contacto.html">Contacto</a>
+                    </li>
+                    <li>
+                        <a href="facturacion.html">Solicitar Factura</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container container-inner-pages"">
+
+        <!-- Page Heading/Breadcrumbs -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">Solicitar Factura
+                </h1>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <!-- Content Row -->
+        <div class="row">
+        <!-- Contact Form -->
+        <!-- In order to set the email address and subject line for the contact form go to the bin/contact_me.php file. -->
+            <div class="col-md-8">
+                <h3>Envíanos tus datos de facturación</h3>
+                <form name="sentMessage" id="contactForm" novalidate>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>Nombre:</label>
+                            <input type="text" class="form-control" id="nombre" required data-validation-required-message="Por favor ingresa tu nombre." data-validation-pattern-message="Por favor ingresa tu nombre." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>RFC:</label>
+                            <input type="text" class="form-control" id="rfc" required data-validation-required-message="Por favor ingresa tu RFC." data-validation-pattern-message="Por favor ingresa tu RFC." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>Dirección:</label>
+                            <input type="text" class="form-control" id="direccion" required data-validation-required-message="Por favor ingresa tu dirección." data-validation-pattern-message="Por favor ingresa tu dirección." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>Código postal:</label>
+                            <input type="text" class="form-control" id="codigo_postal" required data-validation-required-message="Por favor ingresa tu código postal." data-validation-pattern-message="Por favor ingresa tu código postal." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>Ciudad:</label>
+                            <input type="text" class="form-control" id="ciudad" required data-validation-required-message="Por favor ingresa tu ciudad." data-validation-pattern-message="Por favor ingresa tu ciudad." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+					<div class="control-group form-group">
+                        <div class="controls">
+                            <label>Estado:</label>
+                            <input type="text" class="form-control" id="estado" required data-validation-required-message="Por favor ingresa tu estado." data-validation-pattern-message="Por favor ingresa tu estado." style="width: 50%;" pattern=".*[^\s]+.*">
+                        </div>
+                    </div>
+                    <div class="control-group form-group">
+                        <div class="controls">
+                            <label>Correo electrónico:</label>
+                            <input type="email" class="form-control" id="email" required data-validation-required-message="Por favor ingresa tu correo electrónico." style="width: 50%;" >
+                        </div>
+                    </div>
+                    <div class="control-group form-group">
+                        <div class="controls">
+                            <label>Número de ticket:</label>
+                            <input type="text" class="form-control" id="ticket" required data-validation-required-message="Por favor ingresa tu número de ticket." data-validation-pattern-message="Por favor ingresa tu número de ticket." style="width: 30%;" pattern=".*[^\s]+.*">
+                            <p class="help-block"></p>
+                        </div>
+                    </div>
+                    <div class="control-group form-group">
+                        <div class="controls">
+							<label>Tipo de pago:</label><br>
+							<div class="" id="tipo_pago" required data-validation-required-message="Por favor seleccione un tipo de pago.">
+								<input type="radio" name="tipo_pago" value="Efectivo"  checked> Efectivo<br>
+								 <input type="radio" name="tipo_pago" value="Tarjeta"> Tarjeta<br>
+							</div>
+						</div>
+                    </div>
+					<div id="control-tarjeta" class="control-group form-group hidden">
+                        <div class="controls">
+							<label>Ingrese los últimos 4 dígitos de su tarjeta:</label>
+							<input type="text" class="form-control" id="digitosTarjeta" required data-validation-required-message="Por favor ingrese los últimos 4 dígitos de su tarjeta." data-validation-pattern-message="Por favor ingrese los últimos 4 dígitos de su tarjeta." style="width: 50%;" pattern="[0-9]{4}">
+						</div>
+					</div>
+					 <div class="control-group form-group">
+                        <div class="controls">
+                            <label>Monto:</label>
+                            <input type="text" class="form-control" id="monto" required data-validation-required-message="Por favor ingresa el monto." data-validation-pattern-message="Por favor ingresa el monto." style="width: 30%;" pattern=".*[^\s]+.*">
+                        </div>
+					</div>
+                    <div class="control-group form-group">
+                        <div class="controls">
+                            <label>Sucursal:</label><br>
+                            <div class="" id="sucursal" required data-validation-required-message="Por favor selecciona una sucursal.">
+                                <input type="radio" name="sucursal" value="Acueducto" data-mail="facturacion@inmedi-k.com.mx" checked> Acueducto<br>
+                                <input type="radio" name="sucursal" value="Lincoln" data-mail="facturacion@inmedi-k.com.mx"> Lincoln<br>
+                                <input type="radio" name="sucursal" value="Valle de Lincoln" data-mail="facturacion@inmedi-k.com.mx"> Valle de Lincoln<br>
+                                <input type="radio" name="sucursal" value="Matriz" data-mail="facturacion@inmedi-k.com.mx"> Matriz<br>
+                                <input type="radio" name="sucursal" value="Capellanía" data-mail="centromedicodampe@gmail.com"> Capellanía<br>
+								<input type="radio" name="sucursal" value="Puerta de Hierro" data-mail="facturacion@inmedi-k.com.mx">Puerta de Hierro <i>Plus</i><br>
+								<input type="radio" name="sucursal" value="Villas" data-mail="facturacion@inmedi-k.com.mx"> Villas<br>
+								<input type="radio" name="sucursal" value="Sor Juana" data-mail="facturacion@inmedi-k.com.mx"> Sor Juana
+                            </div>
+                        </div>
+                    </div>
+					<input type="text" class="form-control hidden" id="sucursalMail" >
+					<input type="text" class="form-control hidden" id="tipoPago" >
+                    <div id="success"></div>
+                    <!-- For success/fail messages -->
+                    <button type="submit" class="btn btn-primary">Enviar Información</button>
+                </form>
+            </div>
+            <!-- Contact Details Column -->
+            <div class="col-md-4">
+                <h3>Atención las 24 horas</h3>
+                <p><i class="fa fa-phone"></i> 
+                    <abbr title="Teléfono">Teléfono</abbr>: (81) 2165 - 8009</p>
+                <p><i class="fa fa-envelope-o"></i> 
+                    <abbr title="Correo electrónico">Correo Electrónico</abbr>: <a href="mailto:info@inmedi-k.com.mx">info@inmedi-k.com.mx</a>
+                </p>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <div class="row">
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/coins.png" alt="Promociones del mes">
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading"><br><b>Promociones</b> del mes</h4>
+                            <p><a href="promociones.html" class="btn btn-primary btn-responsive" role="button">Descubre nuestros paquetes</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/calendar.png" alt="Horarios de consulta">
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading"><br><b>Horarios</b> de consulta</h4>
+                            <p><a href="contacto.html" class="btn btn-primary btn-responsive" role="button">Horarios de servicio de urgencia</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/navigation.png" alt="Ubicación de nuestras instalaciones">
+                        </div>
+                        <div class="media-body">
+                            <h4 class="media-heading"><b>Ubicación</b> de nuestras instalaciones</h4>
+                            <p><a href="ubicacion.html" class="btn btn-primary btn-responsive" role="button">Calidad en salud a bajo costo</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <h3>Sucursales</h3>
+
+        <div class="row">
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Vida">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL ACUEDUCTO</b></h5>
+                            <p>Palmas No. 340,<br>
+                            Col. Los Girasoles, 4to. sector<br>
+                            Escobedo, N.L.<br>
+                            Tel. 2135-6464</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Valle de Lincoln">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL VIDA (MATRIZ)</b></h5>
+                            <p>Ave. Monterrey No. 100,<br>
+                            Fracc. Vida<br>
+                            Escobedo, N.L.<br>
+                            Tel. 1872-7582</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Lincoln">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL LINCOLN</b></h5>
+                            <p>Av. Lincoln No. 601,<br>
+                            Col. Villas del Poniente<br>
+                            García, N.L.<br>
+                            Tel. 1873-1166</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Lincoln">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL VALLE DE LINCOLN</b></h5>
+                            <p>Camino a San José No. 606,<br>
+                            Col. Valle de Lincoln<br>
+                            García, N.L.<br>
+                            Tel. 2165-8811</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Lincoln">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL CAPELLANÍA</b></h5>
+                            <p>Hacienda del Sol No. 503,<br>
+                            Col. Los Héroes de Capellanía<br>
+                            García, N.L.<br>
+                            Tel. 1948-3808</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+						<div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Villas">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL VILLAS</b></h5>
+                            <p>Colibrí No. 158,<br>
+                            Col. Villas de San Francisco<br>
+                            Escobedo, N.L.<br><br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+			<div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Puerta de Hierro">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL PUERTA DE HIERRO <span style="font-style: italic;">Plus</span></b></h5>
+                            <p>Puerta de Hierro No. 526,<br>
+                            Fracc. Puerta de Hierro<br>
+							Entre Paseo de los leones y Privada Alborán<br>
+                            Monterrey, N.L.<br>
+							Tel. 2472-8335<br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+			 <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="media">
+                        <div class="media-left media-middle">
+                            <img class="media-object" src="images/placeholder.png" alt="Sucursal Sor Juana">
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading"><b>SUCURSAL SOR JUANA</b></h5>
+                            <p>Av, Sor Juana Inés de la Cruz No. 440<br>
+                            Col. Las Arboledas<br>
+                            García, N.L.<br>
+							Tel. 8277-5539<br><br>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p align="center">Copyright &copy; Inmedi-k | Todos los derechos Reservados 2017 | Aviso de Privacidad</p>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+    <!-- /.container -->
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Contact Form JavaScript -->
+    <!-- Do not edit these files! In order to set the email address and subject line for the contact form go to the bin/contact_me.php file. -->
+    <script src="js/jqBootstrapValidation.js"></script>
+    <script src="js/facturas.js"></script>
+
+</body>
+
+</html>

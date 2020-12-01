@@ -1,0 +1,171 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker']);
+        INMEDIKApp.controller('ClinicController', function ($scope, $compile, $sce, $http) {
+            var dt = this;
+            dt.subbmiting = false;
+            dt.errors = [];
+            dt.regularExpretions = Ut_getRegularExpretions();
+
+            dt.SaveElement = function () {
+                $("#ConfirmSave").modal("show");
+            };
+            dt.ConfirmSave = function () {
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveInitialCash", "CashClosing")',
+                    data: dt.CashClosingAux,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        location.reload();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        dt.subbmiting = false;
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                    dt.subbmiting = false;
+                });
+            }
+            dt.numberWithCommas = function(n) {
+                return Ut_numberWithCommas(n);
+            }
+            function init() {
+            }
+            init();
+        });
+</script>
+}
+<div class="container-fluid" ng-controller="ClinicController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Saldo inicial</div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <form class="form-horizontal" name="SaldoObjForm" id="SaldoObjForm">
+                    <div class="form-group" ng-class="{'invalid-group': (SaldoObjForm.nSaldoInicial.$touched && SaldoObjForm.nSaldoInicial.$invalid)}">
+                        <label class="control-label col-sm-3 ">Ingresar saldo inicial en caja:</label>
+                        <div class="col-sm-9">
+                            <div class="input-group">
+                                <span class="input-group-addon">$</span>
+                                <input type="text" class="form-control"
+                                       ng-model="INMEDIKApp.CashClosingAux.InitialCash"
+                                       ng-blur="INMEDIKApp.GetTouched($event)"
+                                       ng-pattern="INMEDIKApp.regularExpretions.onlyNumbersAndAPoint.exp"
+                                       id="InitialCash" required name="InitialCash">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary" data-loading-text="Guardando..."
+                                            ng-click="INMEDIKApp.SaveElement()" ng-disabled="SaldoObjForm.$invalid || INMEDIKApp.subbmiting">
+                                        Guardar
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="ConfirmSave" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    ¿La cantidad es correcta?<br /> <h3>{{INMEDIKApp.numberWithCommas(INMEDIKApp.CashClosingAux.InitialCash)}}</h3>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="INMEDIKApp.ConfirmSave()" ng-disabled="INMEDIKApp.subbmiting" data-dismiss="modal">Guardar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

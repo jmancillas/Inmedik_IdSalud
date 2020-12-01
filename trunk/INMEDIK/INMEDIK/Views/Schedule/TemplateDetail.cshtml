@@ -1,0 +1,284 @@
+﻿
+<div class="form-horizontal">
+    <div class="form-group">
+        <label class="col-md-2">
+            Paciente:
+            <button ng-if="INMEDIKApp.DetailObj.CategoryName == 'Consultas'" ng-click="INMEDIKApp.FindConsultsByUser(INMEDIKApp.DetailObj.PatientId)"
+                    type="button" class="btn btn-info btn-xs">
+                Ver consultas anteriores
+            </button>
+        </label>
+
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName != 'Exámenes'">{{INMEDIKApp.DetailObj.PatientAux.personAux.fullName}}</span>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName == 'Exámenes'">{{INMEDIKApp.DetailObj[0].PatientAux.personAux.fullName}}</span>
+
+        <label class="col-md-2">Edad:</label>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName != 'Exámenes'">{{INMEDIKApp.DetailObj.Age}}</span>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName == 'Exámenes'">{{INMEDIKApp.DetailObj[0].Age}}</span>
+    </div>
+    <div class="form-group">
+        <label class="col-md-2">Folio:</label>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName != 'Exámenes'">{{INMEDIKApp.DetailObj.PatientAux.id}}</span>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName == 'Exámenes'">{{INMEDIKApp.DetailObj[0].PatientAux.id}}</span>
+    </div>
+    <div class="form-group">
+        <label class="col-md-2">Fecha y hora de venta:</label>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName != 'Exámenes'">{{INMEDIKApp.DetailObj.OrderAux.sCreated}}</span>
+        <span class="col-md-4" ng-if="INMEDIKApp.DetailObj.CategoryName == 'Exámenes'">{{INMEDIKApp.DetailObj[0].OrderAux.sCreated}}</span>
+        <!--
+        <label class="col-md-2">Concepto:</label>
+        <span class="col-md-4">{{INMEDIKApp.DetailObj.ConceptAux.name}}</span>
+        -->
+    </div>
+    <hr />
+    <div ng-if="INMEDIKApp.DetailObj.CategoryName == 'Exámenes'">
+        <!--Agregando ng-repeant-->
+        <div ng-repeat="item in INMEDIKApp.DetailObj">
+            <div class="form-group col-md-12">
+                <label class="col-md-2">Concepto:</label>
+                <span class="col-md-4">{{item.ConceptAux.name}}</span>
+            </div>
+            <div class="form-group col-md-6">
+                <label class="col-md-12">Departamento</label>
+                <div class="col-md-12">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tr>
+                            <td>Laboratorio</td>
+                            <td style="width:10%" class="text-center">
+                                <i class="fa fa-check" aria-hidden="true" ng-if="item.ConceptAux.testAux.laboratory"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Rayos X</td>
+                            <td style="width:10%" class="text-center">
+                                <i class="fa fa-check" aria-hidden="true" ng-if="item.ConceptAux.testAux.xray"></i>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="form-group col-md-2"></div>
+            <div class="form-group col-md-6">
+                <label class="col-md-12">Médico</label>
+                <div class="col-md-12">
+                    <select class="form-control" ng-disabled="itemStatusAux.Name == 'Terminado'"
+                            ng-model="item.MedicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.Lists.Medics">
+                        <option value="">Seleccione...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        <hr />
+        <div class="form-group">
+            <label class="col-md-2">Notas</label>
+            <div class="col-md-10">
+                <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj[0].Notes" ng-disabled="INMEDIKApp.DetailObj[0].StatusAux.Name == 'Terminado'"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-2">En Proceso</label>
+            <div class="col-md-10">
+                    <input ng-model="INMEDIKApp.DetailObj[0].StatusId" ng-true-value="{{INMEDIKApp.StatEnProces.id}}" ng-false-value="{{INMEDIKApp.StatTerm.id}}"
+                           class="form-control checkbox" type="checkbox" ng-disabled="INMEDIKApp.DetailObj[0].StatusAux.Name == 'Terminado'" />
+            </div>
+        </div>
+        @*<div class="form-group">
+                <label class="col-md-2">Terminado</label>
+                <div class="col-md-10">
+                    <input ng-model="INMEDIKApp.DetailObj.StatusId" ng-true-value="{{INMEDIKApp.StatTerm.id}}" ng-false-value="{{INMEDIKApp.StatEnfe.id}}"
+                           class="form-control checkbox" type="checkbox" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'" />
+                </div>
+            </div>*@
+    </div>
+
+    <div ng-if="INMEDIKApp.DetailObj.CategoryName == 'Servicios'">
+        <div class="form-group">
+            <label class="col-md-2">Médico</label>
+            <div class="col-sm-10">
+                <select class="form-control" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'"
+                        ng-model="INMEDIKApp.DetailObj.MedicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.Lists.Medics">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-2">Notas</label>
+            <div class="col-md-10">
+                <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.Notes" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-2">Terminado</label>
+            <div class="col-md-10">
+                <input ng-model="INMEDIKApp.DetailObj.StatusId" ng-true-value="{{INMEDIKApp.StatTerm.id}}" ng-false-value="{{INMEDIKApp.StatEnfe.id}}"
+                       class="form-control checkbox" type="checkbox" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'" />
+            </div>
+        </div>
+    </div>
+    <div ng-if="INMEDIKApp.DetailObj.CategoryName == 'Consultas'">
+        <div class="form-group">
+            <div class="col-md-6" style="border-right: 1px solid #dddddd;">
+                <div class="form-group">
+                    <label class="col-md-2">Temperatura</label>
+                    <div class="col-md-10">
+                        <input class="form-control" ng-model="INMEDIKApp.DetailObj.Temperature" maxlength="20" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Frecuencia cardiaca</label>
+                    <div class="col-md-10">
+                        <input class="form-control" ng-model="INMEDIKApp.DetailObj.HeartRate" maxlength="20" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Presión arterial</label>
+                    <div class="col-md-10">
+                        <input class="form-control" ng-model="INMEDIKApp.DetailObj.BloodPressure" maxlength="20" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Peso (Kg)</label>
+                    <div class="col-md-10">
+                        <input class="form-control" ng-model="INMEDIKApp.DetailObj.Weight" type="number" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Talla (Cm)</label>
+                    <div class="col-md-10">
+                        <input class="form-control" ng-model="INMEDIKApp.DetailObj.Height" type="number" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Alérgicos</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.Alergics" maxlength="200" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Enfermeria'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Estatus</label>
+                    <div class="col-md-10">
+                        <input class="form-control" value="{{INMEDIKApp.DetailObj.StatusAux.Name}}" readonly />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Fecha Status</label>
+                    <div class="col-md-10">
+                        <input class="form-control" value="{{INMEDIKApp.DetailObj.sUpdated}}" readonly />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Médico</label>
+                    <div class="col-sm-10">
+                        <select class="form-control" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'"
+                                ng-model="INMEDIKApp.DetailObj.MedicId" ng-options="ct.id as ct.personAux.fullName for ct in INMEDIKApp.Lists.Medics">
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Padecimiento cronico</label>
+                    <div class="col-md-10">
+                        <div class="form-check" ng-repeat="d in INMEDIKApp.Lists.ChronicDisease">
+                            <input type="checkbox" class="form-check-input" ng-model="d.selected"
+                                    ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">
+                            <label class="form-check-label" for="exampleCheck1">{{d.name}}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Tipo de cita</label>
+                    <div class="col-md-10">
+                        <div class="form-check">
+                            <input id="false" type="radio" name="appointment" class="form-check-input" value="false" ng-model="INMEDIKApp.DetailObj.Recurrent"
+                                  ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">Padecimiento nuevo<br>
+                            <input id="true" type="radio" name="appointment" class="form-check-input" value="true" ng-model="INMEDIKApp.DetailObj.Recurrent"
+                                  ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">Padecimiento recurrente<br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" style="border-left: 1px solid #dddddd;">
+                <div class="form-group">
+                    <label class="col-md-2">AHF</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.AHF" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">APP</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.APP" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">APNP</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.APNP" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">AGO</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.AGO" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">PA</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.PA" ng-change="INMEDIKApp.RefreshTypedKeyWords();" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Exploración Física</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" rows="3" ng-model="INMEDIKApp.DetailObj.PhisicalExploration" maxlength="5000" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Diagnóstico <button ng-if="INMEDIKApp.DetailObj.StatusAux.Name == 'Medico'" type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#DiseaseModal">Agregar</button></label>
+                    <div class="col-md-10">
+                        <table class="table table-bordered table-hover table-striped">
+                            <tr ng-repeat="elem in INMEDIKApp.DetailObj.DiseaseAux" ng-if="INMEDIKApp.DetailObj.DiseaseAux.length > 0">
+                                <td style="width:90%;">{{elem.name}}</td>
+                                <td ng-if="INMEDIKApp.DetailObj.StatusAux.Name == 'Medico'">
+                                    <button type="button" class="btn btn-danger btn-xs"
+                                            ng-click="INMEDIKApp.DetailObj.DiseaseAux.splice($index,1); INMEDIKApp.RefreshTypedKeyWords();">
+                                        <i class="fa fa-minus" aria-hidden="true"></i> Quitar
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr ng-if="INMEDIKApp.DetailObj.DiseaseAux.length == 0">
+                                <td>
+                                    <i>Sin diagnostico seleccionado.</i>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2"></label>
+                    <div class="col-md-10" style="height:205px;">
+                        <slick ng-if="INMEDIKApp.updatedAds" class="slider" settings="INMEDIKApp.slickConfig">
+                            <div ng-repeat="slide in INMEDIKApp.ads2show">
+                                <div class="" ng-include="'tpl.html'"></div>
+                            </div>
+                        </slick>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Tratamiento</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control maxRows" rows="20" onkeypress="return validar(event,this)"  ng-model="INMEDIKApp.DetailObj.Treatment" maxlength="1764" ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2">Firma</label>
+                    <div class="col-md-10" ng-if="INMEDIKApp.DetailObj.MedicAux.signatureBytes">
+                        <img style="width: 50%;" src="data:image/png;base64,{{INMEDIKApp.DetailObj.MedicAux.signatureBytes}}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

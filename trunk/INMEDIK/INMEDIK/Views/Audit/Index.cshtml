@@ -1,0 +1,965 @@
+﻿@section styles{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+    <style type="text/css">
+        textarea {
+            resize: vertical;
+        }
+
+        .btn {
+            margin-top: 5px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datatables']);
+
+        INMEDIKApp.controller('AuditController', function ($scope, $compile, $sce, $http, $timeout, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.stocks = JSON.parse('@Html.Raw(ViewBag.stocks)');
+            dt.stocksNurse = JSON.parse('@Html.Raw(ViewBag.stocksNurse)');
+            dt.dtInstance = {};
+            dt.dtInstanceWh = {};
+            dt.audit = {
+                details: [],
+                comment: ""
+            };
+            dt.tempAudit = {};
+            dt.resultAudit = {};
+            dt.modalAudit = {};
+            dt.comment = "";
+            dt.currentStock = [];
+            dt.currentStockNurse = [];
+
+
+
+            dt.submitting = false;
+            dt.savedStock = false;
+            dt.savedStockNurse = false;
+
+
+            dt.printWhStock = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetAllWarehouseStocks", "Audit")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        var tabletoprint =
+                         '<table class="table table-condensed table-bordered table-striped table-responsive">'
+                        + '<thead>'
+                        + '<tr>'
+                        + '<th>Producto</th>'
+                        + '<th>Código</th>'
+                        + '<th>Existencia</th>'
+                    //    + '<th>Subalmacén</th>'
+                        + '</tr>'
+                        + '</thead>'
+                        + '<tbody>'
+                        ;
+                        $.each(res.data.data, function () {
+                            tabletoprint = tabletoprint + '<tr>';
+                            tabletoprint = tabletoprint + '<td>' + this.name + '</td>';
+                            tabletoprint = tabletoprint + '<td>' + this.code + '</td>';
+                            tabletoprint = tabletoprint + '<td>' + this.inStock + '</td>';
+                            //tabletoprint = tabletoprint + '<td>' + this.warehouseName + '</td>';
+                            tabletoprint = tabletoprint + '</tr>';
+                        });
+                        tabletoprint = tabletoprint + '</tbody></table>';
+                        var htmlToPrint = '' +
+                        '<style type="text/css">' +
+                        'table { width:100%; }' +
+                        'table th, table td {' +
+                        'border:1px solid #000;' +
+                        '}' +
+                        '</style>';
+                        tabletoprint = htmlToPrint + tabletoprint;
+                        newWin = window.open("");
+                        newWin.document.write(tabletoprint);
+                        newWin.print();
+                        newWin.close();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function viewBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-search"></i></button></div>';
+            }
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetAudit", "Audit")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.modalAudit = res.data.data;
+                        $("#modalAuditInfo").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    data: {
+                       "isNurse" : "false"
+                    },
+                    url: "@Url.Action("GetAudits", "Audit")"                   
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen auditorías",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron auditorías",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            dt.dtOptionsNurse = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    data: {
+                        "isNurse" : "true"
+                    },
+                    url: "@Url.Action("GetAudits", "Audit")"                   
+            })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen auditorías",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron auditorías",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });            
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("employeeAux.personAux.fullName").withTitle("Empleado"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Fecha creación").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Fecha modificación").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Ver detalle").notSortable().renderWith(viewBtn).withClass('notSearchable')
+            ];
+            dt.dtColumnsNurse = [
+               DTColumnBuilder.newColumn("employeeAux.personAux.fullName").withTitle("Empleado"),
+               DTColumnBuilder.newColumn("sCreated").withTitle("Fecha creación").withClass('notSearchable'),
+               DTColumnBuilder.newColumn("sUpdated").withTitle("Fecha modificación").withClass('notSearchable'),
+               DTColumnBuilder.newColumn("id").withTitle("Ver detalle").notSortable().renderWith(viewBtn).withClass('notSearchable')
+            ];
+            dt.InstanceCallbackNurse = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '"/>');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '"/>');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.dtOptionsWh = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetWarehouseStocks", "Audit")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existe inventario en subalmacenes",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontró inventario",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsWh = [
+                DTColumnBuilder.newColumn("name").withTitle("Producto"),
+                DTColumnBuilder.newColumn("code").withTitle("Código"),
+                DTColumnBuilder.newColumn("inStock").withTitle("Existencia"),
+                //DTColumnBuilder.newColumn("warehouseStock").withTitle("Existencia"),
+                //DTColumnBuilder.newColumn("warehouseName").withTitle("Subalmacén"),
+            ];
+            dt.InstanceCallbackWh = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceWh = instance;
+                var id = '#' + dt.dtInstanceWh.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceWh.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            $.map(dt.stocks, function (val, i) {
+                dt.currentStock.push({
+                    conceptId: val.conceptId,
+                    conceptAux: {
+                        name: val.name,
+                        id: val.conceptId
+                    },
+                    inStock: val.inStock,
+                    quantity: 0
+                });
+            });
+
+            $.map(dt.stocksNurse, function (val, i) {
+                dt.currentStockNurse.push({
+                    conceptId: val.conceptId,
+                    conceptAux: {
+                        name: val.name,
+                        id: val.conceptId
+                    },
+                    inStock: val.inStock,
+                    quantity: 0
+                });
+            });
+
+            dt.SaveStock = function () {
+                mostrarPantallaCarga();
+                dt.submitting = true;
+                dt.audit.details = dt.currentStock;
+                dt.audit.nurse = false;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveAudit", "Audit")',
+                    data: dt.audit,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.resultAudit = res.data.data;
+                        dt.savedStock = true;
+                        $("#confirmSaved").modal("show");
+                        dt.dtInstance.reloadData();
+                        dt.submitting = false;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                        dt.submitting = false;
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    dt.subbmiting = false;
+                });
+            }
+            dt.SaveStockNurse = function () {
+                mostrarPantallaCarga();
+                dt.submitting = true;
+                dt.audit.details = dt.currentStockNurse;
+                dt.audit.nurse = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveAudit", "Audit")',
+                    data: dt.audit,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.resultAuditNurse = res.data.data;
+                        dt.savedStockNurse = true;
+                        $("#confirmSaved").modal("show");
+                        dt.dtInstance.reloadData();
+                        dt.submitting = false;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                        dt.submitting = false;
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    dt.subbmiting = false;
+                });
+            }
+            dt.SaveComment = function () {
+                dt.submittingComment = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveComment", "Audit")',
+                    params: {
+                        auditId: dt.resultAudit.id,
+                        comment: dt.comment
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+
+                        dt.savedStock = false;
+                        $("#confirmSaved").modal("show");
+                        dt.submittingComment = false;                        
+                        dt.currentStock = [];
+                        dt.currentStockNurse = [];
+
+                        $.map(res.data.data, function (val, i) {
+                            dt.currentStock.push({
+                                conceptId: val.conceptId,
+                                conceptAux: {
+                                    name: val.name,
+                                    id: val.conceptId
+                                },
+                                inStock: val.inStock,
+                                quantity: 0
+                            });
+                        });
+
+                        $.map(res.data.dataNurse, function (val, i) {
+                            dt.currentStockNurse.push({
+                                conceptId: val.conceptId,
+                                conceptAux: {
+                                    name: val.name,
+                                    id: val.conceptId
+                                },
+                                inStock: val.inStock,
+                                quantity: 0
+                            });
+                        });
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                        dt.submittingComment = false;                        
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.submittingComment = false;                   
+                });
+            }
+            dt.SaveCommentNurse = function () {
+                dt.submittingCommentNurse = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveComment", "Audit")',
+                    params: {
+                        auditId: dt.resultAuditNurse.id,
+                        comment: dt.comment
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+
+                        dt.savedStockNurse = false;
+                        $("#confirmSaved").modal("show");                        
+                        dt.submittingCommentNurse = false;
+                        dt.currentStock = [];
+                        dt.currentStockNurse = [];
+
+                        $.map(res.data.data, function (val, i) {
+                            dt.currentStock.push({
+                                conceptId: val.conceptId,
+                                conceptAux: {
+                                    name: val.name,
+                                    id: val.conceptId
+                                },
+                                inStock: val.inStock,
+                                quantity: 0
+                            });
+                        });
+
+                        $.map(res.data.dataNurse, function (val, i) {
+                            dt.currentStockNurse.push({
+                                conceptId: val.conceptId,
+                                conceptAux: {
+                                    name: val.name,
+                                    id: val.conceptId
+                                },
+                                inStock: val.inStock,
+                                quantity: 0
+                            });
+                        });
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');                       
+                        dt.submittingCommentNurse = false;
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {                    
+                    dt.submittingCommentNurse = false;
+                });
+            }
+        });
+
+    </script>
+}
+<div class="container-fluid" ng-controller="AuditController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Auditorías</div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs">
+                    @*<li class="active"><a data-toggle="tab" href="#Inventario-tab">Inventarios</a></li>*@
+                    @*<li><a data-toggle="tab" href="#Enfermeria-tab">Enfermería</a></li>*@
+                    <li class="active"><a data-toggle="tab" href="#Existencias-tab">Existencias</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="Inventario-tab" class="tab-pane fade">
+                        @*<div ng-if="!INMEDIKApp.savedStock">
+                            <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Concepto
+                                        </th>
+                                        <th>
+                                            Cantidad
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="stock in INMEDIKApp.currentStock">
+                                        <td>
+                                            {{stock.conceptAux.name}}
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" class="form-control" ng-model="stock.quantity" required name="currStock" maxlength="50">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="col-md-12">
+                                <button class="btn btn-success" ng-click="INMEDIKApp.SaveStock()" ng-disabled="INMEDIKApp.submitting">Guardar</button>
+                            </div>
+                        </div>
+                        <div ng-if="INMEDIKApp.savedStock">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="clinicName">Clínica: </label>
+                                    <input class="form-control" id="clinicName" ng-model="INMEDIKApp.resultAudit.clinicAux.name" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label for="nombreEmpleado">Creado por: </label>
+                                    <input class="form-control" id="nombreEmpleado" ng-model="INMEDIKApp.resultAudit.employeeAux.personAux.fullName" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label for="dateAudit">Fecha: </label>
+                                    <input class="form-control" id="dateAudit" ng-model="INMEDIKApp.resultAudit.sCreated" readonly />
+                                </div>
+                                <div ng-if="!INMEDIKApp.savedStock" class="form-group">
+                                    <label for="auditComment">Comentarios: </label>
+                                    <textarea class="form-control" id="auditComment" ng-model="INMEDIKApp.resultAudit.comment" readonly></textarea>
+                                </div>
+                                <br />
+                                <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Concepto
+                                            </th>
+                                            <th>
+                                                Inventario físico
+                                            </th>
+                                            <th>
+                                                Inventario en sistema
+                                            </th>
+                                            <th>
+                                                Diferencia
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="stock in INMEDIKApp.resultAudit.details">
+                                            <td>
+                                                {{stock.conceptAux.name}}
+                                            </td>
+                                            <td>
+                                                <span>{{stock.quantity}}</span>
+                                            </td>
+                                            <td>
+                                                <span>{{stock.inStock}}</span>
+                                            </td>
+                                            <td>
+                                                <span ng-if="stock.quantity > stock.inStock">Sobra {{stock.quantity - stock.inStock}}</span>
+                                                <span ng-if="stock.quantity < stock.inStock">Falta {{stock.inStock - stock.quantity}}</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <textarea ng-model="INMEDIKApp.comment" class="col-md-12" placeholder="Comentarios"></textarea>
+                            <div class="col-md-12">
+                                <button class="btn btn-success" ng-click="INMEDIKApp.SaveComment()" ng-disabled="INMEDIKApp.submittingComment">Guardar comentarios</button>
+                            </div>
+                        </div>*@
+                        @*<div class="col-md-12">
+                            <div class="table-responsive">
+                                <table id="AuditTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                            </div>
+                        </div>*@
+                    </div>
+                    @*<div id="Enfermeria-tab" class="tab-pane" fade>
+                        <div ng-if="!INMEDIKApp.savedStock">
+                            <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Concepto
+                                        </th>
+                                        <th>
+                                            Cantidad
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="stock in INMEDIKApp.currentStockNurse">
+                                        <td>
+                                            {{stock.conceptAux.name}}
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" class="form-control" ng-model="stock.quantity" required name="currStock" maxlength="50">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="col-md-12">
+                                <button class="btn btn-success" ng-click="INMEDIKApp.SaveStockNurse()" ng-disabled="INMEDIKApp.submitting">Guardar</button>
+                            </div>
+                        </div>
+                        <div ng-if="INMEDIKApp.savedStockNurse">
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="clinicName">Clínica: </label>
+                                    <input class="form-control" id="clinicName" ng-model="INMEDIKApp.resultAuditNurse.clinicAux.name" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label for="nombreEmpleado">Creado por: </label>
+                                    <input class="form-control" id="nombreEmpleado" ng-model="INMEDIKApp.resultAuditNurse.employeeAux.personAux.fullName" readonly />
+                                </div>
+                                <div class="form-group">
+                                    <label for="dateAudit">Fecha: </label>
+                                    <input class="form-control" id="dateAudit" ng-model="INMEDIKApp.resultAuditNurse.sCreated" readonly />
+                                </div>
+                                <div ng-if="!INMEDIKApp.savedStockNurse" class="form-group">
+                                    <label for="auditComment">Comentarios: </label>
+                                    <textarea class="form-control" id="auditComment" ng-model="INMEDIKApp.resultAuditNurse.comment" readonly></textarea>
+                                </div>
+                                <br />
+                                <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Concepto
+                                            </th>
+                                            <th>
+                                                Inventario físico
+                                            </th>
+                                            <th>
+                                                Inventario en sistema
+                                            </th>
+                                            <th>
+                                                Diferencia
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="stock in INMEDIKApp.resultAuditNurse.details">
+                                            <td>
+                                                {{stock.conceptAux.name}}
+                                            </td>
+                                            <td>
+                                                <span>{{stock.quantity}}</span>
+                                            </td>
+                                            <td>
+                                                <span>{{stock.inStock}}</span>
+                                            </td>
+                                            <td>
+                                                <span ng-if="stock.quantity > stock.inStock">Sobra {{stock.quantity - stock.inStock}}</span>
+                                                <span ng-if="stock.quantity < stock.inStock">Falta {{stock.inStock - stock.quantity}}</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <textarea ng-model="INMEDIKApp.comment" class="col-md-12" placeholder="Comentarios"></textarea>
+                            <div class="col-md-12">
+                                <button class="btn btn-success" ng-click="INMEDIKApp.SaveCommentNurse()" ng-disabled="INMEDIKApp.submittingComment">Guardar comentarios</button>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="table-responsive">
+                                <table id="nurseTable" datatable dt-options="INMEDIKApp.dtOptionsNurse" dt-columns="INMEDIKApp.dtColumnsNurse" dt-instance="INMEDIKApp.InstanceCallbackNurse" class="table-hover table-bordered compact"></table>
+                            </div>
+                        </div>
+                    </div>*@
+                    <div id="Existencias-tab" class="tab-pane fade in active">
+                        <div class="col-md-12">
+                            <div class="table-responsive">
+                                <table id="warehouseTable" datatable dt-options="INMEDIKApp.dtOptionsWh" dt-columns="INMEDIKApp.dtColumnsWh" dt-instance="INMEDIKApp.InstanceCallbackWh" class="table-hover table-bordered compact"></table>
+                            </div>
+                        </div>
+                        <div class="pull-left">
+                            <button class="btn btn-success pull-right" ng-click="INMEDIKApp.printWhStock()"><i class="fal fa-print"></i> Imprimir</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="confirmSaved" class="modal modal-success fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    Operación realizada con éxito
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="modalAuditInfo" class="modal modal-info fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Auditoría</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="clinicName">Clínica: </label>
+                                <input class="form-control" id="clinicName" ng-model="INMEDIKApp.modalAudit.clinicAux.name" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="nombreEmpleado">Creado por: </label>
+                                <input class="form-control" id="nombreEmpleado" ng-model="INMEDIKApp.modalAudit.employeeAux.personAux.fullName" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="dateAudit">Fecha: </label>
+                                <input class="form-control" id="dateAudit" ng-model="INMEDIKApp.modalAudit.sCreated" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="auditComment">Comentarios: </label>
+                                <textarea class="form-control" id="auditComment" ng-model="INMEDIKApp.modalAudit.comment" readonly></textarea>
+                            </div>
+                            <br />
+                            <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Concepto
+                                        </th>
+                                        <th>
+                                            Inventario físico
+                                        </th>
+                                        <th>
+                                            Inventario en sistema
+                                        </th>
+                                        <th>
+                                            Diferencia
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="stock in INMEDIKApp.modalAudit.details">
+                                        <td>
+                                            {{stock.conceptAux.name}}
+                                        </td>
+                                        <td>
+                                            <span>{{stock.quantity}}</span>
+                                        </td>
+                                        <td>
+                                            <span>{{stock.inStock}}</span>
+                                        </td>
+                                        <td>
+                                            <span ng-if="stock.quantity > stock.inStock">Sobra {{stock.quantity - stock.inStock}}</span>
+                                            <span ng-if="stock.quantity < stock.inStock">Falta {{stock.inStock - stock.quantity}}</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

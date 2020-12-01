@@ -1,0 +1,514 @@
+﻿
+@{
+    ViewBag.Title = "Solicitudes de acceso";
+}
+@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('DemoAccessController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.dtInstanceConf = {};
+            dt.dtInstanceRej = {};
+            dt.demoRequest = {};
+            dt.subbmiting = false;
+            dt.FormTouched = false;
+            dt.errors = [];
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ',false)" class="btn btn-info btn-xs">Responder</button></div>';
+            }
+            function detailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ',true)" class="btn btn-info btn-xs">Detalle</button></div>';
+            }
+            function boolean(data, type, full, meta) {
+                return data ? "Si" : "No"
+            }
+            dt.GetTouched = function ($event) {
+                dt.FormTouched = true;
+
+            };
+            dt.ReloadTable = function (table) {
+                switch (table) {
+                    case 'pend': dt.dtInstance.reloadData();
+                        break;
+                    case 'conf': dt.dtInstanceConf.reloadData();
+                        break;
+                    case 'rej': dt.dtInstanceRej.reloadData();
+                        break;
+                    default:
+
+                }
+            };
+            dt.LoadElement = function (id, isDetail) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetDemoRequest", "DemoAccess")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (isDetail)
+                    {
+                        dt.isDetail = true;
+                    }
+                    if (res.data.success) {
+                        dt.demoRequest = res.data.data;
+                        $("#NewElementModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.RequestForm.$setUntouched();
+                dt.FormTouched = false;
+                dt.demoRequest = {};
+            });
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.SaveElement = function (rejected) {
+                dt.subbmiting = true;
+                dt.demoRequest.rejected = rejected;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("ReplyDemoRequest", "DemoAccess")',
+                    data: dt.demoRequest,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.subbmiting = false;
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetDemoRequests", "DemoAccess")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('order', [3, 'desc'])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("phone").withTitle("Teléfono"),
+                DTColumnBuilder.newColumn("email").withTitle("Correo"),
+                //DTColumnBuilder.newColumn("rejected").withTitle("Rechazado").renderWith(boolean),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(editBtn).withClass('notSearchable').notSortable(),
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.dtOptionsConf = DTOptionsBuilder.newOptions()
+               .withOption("ajax", {
+                   dataType: "json",
+                   type: "POST",
+                   url: "@Url.Action("GetDemoRequestsConfirmed", "DemoAccess")"
+               })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('order', [0, 'desc'])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsConf = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("phone").withTitle("Teléfono"),
+                DTColumnBuilder.newColumn("email").withTitle("Correo"),
+                DTColumnBuilder.newColumn("userAux.account").withTitle("Usuario"),
+                //DTColumnBuilder.newColumn("rejected").withTitle("Rechazado").renderWith(boolean),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("userAux.sExpiration").withTitle("Expira").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(detailBtn).withClass('notSearchable').notSortable(),
+            ];
+            dt.InstanceCallbackConf = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceConf = instance;
+                var id = '#' + dt.dtInstanceConf.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceConf.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            dt.dtOptionsRej = DTOptionsBuilder.newOptions()
+               .withOption("ajax", {
+                   dataType: "json",
+                   type: "POST",
+                   url: "@Url.Action("GetDemoRequestsRejected", "DemoAccess")"
+               })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('order', [0, 'desc'])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsRej = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("phone").withTitle("Teléfono"),
+                DTColumnBuilder.newColumn("email").withTitle("Correo"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(detailBtn).withClass('notSearchable').notSortable(),
+            ];
+            dt.InstanceCallbackRej = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceRej = instance;
+                var id = '#' + dt.dtInstanceRej.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceRej.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            function init() {
+
+            };
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="DemoAccessController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-if="!INMEDIKApp.isDetail">Editar</span> Solicitud</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="RequestForm.$invalid && INMEDIKApp.FormTouched">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <span ng-show="RequestForm.name.$touched && RequestForm.name.$error.required"><strong>Nombre</strong>: Campo obligatorio</span>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="RequestForm">
+                        <div class="form-group">
+                            <label for="name" class="control-label col-md-3">Nombre: </label>
+                            <div class="col-md-9">
+                                <span type="text" class="form-control">
+                                    {{INMEDIKApp.demoRequest.name}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="name" class="control-label col-md-3">Teléfono: </label>
+                            <div class="col-md-9">
+                                <span type="text" class="form-control">
+                                    {{INMEDIKApp.demoRequest.phone}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="name" class="control-label col-md-3">Correo: </label>
+                            <div class="col-md-9">
+                                <span type="text" class="form-control">
+                                    {{INMEDIKApp.demoRequest.email}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="name" class="control-label col-md-3">Mensaje: </label>
+                            <div class="col-md-9">
+                                <p class="">
+                                    {{INMEDIKApp.demoRequest.message}}
+                                </p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" 
+                            ng-if="!INMEDIKApp.isDetail"
+                            ng-disabled="INMEDIKApp.subbmiting" ng-click="INMEDIKApp.SaveElement(false)">Aceptar</button>
+                    <button type="button" class="btn btn-danger" 
+                            ng-if="!INMEDIKApp.isDetail"
+                            ng-disabled="INMEDIKApp.subbmiting" ng-click="INMEDIKApp.SaveElement(true)">Rechazar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Solicitudes de acceso </div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <ul id="reportes-tabs" class="nav nav-tabs">
+                    <li class="active"><a id="demoaccess-pend-nav" ng-click="INMEDIKApp.ReloadTable('pend')" data-toggle="tab" href="#pending-tab">Pendientes</a></li>
+                    <li><a id="demoaccess-confirmed-nav" ng-click="INMEDIKApp.ReloadTable('conf')" data-toggle="tab" href="#confirmed-tab">Confirmados</a></li>
+                    <li><a id="demoaccess-rejected-nav" ng-click="INMEDIKApp.ReloadTable('rej')" data-toggle="tab" href="#rejected-tab">Rechazados</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="pending-tab" class="tab-pane fade in active">
+                        <div class="table-responsive">
+                            <table id="DemoAccessTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                        </div>
+                    </div>
+                    <div id="confirmed-tab" class="tab-pane fade in">
+                        <div class="table-responsive">
+                            <table id="DemoAccessTableConf" datatable dt-options="INMEDIKApp.dtOptionsConf" dt-columns="INMEDIKApp.dtColumnsConf" dt-instance="INMEDIKApp.InstanceCallbackConf" class="table-hover table-bordered compact"></table>
+                        </div>
+                    </div>
+                    <div id="rejected-tab" class="tab-pane fade in">
+                        <div class="table-responsive">
+                            <table id="DemoAccessTableRej" datatable dt-options="INMEDIKApp.dtOptionsRej" dt-columns="INMEDIKApp.dtColumnsRej" dt-instance="INMEDIKApp.InstanceCallbackRej" class="table-hover table-bordered compact"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length==0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+

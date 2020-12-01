@@ -1,0 +1,29 @@
+﻿@using Mvc.Mailer
+@using System.Globalization;
+@using INMEDIK.Models.Helpers;
+<html>
+<head>
+    <title>ENVIO DE CORREOS</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+
+</head>
+<body>
+    @RenderBody()
+    <hr />
+    <div>
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        Este correo es informativo, favor no responder a esta dirección de correo, ya que no se encuentra habilitada para recibir mensajes
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

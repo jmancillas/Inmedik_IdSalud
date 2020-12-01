@@ -1,0 +1,675 @@
+﻿
+@{
+    ViewBag.Title = "Ventas";
+}
+@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        tr.canceled, tr.canceled:hover {
+            background-color: #f9758e;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script src="~/Scripts/pdfmake/pdfmake.js"></script>
+    <script src="~/Scripts/pdfmake/vfs_fonts.js"></script>
+    <script src="~/Scripts/pdfmake/creacionesDePDF.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables", "datePicker"]);
+        INMEDIKApp.controller('OrderController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Order = {};
+            dt.subbmiting = false;
+            dt.FormTouched = false;
+            dt.errors = [];
+            dt.clinics = [];
+            dt.clinicSelected = {};
+            dt.RestrictedInstance = {};
+            dt.Filters = [];
+            dt.FiltersOrder = [];
+            dt.currentTax = 0;
+            dt.PrintTicketOrder = PrintTicketOrder;
+
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                if (data.IsCanceled) {
+                    $(row).addClass('canceled');
+                }
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+
+            function orderDetail(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs"><i class="fal fa-search"></i> Detalle </button></div>';
+            }
+
+            function ticketDetail(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadTickets(' + data + ')" class="btn btn-info btn-xs"><i class="fal fa-search"></i> Detalle </button></div>';
+            }
+
+            function money(data, type, full, meta) {
+                return dt.Ut_numberWithCommas(data);
+            }
+
+            function boolean(data, type, full, meta) {
+                return data ? "Si" : "No"
+            }
+            dt.Ut_numberWithCommas = Ut_numberWithCommas;
+            dt.GetTouched = function ($event) {
+                dt.FormTouched = true;
+            };
+
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetOrder", "Order")',
+                    params: {
+                        "idOrder": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Order = res.data.data;
+                        dt.currentTax = res.data.tax / 100;
+                        $("#DetailModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.LoadTickets = function (idTicket) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetTicket", "Order")',
+                    params: {
+                        "idTicket": idTicket
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Order = res.data.data;
+                        $("#DetailModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetOrders", "Order")",
+                    data: function (d) {
+                        d.filter = {
+                            dateStart: dt.FiltersOrder.dateStart ? dt.FiltersOrder.dateStart.startOf('day').toDate().toISOString() : null,
+                            dateEnd: dt.FiltersOrder.dateEnd ? dt.FiltersOrder.dateEnd.endOf('day').toDate().toISOString() : null,
+                        };
+                    },
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('order', [0, 'desc'])
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen ventas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron ventas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("Ticket").withTitle("Ticket"),
+                DTColumnBuilder.newColumn("ClinicName").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("EmployeeFullName").withTitle("Empleado"),
+                DTColumnBuilder.newColumn("PatientFullName").withTitle("Cliente"),
+                DTColumnBuilder.newColumn("Amount").withTitle("Total").renderWith(money),
+                DTColumnBuilder.newColumn("Discount").withTitle("Descuento").renderWith(money),
+                DTColumnBuilder.newColumn("Paid").withTitle("Pagado").renderWith(boolean),
+                DTColumnBuilder.newColumn("IsCanceled").withTitle("Cancelado").renderWith(boolean),
+                DTColumnBuilder.newColumn("createdString").withTitle("Fecha").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("OrderId").withTitle("Detalle").renderWith(orderDetail).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.dtOptionsCancelled = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetCancellations", "Order")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen ventas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron ventas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            dt.dtColumnsCancelled = [
+                DTColumnBuilder.newColumn("Ticket").withTitle("Ticket"),
+                DTColumnBuilder.newColumn("total").withTitle("Total").renderWith(money),
+                DTColumnBuilder.newColumn("created").withTitle("Fecha Venta"),
+                DTColumnBuilder.newColumn("employeeName").withTitle("Empleado"),
+                DTColumnBuilder.newColumn("stringDateCancelled").withTitle("Fecha cancelado"),
+                DTColumnBuilder.newColumn("id").withTitle("Detalle").renderWith(orderDetail).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallbackRestricted = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceCancelled = instance;
+                var id = '#' + dt.dtInstanceCancelled.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceCancelled.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.dtOptionsRestricted = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetRestricted", "Order")",
+                    data: function (d) {
+                        d.filter = {
+                            dateStart: dt.Filters.dateStart ? dt.Filters.dateStart.startOf('day').toDate().toISOString() : null,
+                            dateEnd: dt.Filters.dateEnd ? dt.Filters.dateEnd.endOf('day').toDate().toISOString() : null,
+                        };
+                    },
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen ventas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron ventas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            dt.dtColumnsRestricted = [
+                DTColumnBuilder.newColumn("medicname").withTitle("Medico"),
+                DTColumnBuilder.newColumn("decree").withTitle("Cédula"),
+                DTColumnBuilder.newColumn("ConceptAux.name").withTitle("Concepto"),
+                DTColumnBuilder.newColumn("quantity").withTitle("Cantidad"),
+                DTColumnBuilder.newColumn("createdString").withTitle("Fecha").withClass('notSearchable')
+            ];
+            function init() {
+
+            };
+            init();
+            dt.ApplyFilters = function () {
+                dt.RestrictedInstance.reloadData();
+            };
+            dt.Print = function () {
+                var divToPrint = document.getElementById("RestrictedTable");
+                var htmlToPrint = '' +
+                    '<style type="text/css">' +
+                    'table { width:100%; }' +
+                    'table th, table td {' +
+                    'border:1px solid #000;' +
+                    '}' +
+                    '</style>';
+                htmlToPrint += divToPrint.outerHTML;
+                newWin = window.open("");
+                newWin.document.write(htmlToPrint);
+                newWin.print();
+                newWin.close();
+            };
+            dt.ApplyFiltersOrder = function () {
+                dt.dtInstance.reloadData();
+            };
+            dt.clearFiltersOrder = function () {
+                dt.FiltersOrder = {};
+                dt.ApplyFiltersOrder();
+            }
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="OrderController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Ventas</div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" id="order-nav" href="#order-tab">Ventas</a></li>
+                    <li><a data-toggle="tab" href="#cancelled-tab">Tickets cancelados</a></li>
+                    <li><a data-toggle="tab" href="#restrictions-tab">Medicamentos restringidos</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="order-tab" class="tab-pane fade in active">
+                        <div class="row" style="margin-top:20px;">
+                            <div class="form-group col-md-3">
+                                <label class="control-label col-sm-4 ">Fecha inicio: </label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" date-change="INMEDIKApp.ApplyFiltersOrder" date-time ng-model="INMEDIKApp.FiltersOrder.dateStart" id="pickerMaxSelectorStart" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="control-label col-sm-4">Fecha fin: </label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" date-change="INMEDIKApp.ApplyFiltersOrder" date-time ng-model="INMEDIKApp.FiltersOrder.dateEnd" id="pickerMaxSelectorEnd" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <button class="btn btn-primary" ng-click="INMEDIKApp.clearFilters()"><i class="far fa-eraser"></i> Limpiar filtros</button>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="table-responsive">
+                            <table id="OrderTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                        </div>
+
+                    </div>
+                    <div id="cancelled-tab" class="tab-pane fade in">
+                        <div class="table-responsive">
+                            <table id="CanceledTable" datatable dt-options="INMEDIKApp.dtOptionsCancelled" dt-columns="INMEDIKApp.dtColumnsCancelled" dt-instance="INMEDIKApp.InstanceCallbackCancelled" class="table-hover table-bordered compact"></table>
+                        </div>
+                    </div>
+                    <div id="restrictions-tab" class="tab-pane fade in">
+                        <div class="row" style="margin-top:20px;">
+                            <div class="form-group col-md-3">
+                                <label class="control-label col-sm-4 ">Fecha inicio: </label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" date-time ng-model="INMEDIKApp.Filters.dateStart" id="pickerMaxSelectorPStart" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="control-label col-sm-4 ">Fecha fin: </label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" date-time ng-model="INMEDIKApp.Filters.dateEnd" id="pickerMaxSelectorPEnd" view="date" min-view="date" format="DD/MM/YYYY" readonly style="background-color: #ffffff !important; cursor: pointer !important;">
+                                </div>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <button class="btn btn-primary" ng-click="INMEDIKApp.ApplyFilters()"><i class="far fa-search"></i> Buscar</button>
+                                <button class="btn btn-success" ng-click="INMEDIKApp.Print()"><i class="fal fa-print"></i> Imprimir</button>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-12 table-responsive">
+                            <table id="RestrictedTable" datatable dt-options="INMEDIKApp.dtOptionsRestricted" dt-columns="INMEDIKApp.dtColumnsRestricted" dt-instance="INMEDIKApp.RestrictedInstance" class="table-hover table-bordered compact" style="width: 100%;border-collapse: collapse;"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length==0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="modal fade" id="DetailModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel">Detalle de ticket</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row" ng-if="!INMEDIKApp.Order.IsCanceled">
+                        <div class="col-md-6">
+                            <label class="control-label">Empleado:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.employeeAux.personAux.fullName}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Paciente:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.patientAux.personAux.fullName}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <label class="control-label">Total:</label>
+                            <span class="pull-right">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Order.Total)}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Descuento:</label>
+                            <span class="pull-right">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Order.Discount)}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <label class="control-label">Pagada:</label>
+                            <span class="pull-right" ng-if="!INMEDIKApp.Order.Paid">No</span>
+                            <span class="pull-right" ng-if="INMEDIKApp.Order.Paid">Si</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Redondeo:</label>
+                            <span class="pull-right">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Order.Rounding)}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <label class="control-label">Pagos realizados:</label>
+                            <span class="pull-right">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Order.totalpayed)}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Fecha:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.sCreated}}</span>
+                        </div>
+                    </div>
+                    <div class="row" ng-if="INMEDIKApp.Order.IsCanceled">
+                        <div class="col-md-6">
+                            <label class="control-label">Empleado:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.employeeAux.personAux.fullName}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Cancelado por:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.EmployeeCancel.personAux.fullName}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <label class="control-label">Total:</label>
+                            <span class="pull-right">{{INMEDIKApp.Ut_numberWithCommas(INMEDIKApp.Order.Total)}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Paciente:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.patientAux.personAux.fullName}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-6">
+                            <label class="control-label">Fecha creación:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.sCreated}}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="control-label">Fecha cancelación:</label>
+                            <span class="pull-right">{{INMEDIKApp.Order.sDateCanceled}}</span>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="row">
+                        <table class="table table-bordered table-condensed table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Iva</th>
+                                    <th>Sub total</th>
+                                    <th>Médico</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio</th>
+                                    <th>Descuento</th>
+                                    <th>Total</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-if="INMEDIKApp.Order.OrderConceptAux" ng-repeat="concept in INMEDIKApp.Order.OrderConceptAux">
+                                    <td>{{concept.ConceptAux.name}}</td>
+                                    <td>{{concept.iva}}</td>
+                                    <td>{{(concept.price - (concept.price * concept.discount / 100)).toFixed(2)}}</td>
+                                    <td>{{concept.medicname}}</td>
+                                    <td>{{concept.quantity}}</td>
+                                    <td>{{concept.price}}</td>
+                                    <td>{{concept.discount}}</td>
+                                    <td>{{((concept.price + concept.iva - concept.discount) * concept.quantity).toFixed(2)}}</td>
+                                    <!--<td>{{( (concept.price + concept.iva) - ( (concept.price + concept.iva)* concept.discount / 100)).toFixed(2) * concept.quantity}}</td>-->
+                                    <td>{{concept.createdString}}</td>
+                                </tr>
+                                <tr ng-if="INMEDIKApp.Order.orderPackageAux.packageAux.id" ng-init="concept = INMEDIKApp.Order.orderPackageAux">
+                                    <td>{{concept.packageAux.name}}</td>
+                                    <td>{{INMEDIKApp.currentTax * concept.packageAux.price}}</td>
+                                    <td>{{concept.packageAux.price}}</td>
+                                    <td>{{concept.medic.personAux.fullName}}</td>
+                                    <td>1</td>
+                                    <td>{{concept.packageAux.price}}</td>
+                                    <td>0</td>
+                                    <td>{{(concept.packageAux.price + (INMEDIKApp.currentTax * concept.packageAux.price)).toFixed(2)}}</td>
+                                    <td>{{INMEDIKApp.Order.sCreated}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div ng-if="INMEDIKApp.Order.paymentAux.length > 0">
+                        <h4>Pagos</h4>
+                        <div class="row">
+                            <table class="table table-bordered table-condensed table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Abono</th>
+                                        <th>Clínica</th>
+                                        <th>Monto</th>
+                                        <th>Comisión</th>
+                                        <th>Tipo de pago</th>
+                                        <th>Empleado</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-if="INMEDIKApp.Order.paymentAux" ng-repeat="payment in INMEDIKApp.Order.paymentAux">
+                                        <td>{{payment.id}}</td>
+                                        <td>{{payment.clinicAux.name}}</td>
+                                        <td>{{payment.Amount}}</td>
+                                        <td>{{payment.Commission}}</td>
+                                        <td>{{payment.PaymentTypeAux.Name}}</td>
+                                        <td>{{payment.employeeAux.personAux.fullName}}</td>
+                                        <td>{{payment.sCreated}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <a href="#" class="btn btn-success" ng-if="!INMEDIKApp.Order.IsCanceled" ng-click="INMEDIKApp.PrintTicketOrder(INMEDIKApp.Order)"><i class="fal fa-print"></i> Imprimir Ticket</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

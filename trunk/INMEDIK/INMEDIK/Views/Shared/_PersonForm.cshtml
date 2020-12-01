@@ -1,0 +1,107 @@
+﻿<div class="col-md-12 no-padding-sides">
+    <div class="col-md-6 left">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.name.$touched && currentForm.name.$invalid)}">
+            <label for="name" class="control-label col-md-3">Nombre(s)<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control"
+                       ng-model="INMEDIKApp.person.name"
+                       ng-text-change="INMEDIKApp.GetTouched($event)"
+                       ng-blur="INMEDIKApp.GetTouched($event)"
+                       id="name" required name="name" placeholder="Nombre(s)" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 right">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.lastname.$touched && currentForm.lastname.$invalid)}">
+            <label for="lastname" class="control-label col-md-3">Apellido Paterno<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.person.lastName" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="lastname" required name="lastname" placeholder="Apellido Paterno" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 left">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.secondlastname.$touched && currentForm.secondlastname.$invalid)}">
+            <label for="secondlastname" class="control-label col-md-3">Apellido Materno<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.person.secondlastname" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="secondlastname" required name="secondlastname" placeholder="Apellido Materno" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 left">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.birthdate.$touched && currentForm.birthdate.$invalid)}">
+            <label for="birthdate" class="control-label col-md-3">Fecha de nacimiento<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <div class="input-group">
+                    <input type="text" class="form-control" uib-datepicker-popup="{{INMEDIKApp.datepickerFormat}}" ng-model="INMEDIKApp.person.birthDate"
+                           ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)"
+                           datepicker-options="INMEDIKApp.datepickerOptions"
+                           clear-text="Limpiar" current-text="Hoy" close-text="Cerrar"
+                           is-open="INMEDIKApp.dpOpen"
+                           id="birthdate"
+                           name="birthdate"
+                           ng-focus="INMEDIKApp.OpenDP()"
+                           required />
+                    <span class="input-group-btn">
+                        <button type="button" ng-click="INMEDIKApp.OpenDP()" class="btn btn-default"><i class="fa fa-calendar"></i></button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 right">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.sex.$touched && currentForm.sex.$invalid)}">
+            <label for="sex" class="control-label col-md-3">Sexo<span class="required">*</span>: </label>
+            <div class="col-md-9">
+                <select name="sex" id="sex" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.person.sex" required>
+                    <option value="">Seleccione...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                    <option value="N">No definido</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.email.$touched && currentForm.email.$invalid)}">
+            <label for="email" class="control-label col-md-3">Correo: </label>
+            <div class="col-md-9">
+                <input type="email" class="form-control" ng-model="INMEDIKApp.person.email" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="email" name="email" placeholder="Correo" maxlength="100">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.phone.$touched && currentForm.phone.$invalid)}">
+            <label for="phone" class="control-label col-md-3">Teléfono: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.person.phoneNumber" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="phone" name="phone" placeholder="Teléfono" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.mobile.$touched && currentForm.mobile.$invalid)}">
+            <label for="mobile" class="control-label col-md-3">Móvil: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.person.mobile" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="mobile" name="mobile" placeholder="Móvil" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group" ng-class="{'invalid-group': (currentForm.curp.$touched && currentForm.curp.$invalid)}">
+            <label for="curp" class="control-label col-md-3">Curp: </label>
+            <div class="col-md-9">
+                <input type="text" class="form-control" ng-model="INMEDIKApp.person.curp" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" 
+                       ng-pattern="INMEDIKApp.regularExpretions.CURP.exp" id="curp" name="curp" placeholder="Curp" maxlength="50">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+            <label for="mobile" class="control-label col-md-3">Nacionalidad: </label>
+            <div class="col-md-9">
+                <select name="selectedNationalityAux" id="selectedNationalityAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.person.nationalityAux"
+                        ng-options="ct.name for ct in INMEDIKApp.NationalitiesL track by ct.id">
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

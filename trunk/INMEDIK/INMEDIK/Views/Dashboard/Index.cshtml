@@ -1,0 +1,126 @@
+﻿@section Styles
+{
+    <style>
+        .icono {
+            border-radius: 15px;
+            text-align: center;
+            padding-top: 2px;
+            padding-bottom: 2px;
+            color: white;
+        }
+
+            .icono > img {
+                width: 50%;
+                padding: 5px;
+            }
+            .icon-text{
+                font-size:18px;
+            }
+        .ul-icono > li {
+            width: 12em !important;
+        }
+
+        hr {
+            background-color: white;
+        }
+
+        .enlace-servicios {
+            color: white;
+        }
+
+        .center-text {
+            text-align: center;
+            margin-bottom:5px;
+        }
+
+        .nopadding {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .materia {
+            position: relative;
+            color: #fff;
+            padding: 7px;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        td {
+            border: 1px solid #beb5b5;
+        }
+
+        .table td.fit,
+        .table th.fit {
+            white-space: nowrap;
+            width: 1%;
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h3 id="timeline">Bienvenido</h3>
+</div>
+
+<div class="container">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="top-content">
+                    <ul class="ul-icono list-inline quick-access">
+                        <li class="center-text">
+                            <div class="col-xs-12">
+                                <a href="@Url.Action("Index", "ElectronicFile")">
+                                    <div class="icono" style="background: #0070C0;">
+                                        <i class="fa fa-id-card fa-7x"></i>
+                                        <div class="icon-text">Expedientes</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="center-text">
+                            <div class="col-xs-12">
+                                <a href="@Url.Action("Index", "Patient")">
+                                    <div class="icono" style="background: #E6AA00;">
+                                        <i class="fa fa-users fa-7x"></i>
+                                        <div class="icon-text">Pacientes</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="center-text">
+                            <div class="col-xs-12">
+                                <a href="@Url.Action("Index", "Employee")">
+                                    <div class="icono" style="background: #CC0066;">
+                                        <i class="fas fa-user-md fa-7x"></i>
+                                        <div class="icon-text">Empleados</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="center-text">
+                            <div class="col-xs-12">
+                                <a href="@Url.Action("Index", "Report")">
+                                    <div class="icono" style="background: #FF9900;">
+                                        <i class="fa fa-file-chart-line fa-7x"></i>
+                                        <div class="icon-text">Reportes</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="center-text">
+                            <div class="col-xs-12">
+                                <a href="@Url.Action("Index", "Audit")">
+                                    <div class="icono" style="background: #7030A0;">
+                                        <i class="fas fa-clipboard fa-7x"></i>
+                                        <div class="icon-text">Auditorías</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

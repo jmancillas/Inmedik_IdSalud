@@ -1,0 +1,797 @@
+﻿
+@{
+    ViewBag.Title = "Pacientes";
+}
+
+@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .searchButton {
+            margin-bottom: 5px;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/i18n/angular-locale_es-mx.js"></script>
+    <script type="text/javascript" src="~/Scripts/moment-with-locales.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/SheetJS-angular.js"></script>
+    <script type="text/javascript">
+    
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]).directive("importSheetJs", [SheetJSImportDirective]);
+        INMEDIKApp.controller('PatientController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.dtPersonInstance = {};
+            dt.PersonData = [];
+            dt.Patient = {};
+            dt.subbmiting = false;
+            dt.openSearch = false;
+            dt.xlsData = {
+                columnDefs: [],
+                data: {}
+            };
+            dt.bulkSubmitMessage = "";
+            dt.bulkSubmit = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.regularExpretions = Ut_getRegularExpretions();
+
+            dt.Nationalities = JSON.parse('@Html.Raw(ViewBag.NationalityRes)');
+
+            dt.NationalitiesL = [];
+            $.each(dt.Nationalities, function () {
+                dt.NationalitiesL.push({ id: this.id, name: this.name });
+            });
+
+
+            dt.confirmXLS = function () {
+                dt.bulkSubmit = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveBulkPatients", "Patient")',
+                    data: dt.xlsData.data,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.bulkSubmitMessage = "Éxito";
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                    dt.dtInstance.reloadData();
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.bulkSubmit = false;
+                });
+            };
+
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteElement(' + data + ')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+            function selectBtn(data, type, full, meta) {
+                if (dt.PersonData.indexOf(full) == -1) {
+                    dt.PersonData.push(full);
+                }
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.SetPersonSelected(' + dt.PersonData.indexOf(full) + ')" class="btn btn-info btn-xs">Seleccionar</button></div>';
+            }
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+            dt.datepickerOptions = {
+                datepickerMode: 'year',
+                showWeeks: 'false'
+            };
+            dt.datepickerFormat = 'dd/MM/yyyy';
+            dt.dpOpen = false;
+            dt.OpenDP = function () {
+                dt.dpOpen = true;
+            };
+            /*-----------------------------------------------CONFIG DATEPICKER-----------------------------------------------*/
+
+            dt.ToggleSearch = function () {
+                dt.openSearch = !dt.openSearch;
+            }
+
+            dt.SearchPerson = function (val) {
+                return $http.post('@Url.Action("SearchPerson", "Patient")', {
+                    name: val
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        var obj = item;
+                        return obj;
+                    })
+                });
+            };
+
+            dt.SetPersonSelected = function (item) {
+                /*-----------------------------------------------PERSON-----------------------------------------------*/
+                dt.FillPerson(dt.PersonData[item]);
+                /*-------------------------------------------END PERSON-----------------------------------------------*/
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.FillAddress(dt.PersonData[item].addressAux);
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                dt.openSearch = false;
+            };
+
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#PatientForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#PatientForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#PatientForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetPatient", "Patient")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Patient = res.data.data;
+                        /*-----------------------------------------------PERSON-----------------------------------------------*/
+                        dt.FillPerson(dt.Patient.personAux);
+                        /*-------------------------------------------END PERSON-----------------------------------------------*/
+                        /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                        dt.FillAddress(dt.Patient.personAux.addressAux);
+                        /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                        /*-----------------------------------------------Nationality--------------------------------------------*/
+                        for (var i = 0; i < dt.NationalitiesL.length; i++) {
+                            if (dt.NationalitiesL[i].name == "MEXICANA") {
+                                var idx = i;
+                            }
+                        }
+                        dt.person.nationalityAux = dt.NationalitiesL[idx];
+                        /*-----------------------------------------------End Nationality-----------------------------------------*/
+                        $("#NewElementModal").modal("show");
+                        dt.UpdateCities(dt.UpdateCounties);
+
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id) {
+                dt.Patient.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("DeletePatient", "Patient")',
+                    data: dt.Patient,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.Patient = {
+                    personAux: {}
+                };
+                dt.address = {};
+                dt.person = {};
+                dt.person.nationalityAux = {};
+                dt.selectedState = undefined;
+                dt.selectedCity = undefined;
+                $("#NewElementModal").modal("show");
+                for (var i = 0; i < dt.NationalitiesL.length; i++) {
+                    if(dt.NationalitiesL[i].name == "MEXICANA")
+                    {
+                        var idx = i;
+                    }
+                }
+                dt.person.nationalityAux = dt.NationalitiesL[idx];
+            };
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                dt.openSearch = false;
+                $scope.PatientForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.Patient = {
+                    personAux: {}
+                };
+            });
+            $("#MassiveUploadModal").on("hidden.bs.modal", function () {
+                dt.bulkSubmitMessage = "";
+                dt.xlsData = {
+                    columnDefs: [],
+                    data: {}
+                };
+            });
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                /*-----------------------------------------------PERSON-----------------------------------------------*/
+                dt.Patient.personAux = dt.person;
+                /*-------------------------------------------END PERSON-----------------------------------------------*/
+                /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+                dt.Patient.personAux.addressAux = dt.address;
+                /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SavePatient", "Patient")',
+                    data: dt.Patient,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                       // dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                            dt.errors[0] = "La sesión ha caducado.";
+
+                            $("#resultModal").modal('show');
+                    }
+                    else {
+
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            /*-------------------------------------------PersonTable-----------------------------------------------*/
+            dt.dtPersonOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetPersons", "Patient")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen personas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron personas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtPersonColumns = [
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("lastName").withTitle("Apellido Paterno"),
+                DTColumnBuilder.newColumn("secondlastName").withTitle("Apellido Materno"),
+                DTColumnBuilder.newColumn("sex").withTitle("Sexo"),
+                DTColumnBuilder.newColumn("email").withTitle("Email"),
+                DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(selectBtn).withClass('notSearchable').notSortable()
+            ];
+            dt.PersonInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.PersonData = [];
+                dt.dtPersonInstance = instance;
+                var id = '#' + dt.dtPersonInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtPersonInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            dt.PersonData = [];
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END PersonTable-----------------------------------------------*/
+
+            /*-----------------------------------------------ADDRESSS-----------------------------------------------*/
+            dt.address = {};
+            dt.selectedState = undefined;
+            dt.selectedCity = undefined;
+            dt.states = [];
+            dt.cities = [];
+
+            dt.UpdateCities = function (callback) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCitiesSelect", "City")',
+                    data: dt.selectedState,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.cities = res.data.data;
+                    //dt.selectedCity = undefined;
+                    //dt.address.countyAux = undefined;
+                    if (callback != undefined)
+                        callback();
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+            dt.UpdateCounties = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCountiesSelect", "County")',
+                    data: dt.selectedCity,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.counties = res.data.data;
+                    //dt.address.countyAux = undefined;
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            /*-------------------------------------------PatientTable-----------------------------------------------*/
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetPatients", "Patient")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen pacientes",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron pacientes",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("personAux.name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("personAux.lastName").withTitle("Apellido Paterno"),
+                DTColumnBuilder.newColumn("personAux.secondlastname").withTitle("Apellido Materno"),
+                DTColumnBuilder.newColumn("personAux.sex").withTitle("Sexo"),
+                DTColumnBuilder.newColumn("personAux.birthDate_string").withTitle("Fecha de nacimiento").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("reference").withTitle("Referencia"),
+                DTColumnBuilder.newColumn("created_string").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("updated_string").withTitle("Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Borrar").renderWith(deleteBtn).withClass('notSearchable').notSortable()
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+            /*-------------------------------------------END PatientTable-----------------------------------------------*/
+
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetStatesSelect", "State")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.states = res.data.data;
+                        dt.selectedState = undefined;
+
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                dt.UpdateCities();
+                dt.UpdateCounties();
+            };
+            init();
+            dt.FillAddress = function (Address) {
+                dt.address = Address;
+                dt.selectedCity = dt.address.countyAux.cityAux;
+                dt.selectedState = dt.selectedCity.stateAux;
+            }
+            dt.FillPerson = function (Person) {
+                dt.person = Person;
+                dt.person.birthDate = moment(Person.birthDate).toDate();
+            }
+
+            /*-------------------------------------------END ADDRESSS-----------------------------------------------*/
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="PatientController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg" style="width: 60%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Patient.id">Agregar</span><span ng-show="INMEDIKApp.Patient.id">Editar</span> Pacientes</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="PatientForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="PatientForm.name.$touched && PatientForm.name.$error.required"><strong>Nombre(s)</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.lastname.$touched && PatientForm.lastname.$error.required"><strong>Apellido Paterno</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.secondlastname.$touched && PatientForm.secondlastname.$error.required"><strong>Apellido Materno</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.sex.$touched && PatientForm.sex.$error.required"><strong>Sexo</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.birthdate.$touched && PatientForm.birthdate.$error.required"><strong>Fecha de nacimiento</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.birthdate.$touched && !PatientForm.birthdate.$error.required && !PatientForm.birthdate.$valid"><strong>Fecha de nacimiento</strong>: Formato incorrecto. Intente con formato dd/mm/aaaa</p>
+
+                    <p ng-show="PatientForm.address.$touched && PatientForm.address.$error.required"><strong>Dirección</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.postalCode.$touched && PatientForm.postalCode.$error.required"><strong>Código Postal</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.stateAux.$touched && PatientForm.stateAux.$error.required"><strong>Estado</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.cityAux.$touched && PatientForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.countyAux.$touched && PatientForm.countyAux.$error.required"><strong>Departamento</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.email.$touched && PatientForm.email.$error.email"><strong>Correo</strong>: formato incorrecto</p>
+                    <p ng-show="PatientForm.curp.$touched && PatientForm.curp.$error.pattern"><strong>Curp</strong>: {{INMEDIKApp.regularExpretions.CURP.msg}} </p>
+                    <p ng-show="PatientForm.SocialSecurity.$touched && PatientForm.SocialSecurity.$error.pattern"><strong>Número de seguridad social</strong>: {{INMEDIKApp.regularExpretions.NSS.msg}}</p>
+                    <p ng-show="PatientForm.postalCode.$touched && PatientForm.postalCode.$error.pattern"><strong>Código Postal</strong>: {{INMEDIKApp.regularExpretions.onlyNumbers.msg}} </p>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="PatientForm" id="PatientForm">
+                        <div class="searchButton pull-right">
+                            <span ng-if="INMEDIKApp.openSearch" ng-click="INMEDIKApp.ToggleSearch()" class="btn btn-default">Regresar <i class="fa fa-arrow-circle-left"></i></span>
+                            @*<span ng-click="INMEDIKApp.ToggleSearch()" class="btn btn-primary">Búsqueda <i class="fa fa-search"></i></span>*@
+                        </div>
+                        <div class="clearfix"></div>
+                        <div ng-if="INMEDIKApp.openSearch">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">Personas</div>
+                                <div class="panel-body">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table id="PersonTable" datatable dt-options="INMEDIKApp.dtPersonOptions" dt-columns="INMEDIKApp.dtPersonColumns" dt-instance="INMEDIKApp.PersonInstanceCallback" class="table-hover table-bordered compact"></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="!INMEDIKApp.openSearch">
+                            <div ng-init="currentForm = PatientForm">
+                                @Html.Partial("~/Views/Shared/_PersonForm.cshtml")
+                                <div class="clearfix"></div>
+                            </div>
+                            <div ng-init="currentForm = PatientForm">
+                                @Html.Partial("~/Views/Shared/_AddressForm.cshtml")
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="col-md-6 no-padding-left">
+                                    <div class="form-group" ng-class="{'invalid-group': (PatientForm.socialSecurity.$touched && PatientForm.socialSecurity.$invalid)}">
+                                        <label for="SocialSecurity" class="control-label col-md-3">Número seguridad social: </label>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control" ng-model="INMEDIKApp.person.socialSecurity"
+                                                   ng-pattern="INMEDIKApp.regularExpretions.NSS.exp"
+                                                   ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)"
+                                                   id="SocialSecurity" name="SocialSecurity" placeholder="NSS" maxlength="11">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (PatientForm.reference.$touched && PatientForm.reference.$invalid)}">
+                                        <label for="name" class="control-label col-md-3">N° Empleado: </label>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control" ng-model="INMEDIKApp.Patient.reference" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="name" name="reference" placeholder="Referencia" maxlength="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="PatientForm.$invalid || INMEDIKApp.subbmiting">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Paciente 
+            @*<button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button>*@
+            <button class="btn btn-xs btn-warning pull-right" data-toggle="modal" data-target="#MassiveUploadModal" ng-click="INMEDIKApp.MasiveUpload()" hidden="hidden" style="display: none;">Carga masiva</button>
+        </div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="PatientTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="MassiveUploadModal" class="modal modal-warning fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Carga masiva</h4>
+                </div>
+                <div class="modal-body">
+                    <span>Todo campo faltante o llenado incorrectamente será reemplazado por un valor por defecto.</span>
+                    <div ng-show="INMEDIKApp.bulkSubmit"><span class="fa fa-spinner fa-spin"></span>Procesando...</div>
+                    <span ng-if="INMEDIKApp.bulkSubmitMessage">Resultado: {{INMEDIKApp.bulkSubmitMessage}}</span>
+                    <br />
+                    <br />
+                    <input import-sheet-js="" xlsdata="INMEDIKApp.xlsData" type="file" class="col-md-12" id="massiveUploadExcel" value="">
+                    <button ng-click="INMEDIKApp.confirmXLS()"
+                            ng-disabled="INMEDIKApp.xlsData.columnDefs.length==0 || INMEDIKApp.bulkSubmit"
+                            class="btn btn-default btn-xs btn-success pull-right">
+                        Confirmar
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length==0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+

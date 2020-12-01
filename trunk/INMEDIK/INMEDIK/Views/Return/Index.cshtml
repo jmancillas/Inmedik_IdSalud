@@ -1,0 +1,648 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+@section styles
+{
+    <link href="~/Content/angular-datatables.css" type="text/css" rel="stylesheet" />
+    <link href="~/Content/DataTables/dataTables.bootstrap.css" type="text/css" rel="stylesheet" />
+    <link href="~/Content/DataTables/responsive.bootstrap.css" type="text/css" rel="stylesheet" />
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewReturnModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/moment-with-locales.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-fileupload/fileUploader.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/checklist-model.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('ReturnController', function ($scope, $compile, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstanceReturn = {};
+            dt.dtInstanceConcepts = {};
+            dt.Returns = [];
+            dt.Return = {};
+            dt.Roles = [];
+            dt.errors = [];
+            dt.submiting = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.message = '';
+
+
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+
+                $("#ReturnForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+
+                $("#ReturnForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+
+                $("#ReturnForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ReturnProductForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ReturnProductForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            }
+
+            dt.NewReturn = function () {
+                dt.Return = {};
+                dt.Return.ReturnProductsAux = [];
+                $("#NewReturnModal").modal("show");
+            }
+
+            dt.EditReturn = function (id) {
+                dt.LoadReturn(id);
+                $("#NewReturnModal").modal("show");
+            }
+
+            dt.LoadReturn = function (id) {
+                dt.Return = {};
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetReturn", "Return")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.Return = res.data.data;
+                        $("#NewReturnModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SingIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.SaveReturn = function () {
+                $("#SaveNewReturnBtn").button('loading');
+                dt.subbmiting = true;
+                supplierId = 0;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveReturn", "Return")',
+                    data: {
+                        Return: dt.Return
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.dtInstanceReturn.reloadData();
+                        dt.dtInstanceConcepts.reloadData();
+                        dt.message = res.data.message;
+                        $("#result").modal('show');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SingIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                    $("#NewReturnModal").modal('hide');
+                    $("#SaveNewReturnBtn").button('reset');
+                });
+            }
+
+            $("#NewReturnModal").on("hidden.bs.modal", function () {
+                $scope.ReturnForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+            });
+
+            dt.ConfirmReturn = function () {
+                $("#ConfirmReturnModal").modal("show");
+            }
+
+
+            //Datatables
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                if (data.deleted) {
+                    $(row).addClass('danger');
+                }
+                $scope.$digest();
+            }
+
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+
+            function DetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadReturn(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-pencil" aria-hidden="true"></i></button></div>';
+            }
+            function getName(data, type, full, meta) {
+                return full.UserAuxUpda.name + ' ' + full.UserAuxUpda.lastname;
+            }
+
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetReturns", "Return")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("Reason").withTitle("Razón"),
+                DTColumnBuilder.newColumn("UserAuxUpda.account").withTitle("Usuario Actualizó"),
+                DTColumnBuilder.newColumn("sUpdated").withTitle("Fecha Actualizado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Ver detalle").renderWith(DetailBtn).withClass('notSearchable').notSortable()
+            ];
+
+
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceReturn = instance;
+                var id = '#' + dt.dtInstanceReturn.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="Buscar ' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceReturn.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            function createdRowConcepts(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                if (data.InStock <= 0) {
+                    $(row).addClass('danger');
+                }
+            }
+
+            dt.dtOptionsConcepts = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetWarehouseStocks", "Return")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRowConcepts)
+                .withOption('serverSide', true)
+                .withOption('infoCallback', function (settings) {
+                    dt.ConceptList = [];
+                    $.each(settings.aoData, function (idx, item) {
+                        dt.ConceptList.push(item._aData);
+                    })
+                })
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen registros",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron registros",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            function AddProductBtn(data, type, full, meta) {
+                if (full.inStock > 0) {
+                    return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.AddProduct(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
+                }
+                else {
+                    return '<div class="text-center"><button type="button" class="btn btn-danger btn-xs" disabled><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
+                }
+            }
+            dt.AddProduct = function (StockId) {
+
+                var elem = dt.ConceptList.filter(function (a) { return a.stockId == StockId; })[0];
+                var alreadyIn = dt.Return.ReturnProductsAux.filter(function (a) { return a.StockId == StockId; })[0];
+
+                if (elem != undefined && alreadyIn == undefined) {
+                    dt.Return.ReturnProductsAux.push({
+                        ConceptId: elem.conceptId,
+                        AlmStockId: elem.id,
+                        StockId: elem.stockId,
+                        Batch: elem.batch,
+                        Name: elem.name,
+                        InStock: elem.inStock
+                    });
+                }
+            }
+            @* Definicion de las columnas del DT *@
+            dt.dtColumnsConcepts = [
+                //DTColumnBuilder.newColumn("Id").withTitle("ID"),
+                DTColumnBuilder.newColumn("batch").withTitle("Lote"),
+                DTColumnBuilder.newColumn("name").withTitle("Concepto"),
+                DTColumnBuilder.newColumn("inStock").withTitle("En Stock").withClass('notSearchable'),
+                //DTColumnBuilder.newColumn("SupplierName").withTitle("Proveedor"),
+                //DTColumnBuilder.newColumn("sCreated").withTitle("Creado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("stockId").withTitle("Agregar").renderWith(AddProductBtn).withClass('notSearchable').notSortable()
+            ];
+
+
+            dt.InstanceCallbackConcepts = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstanceConcepts = instance;
+                var id = '#' + dt.dtInstanceConcepts.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="Buscar ' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstanceConcepts.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.Init = function () {
+            }
+
+            dt.Init();
+
+
+
+        });
+
+        var isGreatherThan = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    maxValue: "=isGreatherThan"
+                },
+                link: function (scope, element, attributes, ngModel) {
+                    ngModel.$validators.isGreatherThan = function (minValue) {
+                        return (minValue <= scope.maxValue)
+                        ||
+                            (
+                                (minValue == "" || minValue == undefined)
+                            &&
+                                (scope.maxValue == "" || scope.maxValue == undefined)
+                            );
+                    };
+                    scope.$watch("maxValue", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        INMEDIKApp.directive("isGreatherThan", isGreatherThan);
+
+    </script>
+
+}
+
+<div ng-controller="ReturnController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Devoluciones
+            <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewReturn()">Crear nuevo</button>
+        </div>
+        <div class="panel-body">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="table-responsive">
+                    <table id="ReturnTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table table-hover table-bordered"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade modal-info" id="NewReturnModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title"><span ng-show="!INMEDIKApp.Return.id && !INMEDIKApp.Return.confirmed">Agregar</span><span ng-show="INMEDIKApp.Return.id && !INMEDIKApp.Return.confirmed">Editar</span><span ng-show="INMEDIKApp.Return.confirmed && INMEDIKApp.Return.id">Desglose de la</span> Devolución</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" autocomplete="off" name="ReturnForm" id="ReturnForm">
+                        <div class="form-group error-panel" ng-if="ReturnForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                <div class="alert alert-danger" role="alert">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    <span class="sr-only">Error: </span>
+                                    <span>Verifíque los siguientes errores</span>
+                                    <div class="row" ng-if="ReturnForm.Reason.$touched && ReturnForm.Reason.$error.required">
+                                        <div class="col-lg-12">
+                                            <span class="glyphicon glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                            <span><strong>Razón general: </strong> Campo requerido</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" ng-class="{'invalid-group': (ReturnForm.Reason.$touched && ReturnForm.Reason.$invalid)}">
+                            <label for="name" class="col-lg-2 col-md-2 col-sm-2 col-xs-2">Razón general<span class="required">*</span>: </label>
+                            <div class="col-lg-10 col-md-10 col-sm-10 col-xs-10">
+                                <textarea ng-if="!INMEDIKApp.Return.confirmed" type="text" autocomplete="off" class="form-control" ng-model="INMEDIKApp.Return.Reason" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="Reason" name="Reason" placeholder="Razón" required maxlength="2000"></textarea>
+                                <textarea ng-if="INMEDIKApp.Return.confirmed" type="text" autocomplete="off" class="form-control" ng-model="INMEDIKApp.Return.Reason" id="Reason" name="Reason" disabled></textarea>
+                            </div>
+                        </div>
+                        <div ng-if="INMEDIKApp.Return.id > 0" class="col-xs-12">
+                            <div class="form-group">
+                                <label class="col-xs-2">Creado por:</label>
+                                <input class="col-xs-4" value="{{INMEDIKApp.Return.UserAuxCrea.account}}" disabled />
+                                <label class="col-xs-3">Fecha creado:</label>
+                                <input class="col-xs-3" value="{{INMEDIKApp.Return.sCreated}}" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-2">Modificado por:</label>
+                                <input class="col-xs-4" value="{{INMEDIKApp.Return.UserAuxUpda.account}}" disabled />
+                                <label class="col-xs-3">Fecha Modificiación:</label>
+                                <input class="col-xs-3" value="{{INMEDIKApp.Return.sUpdated}}" disabled />
+                            </div>
+                        </div>
+                    </form>
+                    <hr />
+                    <form class="form-horizontal" autocomplete="off" name="ReturnProductForm" id="ReturnProductForm">
+                        <table class="table table-hover table-bordered" ng-show="INMEDIKApp.Return.ReturnProductsAux.length > 0">
+                            <tr>
+                                <th>Lote</th>
+                                <th>Concepo</th>
+                                <th>Disponible</th>
+                                <th>A devolver</th>
+                                <th>Razón</th>
+                                <th ng-if="!INMEDIKApp.Return.id">Quitar</th>
+                            </tr>
+                            <tr ng-repeat="Product in INMEDIKApp.Return.ReturnProductsAux">
+                                <td>{{Product.Batch}}</td>
+                                <td>{{Product.Name}}</td>
+                                <td>{{Product.InStock}}</td>
+                                <td ng-show="!INMEDIKApp.Return.confirmed">
+                                    <input type="number" name="Quantity_{{$index}}" ng-model="Product.Quantity" is-greather-than="Product.InStock" max="{{Product.InStock}}" style="width:100%" min="0" required />
+                                    <span class="label label-danger" ng-show="ReturnProductForm['Quantity_' + $index].$touched && ReturnProductForm['Quantity_' + $index].$error.isGreatherThan">* No se puede devolver mas de lo disponible del lote</span>
+                                    <span class="label label-warning" ng-if="Product.AlmBranchRequestToDeliveryTransactionId">Si disminuye ésta devolución la diferencia debe entrar por factura.</span>
+                                </td>
+                                <td ng-show="INMEDIKApp.Return.confirmed">
+                                    {{Product.Quantity}}
+                                </td>
+                                <td ng-show="!INMEDIKApp.Return.confirmed"><textarea ng-model="Product.Reason" class="form-control" rows="1"></textarea></td>
+                                <td ng-show="INMEDIKApp.Return.confirmed">
+                                    {{Product.Reason}}
+                                </td>
+                                <td ng-if="!INMEDIKApp.Return.confirmed"><button ng-click="INMEDIKApp.Return.ReturnProductsAux.splice($index,1);" class="btn btn-danger btn-xs col-xs-12"><i class="fa fa-times" aria-hidden="true"></i></button></td>
+                            </tr>
+                        </table>
+                        <br />
+                        <div ng-if="!INMEDIKApp.Return.confirmed" class="col-xs-12">
+                            <input type="button" class="btn btn-xs btn-success col-xs-12" data-toggle="modal" data-target="#stockConceptModal" value="Agregar producto" />
+                        </div>
+                        <div class="clearfix"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button id="SaveNewReturnBtn" type="button" class="btn btn-primary" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Guardando..." ng-show="!INMEDIKApp.Return.confirmed" ng-click="INMEDIKApp.ConfirmReturn()" ng-disabled="ReturnForm.$invalid || INMEDIKApp.subbmiting || ReturnProductForm.$invalid">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ConfirmReturnModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que esta todo listo para guardar?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.SaveReturn()" data-dismiss="modal">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length !=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length == 0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length !=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stockConceptModal" class="modal  fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4>Agregar Lote</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel-body">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="table-responsive">
+                                <table id="ConceptsTable" datatable dt-options="INMEDIKApp.dtOptionsConcepts" dt-columns="INMEDIKApp.dtColumnsConcepts" dt-instance="INMEDIKApp.InstanceCallbackConcepts" class="table table-hover table-bordered"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result" class="modal modal-info fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    @*<h4 class="modal-title">Resultado</h4>*@
+                </div>
+                <div class="modal-body">
+                    <label> {{INMEDIKApp.message}}</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

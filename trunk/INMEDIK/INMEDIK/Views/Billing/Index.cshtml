@@ -1,0 +1,550 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles
+{
+    <link href="~/Content/datatables/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Content/datatables/angular-datatables.css" rel="stylesheet" />
+
+    <style>
+        #visor-pdf {
+            float: none;
+        }
+    </style>
+}
+@section Scripts
+{
+    <script src="~/Scripts/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/datatables/angular-datatables.min.js"></script>
+    <script src="~/Scripts/angular-animate.min.js"></script>
+    <script src="~/Scripts/angular-sanitize.min.js"></script>
+    <script src="~/Scripts/ui-bootstrap-tpls-2.3.0.min.js"></script>
+    <script src="~/Scripts/bootbox.min.js"> </script>
+    <script type="text/javascript">
+        var app = angular.module('INMEDIKApp', ['datatables', 'ngAnimate', 'ngSanitize', 'ui.bootstrap']);
+
+        app.controller('BillingController', function ($scope, $compile, $http, DTOptionsBuilder, DTColumnBuilder) {
+            $scope.lang = {
+                title: 'Facturas',
+                table: {
+                    "sEmptyTable": "No existen pagos",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ resultados",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 pagos",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ pagos",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron pagos",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Último",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                }
+            };
+            var dt = this;
+            dt.dtInstance = {};
+
+            $scope.idFacturaActual = undefined;
+            $scope.logFactura = [];
+            $scope.pdfFacturaBase64 = null;
+            $scope.urlDescargarFactura = '';
+            $scope.nombrePdfFactura = '';
+
+            $scope.listaConceptos = [];
+            $scope.TiposRetiro = [];
+            $scope.Retiro = {};
+            $scope.guardandoRetiro = false;
+            $scope.idTicketRetiro;
+            $scope.tipoTicketRetiro;
+
+            var botonesAlerta = {
+                ok: {
+                    label: 'Aceptar',
+                    className: "btn-success"
+                }
+            };
+
+            $scope.facturar = function (idTicket) {
+                $('#btn-fact-' + idTicket).prop("disabled", true);
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("FacturarTicket")',
+                    data: { idTicket: idTicket },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    $('#btn-fact-' + idTicket).prop("disabled", false);
+                    //Habilitar boton
+                    bootbox.alert({
+                        title: resp.data.success ? "Éxito" : "Error",
+                        message: resp.data.message,
+                        buttons: botonesAlerta
+                    });
+                    if (resp.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                });
+            }
+
+
+            $scope.verFactura = function (idFactura, folio) {
+                $scope.pdfFacturaBase64 = null;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GenerarFacturaImpresaBase64")',
+                    data: { idFactura: idFactura },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    if (resp.data.success) {
+                        $scope.pdfFacturaBase64 = resp.data.data;
+                    }
+                    else {
+                        bootbox.alert({
+                            title: resp.data.success ? "Éxito" : "Error",
+                            message: resp.data.message,
+                            buttons: botonesAlerta
+                        });
+                    }
+                });
+
+                $scope.urlDescargarFactura = '@Url.Action("GenerarFacturaImpresa")' + '?idFactura=' + idFactura;
+                $scope.nombrePdfFactura = 'factura_' + folio;
+                $('#modal-ver-factura').modal('show');
+            }
+
+            $scope.verHistorial = function (idTicket) {
+                $scope.logFactura = [];
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("ObtenerLogFactura")',
+                    data: { idTicket: idTicket },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    if (resp.data.success)
+                    {
+                        $('#modal-ver-historial').modal('show');
+                        $scope.logFactura = resp.data.data;
+                    }
+                    else
+                    {
+                        bootbox.alert({
+                            title: resp.data.success ? "Éxito" : "Error",
+                            message: resp.data.message,
+                            buttons: botonesAlerta
+                        });
+                    }
+                });
+            }
+
+            $scope.enviarParaCancelacion = function (idFactura) {
+                $('#btn-enviar-cancelacion-' + idFactura).prop("disabled", true);
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("EnviarParaCancelacionNS")',
+                    data: { idFactura: idFactura },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    $('#btn-enviar-cancelacion-' + idFactura).prop("disabled", false);
+                    bootbox.alert({
+                        title: resp.data.success ? "Éxito" : "Error",
+                        message: resp.data.message,
+                        buttons: botonesAlerta
+                    });
+                    if(resp.data.success)
+                    {
+                        dt.dtInstance.reloadData();
+                    }
+                });
+            }
+
+            $scope.estadoDeCancelacion = function (idFactura, idTicketRetiro, idTipoTicketRetiro) {
+                $scope.idTicketRetiro = idTicketRetiro;
+                $scope.tipoTicketRetiro = idTipoTicketRetiro;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("EstadoDeCancelacion")',
+                    data: { idFactura: idFactura },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+
+                    $scope.cancelarTicket = undefined;
+                    $scope.retirarCaja = undefined;
+                    $scope.Retiro = {
+                        Monto: resp.data.montoTicket
+                    };
+
+                    $('#modal-estado-cancelacion').modal('show');
+                    $scope.estadoCancelacionMensaje = resp.data.message;
+                    if (resp.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                });
+            }
+
+
+            function money(data, type, full, meta) {
+                return "$" + number_format(data);
+            }
+            function opcionesFactura(data, type, full, meta) {
+                if ((!full.IdEstatusFactura || full.IdEstatusFactura == 1) && !full.Cancelado)
+                {
+                    return '<button class="btn btn-success" ng-click="facturar(' + full.IdTicket + ')" id="btn-fact-' + full.IdTicket + '">Facturar</button>';
+                }
+                else if (full.IdEstatusFactura == 2 || full.IdEstatusFactura == 4) {
+                    return '<button class="btn btn-info" ng-click="verFactura( ' + full.IdFactura + ' ,\'' + full.Folio + '\')" id="btn-ver-' + full.IdFactura + '">Ver Factura</button>';
+                }
+                else
+                {
+                    return '';
+                }
+            }
+
+            function opcionesCancelar(data, type, full, meta) {
+                if (!full.IdEstatusFactura || full.IdEstatusFactura == 1) {
+                    return '';
+                }
+                else if (full.IdEstatusFactura == 2) {
+                    return '<button class="btn btn-danger" ng-click="enviarParaCancelacion(' + full.IdFactura + ')" id="btn-enviar-cancelacion-' + full.IdFactura + '">Cancelar</button>';
+                }
+                else if (full.IdEstatusFactura == 3) {
+                    return '<button class="btn btn-danger" ng-click="estadoDeCancelacion(' + full.IdFactura + ', ' + full.IdTicket + ', \'' + full.TipoTicket + '\')">Ver estado cancelación</button>';
+                }
+                else
+                {
+                    return '';
+                }
+            }
+
+            function renderVerHistorial(data, type, full, meta)
+            {
+                return '<button class="btn btn-info" ng-click="verHistorial(' + full.IdTicket + ')">Ver historial</button>';
+            }
+
+            function renderEstatusTicket(data, type, full, meta){
+                if(full.Cancelado)
+                {
+                    return 'Cancelado';
+                }
+                else{
+                    return 'Activo';
+                }
+            }
+
+            $scope.guardaRetiro = function () {
+                if($scope.retirarCaja)
+                {
+                    var errores = [];
+                    if (!$scope.Retiro.AutorizadoPor || $scope.Retiro.AutorizadoPor.trim() == "") {
+                        errores.push('Ingrese el campo Autorizado por.');
+                    }
+                    if (!$scope.Retiro.ConceptoRetiro) {
+                        errores.push('Ingrese el Concepto.');
+                    }
+                    if (!$scope.Retiro.Tipo) {
+                        errores.push('Seleccione el Tipo de retiro.');
+                    }
+                    if (errores.length > 0) {
+                        bootbox.alert({
+                            title: "Error",
+                            message: errores.join('<br>'),
+                            buttons: botonesAlerta
+                        });
+                        return;
+                    }
+                    if (typeof ($scope.Retiro.ConceptoRetiro) == "string")
+                    {
+                        $scope.Retiro.ConceptoRetiro = { IdConcepto: 0, Concepto: $scope.Retiro.ConceptoRetiro }
+                    }
+
+                    cancelarTicket($scope.idTicketRetiro, $scope.tipoTicketRetiro, $scope.Retiro);
+                }
+                else
+                {
+                    cancelarTicket($scope.idTicketRetiro, $scope.tipoTicketRetiro, null);
+                }
+            }
+
+            function cancelarTicket(idTicket, tipoTicket, objRetiro) {
+                $scope.guardandoRetiro = true;
+                $http({
+                    method: 'POST',
+                    url: "@Url.Action("CancelarTicket", "Cobranza")",
+                    data: { idTicket: idTicket, tipoTicket: tipoTicket, retiro: objRetiro, registrarLogFacturacion: true },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    $scope.guardandoRetiro = false;
+                    bootbox.alert({
+                        title: resp.data.success ? "Éxito" : "Error",
+                        message:  resp.data.message,
+                        buttons: botonesAlerta
+                    });
+                    if (resp.data.success) {
+                        $('#modal-estado-cancelacion').modal('hide');
+                    }
+                }, function errorCallback(response) {
+                    $scope.guardandoRetiro = false;
+                    bootbox.alert({
+                        title: "Error",
+                        message: "Ocurrió un error inesperado. " + response.status + " " + response.statusText,
+                        buttons: botonesAlerta
+                    });
+                });
+            }
+
+            dt.dtColumns = [];
+            dt.dtOptions = {};
+            dt.AppReady = false;
+            dt.modalError = {};
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("ObtenerPagosFacturables")",
+                })
+                .withOption('serverSide', true)
+                .withDataProp('data')
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                    .withLanguage($scope.lang.table);
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("Folio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("IdFamilia").withTitle("# Familia"),
+                DTColumnBuilder.newColumn("Apellidos").withTitle("Familia"),
+                DTColumnBuilder.newColumn("").renderWith(renderEstatusTicket).withTitle("Estatus Ticket"),
+                DTColumnBuilder.newColumn("FechaString").withTitle("Fecha").withClass("notSearchable"),
+                DTColumnBuilder.newColumn("Monto").renderWith(money).withTitle("Monto"),
+                DTColumnBuilder.newColumn("MontoFacturable").renderWith(money).withTitle("Monto Facturable"),
+                DTColumnBuilder.newColumn("DescEstatusFactura").withTitle("Estatus Factura"),
+                DTColumnBuilder.newColumn("").renderWith(renderVerHistorial).withClass("notSearchable").notSortable(),
+                DTColumnBuilder.newColumn("").renderWith(opcionesFactura).withClass("notSearchable").notSortable(),
+                DTColumnBuilder.newColumn("").renderWith(opcionesCancelar).withClass("notSearchable").notSortable(),
+            ];
+            dt.InstanceCallback = function (instance) {
+                dt.dtInstance = instance;
+            }
+
+            var init = function () {
+                dt.AppReady = true;
+
+                $http({
+                    method: 'POST',
+                    url: "@Url.Action("ListadeConceptosxidConfiguracion", "Cuotas")",
+                    data: { IdConfiguracion: @ViewBag.IdConfiguracionInscripcion },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    if (resp.data.success) {
+                        $scope.listaConceptos = resp.data.listaConceptos;
+                    }
+                    else {
+                        bootbox.alert({
+                            title: "Ocurrió un error",
+                            message: "Ocurrió un error al intentar obtener el listado de conceptos.",
+                            buttons: botonesAlerta
+                        });
+                    }
+                }, function errorCallback(response) {
+                    bootbox.alert({
+                        title: "Ocurrió un error",
+                        message: "Error " + response.status + " - " + response.statusText,
+                        buttons: botonesAlerta
+                    });
+                });
+
+                $http({
+                    method: 'POST',
+                    url: "@Url.Action("ObtenerTiposRetiro", "Caja")",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (resp) {
+                    if (resp.data.success) {
+                        $scope.TiposRetiro = resp.data.data;
+                    }
+                    else {
+                        bootbox.alert({
+                            title: "Ocurrió un error",
+                            message: "Ocurrió un error al intentar obtener los tipos de retiro.",
+                            buttons: botonesAlerta
+                        });
+                    }
+                }, function errorCallback(response) {
+                    bootbox.alert({
+                        title: "Ocurrió un error",
+                        message: "Error " + response.status + " - " + response.statusText,
+                        buttons: botonesAlerta
+                    });
+                });
+            };
+
+            init();
+        });
+    </script>
+}
+<div ng-app="EscuelasApp">
+    <div ng-controller="FacturacionController as dt" class="col-md-12">
+        <h3>{{lang.title}}</h3>
+        <div class="col-md-12">
+            <div class="row" ng-if="dt.AppReady">
+                <table datatable="" dt-options="dt.dtOptions" dt-columns="dt.dtColumns" dt-instance="dt.dtInstance" class="row-border hover"></table>
+            </div>
+        </div>
+
+        <div id="modal-ver-factura" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h3>Factura</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-right">
+                            <a class="btn btn-success" href="{{urlDescargarFactura}}" download="{{nombrePdfFactura}}">Descargar</a>
+                            <br /><br />
+                        </div>
+
+                        <div class="col-md-12 space-top" id="visor-pdf">
+                            <object ng-show="pdfFacturaBase64 != null" data="{{pdfFacturaBase64}}" type="application/pdf" width="100%" height="800"></object>
+                            <div ng-show="pdfFacturaBase64 == null" class="text-center">
+                                <span class="glyphicon glyphicon-refresh glyphicon-spin"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-ver-historial" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h3>Historial</h3>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-bordered table-condensed" ng-if="logFactura.length > 0">
+                            <thead>
+                                <tr>
+                                    <th>Mensaje</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in logFactura">
+                                    <td>{{item.Mensaje}}</td>
+                                    <td>{{item.Fecha}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div ng-if="logFactura.length == 0">Sin eventos</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-estado-cancelacion" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h3>Estado de Cancelación</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div>{{estadoCancelacionMensaje}}</div>
+                        <br />
+                        <div class="col-md-6 no-padding-right">
+                            <div class="form-group">
+                                <label class="control-label"><input type="checkbox" class="check" ng-model="cancelarTicket" /> Cancelar ticket</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 no-padding-left">
+                            <div class="form-group" ng-show="cancelarTicket">
+                                <label class="control-label"><input type="checkbox" class="check" ng-model="retirarCaja" /> Retirar de caja</label>
+                            </div>
+                        </div>
+                        <div class="row" ng-show="retirarCaja">
+                            <div class="col-md-12">
+                                <form>
+                                    <div class="col-md-6 no-padding-right">
+                                        <div class="form-group">
+                                            <label class="control-label col-md-4">Autorizado por: <span class="obligatorio">*</span></label>
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control input-sm" ng-model="Retiro.AutorizadoPor" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 no-padding-left">
+                                        <div class="form-group">
+                                            <label class="control-label col-md-4">Monto: <span class="obligatorio">*</span></label>
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control input-sm" ng-model="Retiro.Monto" disabled />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 no-padding-right">
+                                        <div class="form-group">
+                                            <label class="control-label col-md-4">Concepto:<span class="obligatorio">*</span></label>
+                                            <div class="col-md-8">
+                                                <input type="text" autocomplete="off" ng-model="Retiro.ConceptoRetiro"
+                                                       uib-typeahead="itemConcepto as itemConcepto.Concepto for itemConcepto in listaConceptos | filter:{Concepto : $viewValue} | limitTo:8"
+                                                       class="form-control" id="concepto">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 no-padding-left">
+                                        <div class="form-group">
+                                            <label class="control-label col-md-4">Tipo de retiro:<span class="obligatorio">*</span></label>
+                                            <div class="col-md-8">
+                                                <select name="tipo" id="tipo" ng-model="Retiro.Tipo" class="form-control" ng-options="tipo.Nombre for tipo in TiposRetiro track by tipo.IdTipoRetiro">
+                                                    <option value="">Seleccione...</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-success" ng-show="cancelarTicket" ng-disabled="guardandoRetiro" ng-click="guardaRetiro()">Cancelar ticket</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

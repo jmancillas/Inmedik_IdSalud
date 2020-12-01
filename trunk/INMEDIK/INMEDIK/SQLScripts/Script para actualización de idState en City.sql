@@ -1,0 +1,9 @@
+GO
+UPDATE City
+SET StateId = CASE StateId WHEN 5 THEN 7 WHEN 7 THEN 5 END WHERE StateId IN (5, 7)
+UPDATE City
+SET StateId = CASE StateId WHEN 6 THEN 8 WHEN 8 THEN 6 END WHERE StateId IN (6, 8)
+GO
+
+
+

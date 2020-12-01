@@ -1,0 +1,670 @@
+﻿<!DOCTYPE html>
+<style type="text/css">
+    /*Fondo Gris*/
+    .background-gray {
+        /*display: none;  Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(193, 193, 193, 0.31); /* Black w/ opacity */
+    }
+
+    /*Contenedor de pantalla de carga*/
+    .loading-content {
+        background-color: transparent;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: none; /*1px solid #888;*/
+        width: 80%; /* Could be more or less, depending on screen size */
+        color: #ffffff;
+    }
+
+    /*Texto mostrado de carga*/
+    .loading-info-container {
+        font-size: 2em;
+    }
+
+    /*Icono de carga*/
+    .loading-icon-container {
+        font-size: 3em;
+    }
+
+    .bg-danger {
+        color: #ffffff;
+        background-color: #e87c7c;
+    }
+
+    .bg-primary {
+        color: #ffffff;
+        background-color: #20a8d8;
+    }
+
+    .logo-container-bg {
+        width: 240px;
+        text-align: center;
+        background-color: white;
+    }
+
+        .logo-container-bg svg {
+            color: #000000;
+        }
+</style>
+<html lang="en" ng-app="INMEDIKApp">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Grupo PiedraSanta">
+
+    @*<title>INMEDIK</title>*@
+    <title>ID Salud</title>
+    <link rel="stylesheet" href="@Url.Content("~/Content/bootstrap.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/bootstrap-tour.min.css")" />
+
+    <!-- Remove following comment to add Right to Left Support or add class rtl to body -->
+    @*<link rel="stylesheet" href="@Url.Content("~/Content/font-awesome.css")" />*@
+    <link rel="stylesheet" href="@Url.Content("~/Content/Site.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/Style.css")" />
+
+    <script src="@Url.Content("~/Scripts/FontAwesome/fontawesome-all.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/moment-with-locales.js")"></script>
+    <script src="@Url.Content("~/Scripts/moment-timezone-with-data.js")"></script>
+
+    @RenderSection("Styles", false)
+    <script src="@Url.Content("~/Scripts/jquery-1.10.2.min.js")"></script>
+    <script src="~/Scripts/jquery-ui.js"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap-tour.js")"></script>
+    @Scripts.Render("~/Angular")
+
+    @RenderSection("Scripts", false)
+
+    <script>
+        $(document).ready(function () {
+            $('.manual-button').click(function () {
+                $("#manualModal").modal("show");
+            });
+            var tourTemplate = "<div class='popover tour'>" +
+                           "<div class='arrow'></div>" +
+                            "<h3 class='popover-title'></h3>" +
+                            "<div class='popover-content'></div>" +
+                            "<div class='popover-navigation'>" +
+                                "<div class='btn-group'>" +
+                                    "<button class='btn btn-default' data-role='prev'>« Prev</button>" +
+                                    "<button class='btn btn-default' data-role='next'>Sig »</button>" +
+                                "</div>" +
+                                "<button class='btn btn-default' data-role='end'>Terminar</button>" +
+                            "</div>" +
+                          "</div>";
+            var tourReception = new Tour({
+                onRedirectError: function (tour) {
+                    tour.end();
+                },
+                //debug: true,
+                name: 'tourReception',
+                template: tourTemplate,
+                steps: [
+                  {
+                      path: "/Reception",
+                      element: "#Pacientes-nav",
+                      title: "Pacientes",
+                      content: "En esta pestaña puedes dar de alta un paciente nuevo ó buscar el nombre del paciente que puede ser por 2 formas (apellidos ó número de expediente)"
+                  },
+                  {
+                      path: "/Reception",
+                      element: "#Productos-nav",
+                      title: "Productos",
+                      content: "En esta pestaña esta la información de los medicamentos que se dieron de alta para venta en  farmacia o consultorio, así como la venta de ofertas en combo (compras 1 paracetamol y la segunda pieza con 50% de descuento, en la compra de 2 ceftriaxonas la tercera con un 40% de descuento)"
+                  },
+                  {
+                      path: "/Reception",
+                      element: "#Servicios-nav",
+                      title: "Servicios",
+                      content: "En esta pestaña puedes encontrar todos los procedimientos  que se realizan en la clínica ó consultorio (suturas, aplicaciones, internamientos etc.)"
+                  },
+                  {
+                      path: "/Reception",
+                      element: "#Examenes-nav",
+                      title: "Exámenes",
+                      content: "En esta pestaña dará los costos de laboratorios y radiografías."
+                  },
+                  {
+                      path: "/Reception",
+                      element: "#Cancelaciones-nav",
+                      title: "Cancelaciones",
+                      content: "Para realizar esta función pide el número de ticket y la clave de autorización que la tendrán solo personas autorizadas."
+                  },
+                  {
+                      path: "/Reception",
+                      element: "#pestana_Carrito",
+                      title: "Carrito",
+                      content: "Aparece el producto y su costo, tipo de pago (efectivo, tarjeta, vale), puedes pagar con uno solo ó mezcla de los 3. NOTA: en caso de tarjeta tú puedes poner que cobre una comisión (1 al 4%)"
+                  }
+                ]
+            });
+            var tourVentas = new Tour({
+                onRedirectError: function (tour) {
+                    tour.end();
+                },
+                //debug: true,
+                name: 'tourVentas',
+                template: tourTemplate,
+                steps: [
+                  {
+                      path: "/Order",
+                      element: "#order-nav",
+                      title: "Ventas",
+                      content: "Esta pestaña muestra número de ticket, cajero, cantidad vendida, producto vendido y fecha."
+                  },
+                ]
+            });
+            var tourReportes = new Tour({
+                onRedirectError: function (tour) {
+                    tour.end();
+                },
+                //debug: true,
+                name: 'tourReportes',
+                template: tourTemplate,
+                steps: [
+                  {
+                      path: "/Report",
+                      element: "#reportTour",
+                      title: "Reportes",
+                      content: "En este parte se tienen 9 tipos de reportes (productividad por médico, productividad de farmacia, productividad por concepto, reporte de redondeo, pagos con tarjeta, pacientes, salubridad, cierre de caja y donativos)."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#prod-med-nav",
+                      title: "Productividad por médico",
+                      content: "Nos presenta la cantidad de pacientes, exámenes y procedimientos realizados por cada médico."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#prod-farm-nav",
+                      title: "Productividad por farmacia",
+                      content: "Reporta que personal es la que más venta realiza en farmacia."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#prod-concep-nav",
+                      title: "Productividad por concepto",
+                      content: "Este reporte nos concentra la venta total de cada departamento que puede ser por día o mes."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#redondeo-nav",
+                      title: "Redondeo",
+                      content: "Si tenemos habilitado esta función, cada que se realiza un cobro realizara redondeo de la suma a cobrar y en este reporte te da la cantidad redondeada por cada compra así como la suma total."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#pacientes-nav",
+                      title: "Pacientes",
+                      content: "En esta pantalla muestra todos los pacientes diabéticos e hipertensos que se tienen registrados."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#salubridad-nav",
+                      title: "Salubridad",
+                      content: "Reporta las enfermedades que se registraron en el diagnóstico de la historia clínica, la edad del paciente y sexo."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#cierre-nav",
+                      title: "Cierre de caja",
+                      content: "Muestra el número de corte, usuario que lo realiza, venta y fecha de corte. En la descripción del corte nos reporta número de consultas, horario de inicio y final así como ticket promedio."
+                  },
+                  {
+                      path: "/Report",
+                      element: "#dona-nav",
+                      title: "Donaciones",
+                      content: "Si pones esta función, en este reporte te dará la cantidad que se recibe por este rubro."
+                  },
+                ]
+            });
+            //TODO: Nada de lo que descrito existe aún por lo que no se agregaron el resto de los pasos
+            var tourConsultas = new Tour({
+                onRedirectError: function (tour) {
+                    tour.end();
+                },
+                //debug: true,
+                name: 'tourConsultas',
+                template: tourTemplate,
+                steps: [
+                  {
+                      path: "/Schedule",
+                      element: "#consultas-nav",
+                      title: "Consultas",
+                      content: "En esta parte aparecen las consultas pendientes de los médicos, que fueron cobradas con su nombre en recepción, muestra el expediente con nombre del paciente, edad así como los signos viales que reporto enfermería. El Doctor puede ver las consultas anteriores así como los diagnósticos médicos que el área de administración ingreso en el banco de datos."
+                  },
+                ]
+            });
+            var tourEmpleados = new Tour({
+                onRedirectError: function (tour) {
+                    tour.end();
+                },
+                //debug: true,
+                name: 'tourEmpleados',
+                template: tourTemplate,
+                placement: "bottom",
+                smartPlacement: false,
+                steps: [
+                  {
+                      path: "/Employee",
+                      element: "#employeeTour",
+                      title: "Empleados",
+                      content: "El administrador o cualquier persona que tenga el permiso de esta función, podrá dar de alta empleados nuevos, tomando los datos personales, le define rol (medico, enfermera, recepción) así como los permisos que tendrá en el sistema."
+                  },
+                ]
+            });
+            $('#guia-ventas').click(function () {
+                $("#manualModal").modal("hide");
+                if (tourVentas.ended()) {
+                    tourVentas.restart();
+                }
+                else {
+                    tourVentas.start(true);
+                }
+            });
+            $('#guia-reportes').click(function () {
+                $("#manualModal").modal("hide");
+                if (tourReportes.ended()) {
+                    tourReportes.restart();
+                }
+                else {
+                    tourReportes.start(true);
+                }
+            });
+            $('#guia-empleados').click(function () {
+                $("#manualModal").modal("hide");
+                if (tourEmpleados.ended()) {
+                    tourEmpleados.restart();
+                }
+                else {
+                    tourEmpleados.start(true);
+                }
+            });
+            $('#guia-consultas').click(function () {
+                $("#manualModal").modal("hide");
+                if (tourConsultas.ended()) {
+                    tourConsultas.restart();
+                }
+                else {
+                    tourConsultas.start(true);
+                }
+            });
+            $('#guia-recepcion').click(function () {
+                $("#manualModal").modal("hide");
+                if (tourReception.ended()) {
+                    tourReception.restart();
+                }
+                else {
+                    tourReception.start(true);
+                }
+            });
+            $('a[data-toggle="tooltip"]').tooltip({
+                animated: 'fade',
+            });
+            function setCookie(cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+            }
+
+            function getCookie(cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                        return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            }
+
+            if ($('.sidebar').hasClass("hidden-sidebar") && getCookie('sidebar') == "show") {
+                $('.sidebar').removeClass("hidden-sidebar");
+                $('.logo-container-bg').removeClass("hidden-logo-container");
+                $('.main').removeClass("expanded-main");
+                $('.logo-container-bg img').removeClass("hidden-logo");
+
+            }
+            else if (getCookie('sidebar') == "hide") {
+                $('.sidebar').addClass("hidden-sidebar")
+                $('.logo-container-bg').addClass("hidden-logo-container");
+                $('.logo-container-bg img').addClass("hidden-logo");
+                $('.main').addClass("expanded-main");
+            }
+
+            $(document).on("click", "#main-menu-button", function () {
+                if ($('.sidebar').hasClass("hidden-sidebar")) {
+                    $('.sidebar').removeClass("hidden-sidebar");
+                    $('.logo-container-bg').removeClass("hidden-logo-container");
+                    $('.main').removeClass("expanded-main");
+                    $('.logo-container-bg img').removeClass("hidden-logo");
+                    setCookie('sidebar', 'show', 365);
+                }
+                else {
+                    $('.sidebar').addClass("hidden-sidebar")
+                    $('.main').addClass("expanded-main");
+                    $('.logo-container-bg').addClass("hidden-logo-container");
+                    $('.logo-container-bg img').addClass("hidden-logo");
+                    setCookie('sidebar', 'hide', 365);
+                }
+            });
+            $('body').show();
+            if (!tourReception._inited)
+                tourReception.init();
+            if (!tourVentas._inited)
+                tourVentas.init();
+            if (!tourReportes._inited)
+                tourReportes.init();
+            if (!tourConsultas._inited)
+                tourConsultas.init();
+            if (!tourEmpleados._inited)
+                tourEmpleados.init();
+        });
+    </script>
+    <!-- end: JavaScript-->
+</head>
+
+<body hidden>
+    <!-- start: Header -->
+    <div class="navbar" role="navigation">
+        <ul class="nav navbar-nav navbar-actions navbar-left">
+            <li class="">
+                <a href="#" id="main-menu-button">
+                    <div class="logo-container-bg">
+                        @*<img src="~/Content/Images/logo_v2.png" />*@
+                        <img src="~/Content/Images/id-salud-v2.png" />
+                        <i class="fa fa-bars"></i>
+                    </div>
+                </a>
+            </li>
+            @if (ViewBag.UsuarioNombre != null)
+            {
+                <li>
+                    <a class="navbar_btn btn-info manual-button"><i class="fas fa-book-open"></i>  Manual de usuario</a>
+                </li>
+            }
+        </ul>
+        <span class="hideOnSmall navbar-left navbar-text navbarUserName">@ViewBag.UsuarioNombre</span>
+        <span class="hideOnSmall navbar-left navbar-text navbarUserName">@ViewBag.ClinicName</span>
+        <ul class="nav navbar-nav navbar-right hideOnSmall">
+            @if (ViewBag.UsuarioNombre != null)
+            {
+                <li class="dropdown">
+                    <a href="@Url.Action("LogOut", "Authentication")" class="navbar_btn"><i class="fa fa-power-off"></i> Cerrar sesión</a>
+                </li>
+            }
+        </ul>
+    </div>
+    <!-- end: Header -->
+    <!-- start: Main Menu -->
+    <div class="sidebar" style="overflow-y:auto;">
+
+        <div class="sidebar-collapse">
+
+            <div class="sidebar-menu">
+                <ul class="nav nav-sidebar">
+                    <li class="showOnSmall">
+                        <span data-toggle="tooltip"
+                              data-placement="right"
+                              data-container="body"
+                              class="menu_btn text">
+                            @ViewBag.UsuarioNombre
+                        </span>
+                    </li>
+                    <li class="showOnSmall">
+                        <span data-toggle="tooltip"
+                              data-placement="right"
+                              data-container="body"
+                              class="menu_btn text">
+                            @ViewBag.ClinicName
+                        </span>
+                    </li>
+                    <li class="showOnSmall">
+                        <a href="@Url.Action("LogOut", "Authentication")"
+                           data-toggle="tooltip"
+                           data-placement="right"
+                           data-container="body"
+                           title="Cerrar sesión"
+                           class="menu_btn">
+                            <i class="fa fa-power-off"></i>
+                            <span class="text">Cerrar sesión</span>
+                        </a>
+                    </li>
+                    @if (ViewBag.Menu != null)
+                    {
+                        foreach (INMEDIK.Models.Helpers.MenuViewAux mv in ViewBag.Menu)
+                        {
+                            <li>
+                                <a class="menu_btn"
+                                   href="@Url.Action(mv.action, mv.controller)"
+                                   data-toggle="tooltip"
+                                   data-placement="right"
+                                   data-container="body"
+                                   title="@(string.IsNullOrEmpty(mv.tooltip) ? mv.name : mv.tooltip)">
+                                    <i class="@mv.icon"></i><span class="text">@mv.name</span>
+                                </a>
+                            </li>
+                        }
+                    }
+
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- end: Main Menu -->
+    <!-- start: Content -->
+    <div class="main">
+        <div class="container-fluid">
+            <div class="row">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    <!-- end: Content -->
+
+    <footer></footer>
+    <div id="manualModal" class="modal fade modal-info" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Manual</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="heading1">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse1" aria-expanded="true" aria-controls="collapse1">
+                                                RECEPCION
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse1" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading1">
+                                        <div class="panel-body">
+                                            <button id="guia-recepcion" class="btn btn-info pull-right col-md-offset-11 col-md-1">Guía</button>
+                                            <p>En esta pestaña encontraras 4 funciones principales (pacientes, productos, servicios, exámenes, consulta y cancelaciones) y 2 alternas que es para realizar cobros así como cortes de caja.</p>
+                                            <ul>
+                                                <li>
+                                                    <p>PACIENTES- En esta pestaña puedes dar de alta un paciente nuevo ó buscar el nombre del paciente que puede ser por 2 formas (apellidos ó número de expediente).</p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        PRODUCTO- En esta pestaña esta la información de los medicamentos que se dieron de alta para venta en  farmacia o consultorio, así como la venta de ofertas en combo (compras 1 paracetamol y la segunda pieza con 50% de descuento, en la compra de 2 ceftriaxonas la tercera con un 40% de descuento)
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        SERVICIOS- En esta pestaña puedes encontrar todos los procedimientos  que se realizan en la clínica ó consultorio (suturas, aplicaciones, internamientos etc.)
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        EXAMENES- En esta pestaña dará los costos de laboratorios y radiografías.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        CANCELACIONES- Para realizar esta función pide el número de ticket y la clave de autorización que la tendrán solo personas autorizadas.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        CARRITO DE COMPRA- Aparece el producto y su costo, tipo de pago (efectivo, tarjeta, vale), puedes pagar con uno solo ó mezcla de los 3. NOTA: en caso de tarjeta tú puedes poner que cobre una comisión (1 al 4%)
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="heading2">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse2" aria-expanded="true" aria-controls="collapse2">
+                                                CONSULTAS
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse2" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading2">
+                                        <div class="panel-body">
+                                            <button id="guia-consultas" class="btn btn-info pull-right col-md-offset-11 col-md-1">Guía</button>
+                                            <p>En esta parte aparecen las consultas pendientes de los médicos, que fueron cobradas con su nombre en recepción, muestra el expediente con nombre del paciente, edad así como los signos viales que reporto enfermería. El Doctor puede ver las consultas anteriores así como los diagnósticos médicos que el área de administración ingreso en el banco de datos.</p>
+                                            <ul>
+                                                <li>
+                                                    <p>
+                                                        FIRMA- Puedes agregar tu firma electrónica.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>ENVIAR RECETA- Al seleccionar esta función la receta médica aparecerá en la aplicación del paciente que ya cuente con descarga en su celular.</p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        CITA- Cuando seleccionas la fecha y una vez guardado el expediente, esta cita le aparecerá al paciente en la aplicación  de su celular y le recordara el día de la feche que tiene la cita.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        HISTORICO- TA y GLUCOSA-  En esta parte se queda el histórico de estos parámetros ya sea registrados en la consulta o si lo realiza el paciente en su aplicación.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="heading3">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse3" aria-expanded="true" aria-controls="collapse3">
+                                                EMPLEADOS
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse3" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading3">
+                                        <div class="panel-body">
+                                            <button id="guia-empleados" class="btn btn-info pull-right col-md-offset-11 col-md-1">Guía</button>
+                                            <p>El administrador o cualquier persona que tenga el permiso de esta función, podrá dar de alta empleados nuevos, tomando los datos personales, le define rol (medico, enfermera, recepción) así como los permisos que tendrá en el sistema.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="heading4">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse4" aria-expanded="true" aria-controls="collapse4">
+                                                REPORTES
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse4" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading4">
+                                        <div class="panel-body">
+                                            <button id="guia-reportes" class="btn btn-info pull-right col-md-offset-11 col-md-1">Guía</button>
+                                            <p>En este parte se tienen 9 tipos de reportes (productividad por médico, productividad de farmacia, productividad por concepto, reporte de redondeo, pagos con tarjeta, pacientes, salubridad, cierre de caja y donativos).</p>
+                                            <ul>
+                                                <li>
+                                                    <p>
+                                                        PRODUCTIVIDAD POR MEDICO- Nos presenta la cantidad de pacientes, exámenes y procedimientos realizados por cada médico.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        PRODUCTIVIDAD DE FARMACIA- Reporta que personal es la que más venta realiza en farmacia.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        PRODUCTIVIDAD POR CONCEPTO- Este reporte nos concentra la venta total de cada departamento que puede ser por día o mes.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        REDONDEO- Si tenemos habilitado esta función, cada que se realiza un cobro realizara redondeo de la suma a cobrar y en este reporte te da la cantidad redondeada por cada compra así como la suma total.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        PACIENTES- En esta pantalla muestra todos los pacientes diabéticos e hipertensos que se tienen registrados.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        SALUBRIDAD- Reporta las enfermedades que se registraron en el diagnóstico de la historia clínica, la edad del paciente y sexo.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        CIERRE DE CAJA- Muestra el número de corte, usuario que lo realiza, venta y fecha de corte. En la descripción del corte nos reporta número de consultas, horario de inicio y final así como ticket promedio.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        DONACIONES-  Si pones esta función, en este reporte te dará la cantidad que se recibe por este rubro.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="heading5">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse5" aria-expanded="true" aria-controls="collapse5">
+                                                VENTAS
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse5" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading5">
+                                        <div class="panel-body">
+                                            <button id="guia-ventas" class="btn btn-info pull-right col-md-offset-11 col-md-1">Guía</button>
+                                            <p>Esta pestaña muestra número de ticket, cajero, cantidad vendida, producto vendido y fecha.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @RenderSection("Modals", false)
+</body>
+</html>

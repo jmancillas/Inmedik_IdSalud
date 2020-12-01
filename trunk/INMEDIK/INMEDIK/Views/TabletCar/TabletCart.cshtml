@@ -1,0 +1,49 @@
+﻿<div class="form-horizontal">
+    <div class="form-group">
+        <label class="control-label col-sm-3">Paciente: </label>
+        <div class="col-sm-9">
+            <input class="form-control" @*ng-class="INMEDIKApp.Cart.Patient.id != undefined ? 'form-control-success' : 'form-control-danger'"*@
+                   value="{{INMEDIKApp.Cart.Patient.personAux.fullName}}" readonly />
+        </div>
+    </div>
+    <hr/>
+
+    <div>
+        <div class="form-group">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                        <td>Concepto</td>
+                        <td colspan="2">Total a Pagar</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="consults in INMEDIKApp.Cart.Concepts">
+                        <td>{{consults.name}}</td>
+
+                        <td>{{INMEDIKApp.Ut_numberWithCommas(consults.total)}}</td>
+                    </tr>
+                    @*<tr><td colspan="4">{{INMEDIKApp.Cart.Concepts}}</td></tr>*@
+                </tbody>
+            </table>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+ 
+            <div class="clearfix"></div>
+        <div class="form-group">
+            <div class="col-md-12">
+                <div class="progress progress-striped active" ng-if="INMEDIKApp.Paying">
+                    <div class="progress-bar" style="width: 100%;">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-lg pull-right" ng-click="INMEDIKApp.CloseModal('cancelar')">Cancelar</button>
+                <button type="button" class="btn btn-success btn-lg" ng-click="INMEDIKApp.UpdateTemporalCart('pagar'); INMEDIKApp.ViewOption('Panel')">Continuar</button>
+
+                <!--<input type="button" class="btn btn-default pull-right" value="Reserva Consulta" data-toggle="modal" data-target="#PrePayModal">-->
+            </div>
+        </div>
+    </div>
+</div>

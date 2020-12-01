@@ -1,0 +1,458 @@
+﻿@{
+    ViewBag.Title = "Anuncios";
+}
+@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/Tags/ng-tags-input.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/Tags/ng-tags-input.bootstrap.css" />
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .selectable {
+            background-color: #ffffff !important;
+            cursor: pointer !important;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/ng-file/ng-file-upload-shim.js"></script>
+    <script type="text/javascript" src="~/Scripts/ng-file/ng-file-upload.js"></script>
+    <script type="text/javascript" src="~/Scripts/Tags/ng-tags-input.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables", "ngFileUpload", "datePicker","ngTagsInput"]);
+        INMEDIKApp.controller('AdController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder, Upload) {
+
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Ad = {};
+            dt.subbmiting = false;
+            dt.FormTouched = false;
+            dt.errors = [];
+            /**/
+            @* Datatables *@
+            /**/
+            /**/
+            @*Recompiling so we can bind Angular directive to the DT*@
+            /**/
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+            /**/
+            @* Enumera las filas del DT *@
+            /**/
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.DeleteElement(' + data + ')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+            dt.GetTouched = function ($event) {
+                dt.FormTouched = true;
+
+            };
+            dt.LoadElement = function (id) {
+                $http({
+                    method: 'POST',
+                    /**/
+                    url: '@Url.Action("GetAd", "Ads")',
+                    /**/
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Ad = JSON.parse(res.data.data);
+                        $("#NewElementModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id) {
+                dt.Ad.id = id;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                $http({
+                    method: 'POST',
+                    /**/
+                    url: '@Url.Action("DeleteAd", "Ads")',
+                    /**/
+                    data: dt.Ad,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.loadTags = function (query) {
+                return $http.post("@Url.Action("GetKeywords","Ads")", {
+                    data: JSON.stringify({ typed: query })
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+
+            dt.NewElement = function () {
+                dt.Ad = {};
+                $("#NewElementModal").modal("show");
+            };
+
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.AdForm.$setUntouched();
+                dt.FormTouched = false;
+                dt.Ad = {};
+            });
+            dt.onlyNumbers = /^[0-9]+$/;
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    /**/
+                    url: '@Url.Action("SaveAd", "Ads")',
+                    /**/
+                    data: dt.Ad,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        if (dt.Ad.image) {
+                            dt.Ad.image.upload = Upload.upload({
+                                url: "@Url.Action("SaveImageAd", "Files")",
+                                data: { File: dt.Ad.image, adId: res.data.id},
+                            });
+
+                            dt.Ad.image.upload.then(function (res) {
+                                if (res.data.success) {
+                                }
+                                else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                                    dt.errors[0] = "La sesión ha caducado.";
+                                    $("#resultModal").modal('show');
+                                }
+                                else {
+                                    if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                                        dt.errors = res.data.errors;
+                                    }
+                                    else {
+                                        dt.errors[0] = "Los datos del examen fueron guardados, pero ocurrio un eror al guardar los archivos";
+                                        dt.errors[1] = res.data.message;
+                                    }
+                                    $("#resultModal").modal('show');
+                                }
+
+                            }, function (response) {
+                                if (response.status > 0)
+                                    $scope.errorMsg = response.status + ': ' + response.data;
+
+                            }, function (evt) {
+                            });
+
+                        }
+
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                /**/
+                url: "@Url.Action("GetAds", "Ads")"
+                /**/
+            })
+            .withDataProp("data")
+            .withPaginationType('full_numbers')
+            .withOption('createdRow', createdRow)
+            .withOption('serverSide', true)
+            .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+            .withLanguage({
+                "sEmptyTable": "No existen anuncios",
+                "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ",",
+                "sLengthMenu": "Mostrando _MENU_ entradas",
+                "sLoadingRecords": "Cargando...",
+                "sProcessing": "Procesando...",
+                "sSearch": "Buscar:",
+                "sZeroRecords": "No se encontraron anuncios",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Ultimo",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": ascendiente",
+                    "sSortDescending": ": descendiente"
+                }
+            });
+            /**/
+            @* Definicion de las columnas del DT *@
+            /**/
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID"),
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("created_string").withTitle("Creado").withClass("notSearchable"),
+                DTColumnBuilder.newColumn("updated_string").withTitle("Actualizado").withClass("notSearchable"),
+                DTColumnBuilder.newColumn("periodActive").withTitle("Vigencia").withClass("notSearchable"),
+                DTColumnBuilder.newColumn("id").renderWith(editBtn).withTitle("Editar").withClass("notSearchable"),
+                DTColumnBuilder.newColumn("id").renderWith(deleteBtn).withTitle("Borrar").withClass("notSearchable"),
+            ];
+            dt.InstanceCallback = function (instance) {
+        // Setup - add a text input to each footer cell
+        dt.dtInstance = instance;
+        var id = '#' + dt.dtInstance.id;
+        $(id + ' thead th').each(function () {
+            var title = $(id + ' thead th').eq($(this).index()).text();
+            if (!$(this).hasClass('notSearchable')) {
+                $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+            }
+        });
+
+        var table = dt.dtInstance.DataTable;
+        // Apply the search
+        table.columns().every(function () {
+            var that = this;
+
+            $('input', this.header()).on('keyup change', function (e) {
+                e.stopPropagation()
+                if (that.search() !== this.value) {
+                    that
+                    .search(this.value)
+                    .draw();
+                }
+            });
+            $('input', this.header()).on('click', function (e) {
+                e.stopPropagation()
+            });
+        });
+    };
+
+    function init() {
+
+    };
+    init();
+});
+    </script>
+}
+<div class="container-fluid" ng-controller="AdController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Ad.id">Agregar</span><span ng-show="INMEDIKApp.Ad.id">Editar</span> Anuncios</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="AdForm.$invalid && INMEDIKApp.FormTouched">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <span ng-show="AdForm.name.$touched && AdForm.name.$error.required"><strong>Título</strong>: Campo obligatorio</span>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" name="AdForm">
+                        <div class="col-md-6 no-padding-right">
+                            <div class="form-group" ng-class="{'invalid-group': (AdForm.name.$touched && AdForm.name.$invalid)}">
+                                <label for="name" class="control-label col-md-3">Título<span class="required">*</span>: </label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" ng-model="INMEDIKApp.Ad.name" ng-blur="INMEDIKApp.GetTouched($event)" id="name" required name="name" placeholder="Nombre" maxlength="50">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 no-padding-left">
+                            <div class="form-group">
+                                <label for="image" class="control-label col-md-3">Imagen<span class="required">*</span>: </label>
+                                <div class="col-md-9">
+                                    <div ng-if="INMEDIKApp.Ad.id && !INMEDIKApp.Ad.EditingImage">
+                                        <img ng-src="@Url.Action("GetAdImage","Ads")?adId={{INMEDIKApp.Ad.id}}" style="max-width:120px;">
+                                        <a class="btn btn-primary" ng-click="INMEDIKApp.Ad.EditingImage = true">Modificar Imagen</a>
+                                    </div>
+                                    <input ng-if="!INMEDIKApp.Ad.id || INMEDIKApp.Ad.EditingImage" ngf-select ngf-model-invalid="errorFile" type="file" accept="image/*" ng-model="INMEDIKApp.Ad.image" id="image" name="image" placeholder="Imagen" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-4 no-padding-right">
+                            <label class="control-label col-sm-4 ">Desde: </label>
+                            <div class="col-sm-8">
+                                <input class="form-control" ng-disabled="INMEDIKApp.Ad.alwaysActive" ng-class="{'selectable': !INMEDIKApp.Ad.alwaysActive}" date-time ng-model="INMEDIKApp.Ad.fromDate" id="fromDate" view="date" min-view="date" format="DD/MM/YYYY" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4 no-padding-sides">
+                            <label class="control-label col-sm-4 ">Hasta: </label>
+                            <div class="col-sm-8">
+                                <input class="form-control" ng-disabled="INMEDIKApp.Ad.alwaysActive" ng-class="{'selectable': !INMEDIKApp.Ad.alwaysActive}" date-time ng-model="INMEDIKApp.Ad.toDate" id="toDate" view="date" min-view="date" format="DD/MM/YYYY" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4 no-padding-left">
+                            <label class="control-label col-sm-4 ">Siempre: </label>
+                            <input type="checkbox" ng-model="INMEDIKApp.Ad.activeAlways" />
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="col-md-12">
+                            <label class="">Palabras clave: </label>
+                            <div class="clearfix"></div>
+                            <tags-input ng-model="INMEDIKApp.Ad.keywordAux" placeholder="Ingrese palabras clave" display-property="name">
+                                <auto-complete source="INMEDIKApp.loadTags($query)"></auto-complete>
+                            </tags-input>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Anuncio <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="AdTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 ng-show="INMEDIKApp.errors.length==0">Redirecting...</h4>
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

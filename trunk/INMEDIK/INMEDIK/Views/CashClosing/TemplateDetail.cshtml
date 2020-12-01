@@ -1,0 +1,207 @@
+﻿<div class="col-xs-12">
+    <table class="table table-bordered table-striped table-xs" ng-if="INMEDIKApp.detail"">
+        <tr>
+            <td class="col-xs-3"><b>Fecha:</b></td>
+            <td>{{INMEDIKApp.Cierre.sDateClosed}}</td>
+        </tr>
+        <tr>
+            <td><b>ID:</b></td>
+            <td>{{INMEDIKApp.Cierre.number}}</td>
+        </tr>
+        <tr>
+            <td><b>Usuario:</b></td>
+            <td>{{INMEDIKApp.Cierre.PersonAux.fullName}}</td>
+        </tr>
+        <tr>
+            <td><b>Clínica:</b></td>
+            <td>{{INMEDIKApp.Cierre.clinicAux.name}}</td>
+        </tr>
+        <tr>
+            <td><b>Efectivo:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalCash)}}</td>
+        </tr>
+        <tr>
+            <td><b>Tarjeta de credito:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalCrediCard)}}</td>
+        </tr>
+        <tr>
+            <td><b>Vales:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalVoucher)}}</td>
+        </tr>
+        <tr>
+            <td><b>Facturas:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalExpense)}}</td>
+        </tr>
+        <tr>
+            <td><b>Cancelaciones:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalCancelation)}}</td>
+        </tr>
+        <tr>
+            <td><b>Retiros:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalWithdrawal)}}</td>
+        </tr>
+        <tr>
+            <td><b>Total fisico:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.physicalTotal)}}</td>
+        </tr>
+        <tr>
+            <td><b>Venta total:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.calcTotalSell)}}</td>
+        </tr>
+        <tr>
+            <td><b>Saldo inicial:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.InitialCash)}}</td>
+        </tr>
+        <tr>
+            <td><b>Total lógico:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.logicTotal)}}</td>
+        </tr>
+        <tr>
+            <td><b>Falta o sobra:</b></td>
+            <td>
+            <span ng-if="INMEDIKApp.Cierre.RemainingOrMissing < 0">Falta {{INMEDIKApp.numberWithCommas(-INMEDIKApp.Cierre.RemainingOrMissing)}}</span>
+            <span ng-if="INMEDIKApp.Cierre.RemainingOrMissing > 0">Sobra {{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.RemainingOrMissing)}}</span>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Hora:</b></td>
+            <td>{{INMEDIKApp.Cierre.sDateOpened}} a {{INMEDIKApp.Cierre.sDateClosed}}</td>
+        </tr>
+        <tr>
+            <td><b>Total consultas vendidas:</b></td>
+            <td>{{INMEDIKApp.Cierre.TotalConsult}}</td>
+        </tr>
+        <tr>
+            <td><b>Total venta productos:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.TotalProductSell)}}</td>
+        </tr>
+        <tr>
+            <td><b>Ticket promedio:</b></td>
+            <td>{{INMEDIKApp.numberWithCommas(INMEDIKApp.Cierre.AvgTicket)}}</td>
+        </tr>
+    </table>
+    <hr />
+    @*<div class="form-group">
+        Detalle de efectivo:
+    </div>*@
+    <div class="form-group">
+        <label class="col-xs-12">Detalle de efectivo: </label>
+        <div ng-repeat="item in INMEDIKApp.DenominationsList" class="col-xs-12 col-sm-4 col-md-3 col-lg-2" ng-if="!INMEDIKApp.detail">
+            <label class="col-xs-12 col-sm-3 col-md-4 no-padding-left">
+                {{( item.Name != 'CC' && item.Name != 'Vales' ) ? INMEDIKApp.numberWithCommas(item.Name) : item.Name}}:
+            </label>
+            <div class="col-xs-12 col-sm-9 col-md-8 no-padding-sides">
+                <input type="number" class="put-tooltip form-control"
+                       ng-init="INMEDIKApp.Cierre.denominationByCashCloseAux[$index].idDenomination = item.id;
+                                INMEDIKApp.Cierre.denominationByCashCloseAux[$index].Value = item.Value;
+                                INMEDIKApp.Cierre.denominationByCashCloseAux[$index].Value = item.Value;
+                                INMEDIKApp.Cierre.denominationByCashCloseAux[$index].denominationAux.Name = item.Name"
+                       ng-model="INMEDIKApp.Cierre.denominationByCashCloseAux[$index].Quantity"
+                       ng-disabled="INMEDIKApp.detail"
+                       min="0">
+            </div>
+        </div>
+        <div ng-repeat="item in INMEDIKApp.Cierre.denominationByCashCloseAux" class="col-xs-12 col-sm-4 col-md-3 col-lg-3" ng-if="INMEDIKApp.detail && item.Quantity > 0">
+            <label class="col-xs-12 col-sm-3 col-md-4 no-padding-left">
+                {{( item.denominationAux.Name != 'CC' && item.denominationAux.Name != 'Vales' ) ? INMEDIKApp.numberWithCommas(item.denominationAux.Name) : item.denominationAux.Name}}:
+            </label>
+            <div class="col-xs-12 col-sm-9 col-md-8 no-padding-sides">
+                <input type="number" class="put-tooltip form-control"
+                       value="{{item.Quantity}}"
+                       ng-disabled="INMEDIKApp.detail"
+                       min="0">
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="form-group">
+        <div class="col-xs-12">
+            <label>Facturas:</label>
+            <table class="table table-bordered table-striped table-hover">
+                <tr>
+                    <th class="text-center" style="width:30%">No. Factura</th>
+                    <th class="text-center" style="width:30%">Concepto</th>
+                    <th class="text-center" style="width:30%">Cantidad</th>
+                    <th class="text-center" style="width:10%" ng-if="!INMEDIKApp.detail">
+                        <a class="btn btn-success btn-xs col-xs-12" ng-click="INMEDIKApp.Cierre.expensesAux.push({});">
+                            <i class="fa fa-plus" aria-hidden="true"></i>
+                        </a>
+                    </th>
+                </tr>
+                <tr ng-repeat="item in INMEDIKApp.Cierre.expensesAux" ng-if="INMEDIKApp.Cierre.expensesAux.length > 0">
+                    <td class="text-center"><input class="form-control" type="number" ng-model="item.Number" name="Number_{{$index}}" style="height:100%; width:100%" required ng-disabled="INMEDIKApp.detail" /></td>
+                    <td class="text-center"><input class="form-control" ng-model="item.Name" name="Name_{{$index}}" style="height:100%; width:100%" required ng-disabled="INMEDIKApp.detail" maxlength="100"/></td>
+                    <td class="text-center">
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
+                            <input class="form-control" type="number" ng-model="item.Amount" name="Amount_{{$index}}" style="height:100%; width:100%" data-type="number" required ng-disabled="INMEDIKApp.detail" />
+                        </div>
+                    </td>
+                    <td class="text-center" ng-if="!INMEDIKApp.detail">
+                        <a class="btn btn-danger btn-xs col-xs-12" ng-click="INMEDIKApp.Cierre.expensesAux.splice($index,1);">
+                            <i class="fa fa-times" aria-hidden="true"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr ng-if="INMEDIKApp.Cierre.expensesAux.length <= 0">
+                    <td colspan="4" class="text-center"><i>Sin facturas</i></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <hr />
+    <div class="form-group">
+        <label class="col-xs-12 col-sm-3 col-md-1">Total: </label>
+        <div class="col-xs-12 col-sm-9 col-md-11">
+            <div class="input-group">
+                <span class="input-group-addon">$</span>
+                <input type="number" class="put-tooltip form-control" min="0"
+                       ng-model="INMEDIKApp.Cierre.FinalCash" ng-disabled="INMEDIKApp.detail"
+                       id="nTotalFinDeDia" required name="nTotalFinDeDia">
+            </div>
+        </div>
+    </div>
+
+    <hr  ng-if="INMEDIKApp.detail"/>
+    <div class="form-group" ng-if="INMEDIKApp.detail">
+        <div class="col-xs-12">
+            <label>Cancelaciones:</label>
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <th class="text-center">Ticket</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-center">Fecha venta</th>
+                    <th class="text-center">Fecha Cancelacion</th>
+                    <th class="text-center">Empleado</th>
+                    
+                </tr>
+                <tr ng-repeat="item in INMEDIKApp.Cierre.OrdersCanceled" ng-if="INMEDIKApp.Cierre.OrdersCanceled.length > 0" class="bg-danger">
+                    <td class="text-center">{{item.id}}</td>
+                    <td class="text-center">{{item.Total}}</td>
+                    <td class="text-center">{{item.sCreated}}</td>
+                    <td class="text-center">{{item.sDateCanceled}}</td>
+                    <td class="text-center">{{item.EmployeeCancel.personAux.fullName}}</td>
+                </tr>
+                <tr ng-if="INMEDIKApp.Cierre.OrdersCanceled.length <= 0">
+                    <td colspan="5" class="text-center"><i>Sin cancelaciones</i></td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-xs-12">
+            <label>Retiros:</label>
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <th class="text-center">Fecha</th>
+                    <th class="text-center">Total</th>
+                </tr>
+                <tr ng-repeat="item in INMEDIKApp.Cierre.withdrawalAux" ng-if="INMEDIKApp.Cierre.withdrawalAux.length > 0">
+                    <td class="text-center">{{item.sCreated}}</td>
+                    <td class="text-center">{{item.total}}</td>
+                </tr>
+                <tr ng-if="INMEDIKApp.Cierre.withdrawalAux.length <= 0">
+                    <td colspan="5" class="text-center"><i>Sin retiros</i></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

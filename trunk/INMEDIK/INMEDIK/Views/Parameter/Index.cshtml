@@ -1,0 +1,198 @@
+﻿@section styles
+{
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls"]);
+        INMEDIKApp.controller('ParameterController', function ($scope, $compile, $sce, $http) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Parameters = [];
+            dt.subbmiting = false;
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#ParameterForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ParameterForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#ParameterForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+
+            dt.SaveParameters = function () {
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveParameters", "Parameter")',
+                    data: dt.Parameters,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        $("#confirmSaved").modal("show");
+                        dt.FormTouchedAndInvalid = false;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetParameters", "Parameter")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.Parameters = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            init();
+
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ParameterController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Configuración</div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <form class="form-horizontal" name="ParameterForm">
+                    <div class="col-md-6" ng-repeat="param in INMEDIKApp.Parameters">
+                        <div class="form-group" ng-class="{'invalid-group': (ParameterForm.name.$touched && ParameterForm.name.$invalid)}">
+                            <label for="name" class="control-label col-md-3">{{param.showName}}<span class="required">*</span>: </label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" ng-model="param.value" ng-blur="INMEDIKApp.GetTouched($event)" required name="param_{{$index}}" placeholder="{{param.value}}" maxlength="50">
+                            </div>
+                        </div>
+                    </div>
+                    <button ng-click="INMEDIKApp.SaveParameters()" class="btn btn-success col-md-offset-1"> Guardar </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="confirmSaved" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Guardado</h4>
+                </div>
+                <div class="modal-body">
+                    Se ha guardado correctamente.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+

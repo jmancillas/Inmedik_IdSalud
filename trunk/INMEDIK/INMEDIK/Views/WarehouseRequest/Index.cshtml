@@ -1,0 +1,2147 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section styles {
+
+    <link href="~/Content/angular-datatables.css" type="text/css" rel="stylesheet" />
+    <link href="~/Content/DataTables/dataTables.bootstrap.css" type="text/css" rel="stylesheet" />
+    <link href="~/Content/DataTables/responsive.bootstrap.css" type="text/css" rel="stylesheet" />
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        sup {
+            border-bottom: 1px dotted #000;
+            text-decoration: none;
+        }
+
+            sup:hover {
+                cursor: pointer;
+            }
+    </style>
+
+}
+
+@section scripts {
+
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/moment-with-locales.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-fileupload/fileUploader.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/checklist-model.js"></script>
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+
+    <script type="text/javascript">
+        // Declarar todos los tooltip a usar
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        });
+
+        // Forzar a que todo tooltip se cierre dos segundos despues de ser visto
+        $(document).on('shown.bs.tooltip', function (e) {
+            setTimeout(function () {
+                $(e.target).tooltip('hide');
+            }, 2000);
+        });
+
+
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables"]);
+        INMEDIKApp.controller('WarehouseRequestController', function ($scope, $compile, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.InstanceSend = {};
+            dt.InstanceOnHoldSend = {};
+            dt.InstanceConfirmed = {};
+            dt.InstanceRejected = {};
+            dt.InstanceToDelivery = {};
+            dt.InstanceDelivered = {};
+            dt.Concept = {};
+            dt.Concept.WarehouseConcept = [{}];
+            dt.AlmBranchRequest = {};
+            dt.AlmBranchRequestResponse = {};
+            dt.AlmBranchRequestConfirmed = {};
+            dt.AlmBranchRequestRejected = {};
+            dt.AlmBranchRequestToDelivery = {};
+            dt.WarehouseRequestCounter = {};
+            dt.errors = [];
+            dt.subbmiting = false;
+            dt.requiredObservationToDelivery = true;
+
+            // Datatables
+
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+            }
+
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+
+            function getRequestDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestDetail(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            function getRequestResponseDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestResponseDetail(' + data + ')" class="btn btn-warning btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            function getRequestConfirmedDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestConfirmedDetail(' + data + ')" class="btn btn-warning btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            function getRequestRejectedDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestRejectedDetail(' + data + ')" class="btn btn-warning btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            function getRequestToDeliveryDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestToDeliveryDetail(' + data + ')" class="btn btn-warning btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            function getRequestDeliveredDetailBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="WHR.GetWarehouseRequestDeliveredDetail(' + data + ')" class="btn btn-warning btn-xs"><i class="fa fa-list-ul" aria-hidden="true"></i></button></div>';
+            }
+
+            dt.evaluateIfComment = function () {
+                dt.requiredObservationToDelivery = false;
+                $.each(dt.AlmBranchRequestToDelivery.vwrequestToDeliveryTransactionsAux, function () {
+                    if(this.toSend > (this.sended + this.toReturn))
+                    {
+                        dt.requiredObservationToDelivery = true;
+                    }
+                });
+            };
+
+            dt.BranchRequestSendTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestSend", "WarehouseRequest")"
+            })
+            .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.BranchRequestSendTableColumns = [
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Solicitado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("sResponded").withTitle("Respondido").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestSendTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceSend = instance;
+                var id = '#' + dt.InstanceSend.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceSend.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.BranchRequestOnHoldTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestOnHold", "WarehouseRequest")"
+            })
+            .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.BranchRequestOnHoldTableColumns = [
+                DTColumnBuilder.newColumn("srequestFolio").withTitle("Folio de solicitud"),
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Solicitado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestResponseDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestOnHoldTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceOnHoldSend = instance;
+                var id = '#' + dt.InstanceOnHoldSend.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceOnHoldSend.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.BranchRequestConfirmedTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestConfirmed", "WarehouseRequest")"
+            })
+            .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.BranchRequestConfirmedTableColumns = [
+                DTColumnBuilder.newColumn("srequestFolio").withTitle("Folio de solicitud"),
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Confirmado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestConfirmedDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestConfirmedTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceConfirmed = instance;
+                var id = '#' + dt.InstanceConfirmed.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceConfirmed.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.BranchRequestRejectedTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestRejected", "WarehouseRequest")"
+            })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+
+            dt.BranchRequestRejectedTableColumns = [
+                DTColumnBuilder.newColumn("srequestFolio").withTitle("Folio de solicitud"),
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Solicitado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestRejectedDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestRejectedTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceRejected = instance;
+                var id = '#' + dt.InstanceRejected.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceRejected.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.BranchRequestToDeliveryTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestToDelivery", "WarehouseRequest")"
+            })
+            .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.BranchRequestToDeliveryTableColumns = [
+                DTColumnBuilder.newColumn("srequestFolio").withTitle("Folio de solicitud"),
+                DTColumnBuilder.newColumn("sconfirmedFolio").withTitle("Folio de confirmación"),
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Solicitado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestToDeliveryDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestToDeliveryTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceToDelivery = instance;
+                var id = '#' + dt.InstanceToDelivery.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceToDelivery.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.BranchRequestDeliveredTableOptions = DTOptionsBuilder.newOptions()
+            .withOption("ajax", {
+                dataType: "json",
+                type: "POST",
+                url: "@Url.Action("GetBranchRequestDelivered", "WarehouseRequest")"
+            })
+            .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', false)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen entradas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un total de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron entradas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.BranchRequestDeliveredTableColumns = [
+                DTColumnBuilder.newColumn("srequestFolio").withTitle("Folio de solicitud"),
+                DTColumnBuilder.newColumn("sFolio").withTitle("Folio"),
+                DTColumnBuilder.newColumn("clinic").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCreated").withTitle("Solicitado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Desglose").renderWith(getRequestDeliveredDetailBtn).withClass('notSearchable')
+            ];
+
+            dt.BranchRequestDeliveredTableInstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.InstanceDelivered = instance;
+                var id = '#' + dt.InstanceDelivered.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.InstanceDelivered.DataTable;
+                //Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                            .search(this.value)
+                            .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            // End Datatables
+
+            dt.DeleteWarehouseConcept = function (index, elements) {
+                dt.Concept.WarehouseConcept.splice(index, elements);
+            }
+
+            dt.GetWarehouseRequestDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequest = res.data.data
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    $("#GetWarehouseRequestDetailModal").modal("show");
+                });
+            }
+
+            dt.GetWarehouseRequestResponseDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetBranchRequestResponseDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequestResponse = res.data.data
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    $("#GetWarehouseRequestResponseDetailModal").modal("show");
+                });
+            }
+
+            dt.GetWarehouseRequestConfirmedDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestConfirmedDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequestConfirmed = res.data.data
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    console.log(dt.AlmBranchRequestConfirmed);
+                    $("#GetWarehouseRequestConfirmedDetailModal").modal("show");
+                });
+            }
+
+            dt.GetWarehouseRequestRejectedDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestRejectedDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequestRejected = res.data.data
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    console.log(dt.AlmBranchRequestRejected);
+                    $("#GetWarehouseRequestRejectedDetailModal").modal("show");
+                });
+            }
+
+            dt.GetWarehouseRequestToDeliveryDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestToDeliveryDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequestToDelivery = res.data.data
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    console.log(dt.AlmBranchRequestToDelivery);
+                    $("#GetWarehouseRequestToDeliveryModal").modal("show");
+                });
+            }
+
+            dt.GetWarehouseRequestDeliveredDetail = function (id) {
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestDeliveredDetail", "WarehouseRequest")',
+                    params: {
+                        wareHouseRequestId: id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.AlmBranchRequestDelivered = res.data.data;
+                        console.log(dt.AlmBranchRequestDelivered);
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    quitarPantallaCarga();
+                    $("#GetWarehouseRequestDeliveredModal").modal("show");
+                });
+            }
+
+            dt.GetConcepts = function (val) {
+                return $http.post('@Url.Action("GetConceptsTypeaheadForWarehouseRequest", "WarehouseRequest")', {
+                    typed: val,
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+
+            dt.AddWarehouseConcept = function () {
+                dt.Concept.WarehouseConcept.push({
+                    minRequest: 1
+                });
+            }
+
+            dt.NewWarehouseRequest = function () {
+                dt.Concept = {};
+                dt.Concept.WarehouseConcept = [{}];
+                $("#NewWarehouseRequestModal").modal("show");
+            }
+
+            dt.ConfirmSaveWarehouseRequest = function () {
+                $("#ConfirmSaveWarehouseRequest").modal("show");
+            }
+
+            dt.SaveWarehouseRequest = function ($event) {
+                dt.EnableLoadButton($event.currentTarget.id);
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveWarehouseRequest", "WarehouseRequest")',
+                    data: dt.Concept,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        $("#NewWarehouseRequestModal").modal("hide");
+                        dt.ReloadDatatables();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.DisableLoadButton($event.currentTarget.id);
+                    $("#ConfirmSaveWarehouseRequest").modal("hide");
+                    dt.subbmiting = false;
+                });
+            }
+
+            dt.ConfirmSaveRequestRespnse = function () {
+                $("#ConfirmSaveRequestResponse").modal("show");
+            }
+
+            dt.SaveRequestResponse = function ($event) {
+                dt.EnableLoadButton($event.currentTarget.id);
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveRequestResponse", "WarehouseRequest")',
+                    data: dt.AlmBranchRequestResponse,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.ReloadDatatables();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.DisableLoadButton($event.currentTarget.id);
+                    $("#GetWarehouseRequestResponseDetailModal").modal('hide');
+                    $("#ConfirmSaveRequestResponse").modal('hide');
+                    dt.subbmiting = false;
+                });
+            }
+
+            dt.ConfirmSaveRequestToDelivery = function () {
+                dt.subbmiting = true;
+                $("#ConfirmSaveRequestToDelivery").modal('show')
+                dt.subbmiting = false;
+            }
+
+            dt.SaveRequestToDelivery = function ($event) {
+                dt.EnableLoadButton($event.currentTarget.id);
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveRequestToDelivery", "WarehouseRequest")',
+                    data: dt.AlmBranchRequestToDelivery,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.ReloadDatatables();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.DisableLoadButton($event.currentTarget.id);
+                    $("#GetWarehouseRequestToDeliveryModal").modal('hide');
+                    $("#ConfirmSaveRequestToDelivery").modal('hide');
+                    dt.subbmiting = false;
+                });
+            }
+
+            dt.ReloadDatatable = function (name) {
+                switch (name) {
+                    case 'envia': dt.InstanceSend.reloadData();
+                        break;
+                    case 'espera': dt.InstanceOnHoldSend.reloadData();
+                        break;
+                    case 'confirma': dt.InstanceConfirmed.reloadData();
+                        break;
+                    case 'rechaza': dt.InstanceRejected.reloadData();
+                        break;
+                    case 'entrega': dt.InstanceToDelivery.reloadData();
+                        break;
+                    case 'recibe': dt.InstanceDelivered.reloadData();
+                        break;
+                    default:
+
+                };
+            }
+
+            dt.ReloadDatatables = function () {
+                dt.InstanceSend.reloadData();
+                dt.InstanceOnHoldSend.reloadData();
+                dt.InstanceConfirmed.reloadData();
+                dt.InstanceRejected.reloadData();
+                dt.InstanceToDelivery.reloadData();
+                dt.InstanceDelivered.reloadData();
+            }
+
+            dt.GetTotalIVAresponse = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestResponse.vwAlmBranchRequestResponseTransactionAuxList).each(function () {
+                    if (this.confirmed) {
+                        if (this.iva) {
+                            sum += ((this.price * this.available) * 0.16);
+                        }
+                        else {
+                            sum += 0;
+                        }
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotalresponse = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestResponse.vwAlmBranchRequestResponseTransactionAuxList).each(function () {
+                    if (this.confirmed) {
+                        if (this.iva) {
+                            sum += ((this.price * this.available) + ((this.price * this.available) * 0.16));
+                        }
+                        else {
+                            sum += (this.price * this.available);
+                        }
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotalIVAconfirmed = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestConfirmed.vwAlmBranchRequestConfirmedTransactionAuxList).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.confirmed) * 0.16);
+                    }
+                    else {
+                        sum += 0;
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotalconfirmed = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestConfirmed.vwAlmBranchRequestConfirmedTransactionAuxList).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.confirmed) + ((this.price * this.confirmed) * 0.16));
+                    }
+                    else {
+                        sum += (this.price * this.confirmed);
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotalIVAtoDelivery = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestToDelivery.vwrequestToDeliveryTransactionsAux).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.sended) * 0.16);
+                    }
+                    else {
+                        sum += 0;
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotaltoDelivery = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestToDelivery.vwrequestToDeliveryTransactionsAux).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.sended) + ((this.price * this.sended) * 0.16));
+                    }
+                    else {
+                        sum += (this.price * this.sended);
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotalIVAdelivered = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestDelivered.vwrequestDeliveredTransactionsAux).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.sended) * 0.16);
+                    }
+                    else {
+                        sum += 0;
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTotaldelivered = function () {
+                var sum = 0;
+                $(dt.AlmBranchRequestDelivered.vwrequestDeliveredTransactionsAux).each(function () {
+                    if (this.iva) {
+                        sum += ((this.price * this.sended) + ((this.price * this.sended) * 0.16));
+                    }
+                    else {
+                        sum += (this.price * this.sended);
+                    }
+                });
+                return Math.round(sum * 100) / 100;
+            }
+
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                var FormId = "#" + $($event.currentTarget.form).attr('id');
+                $(FormId + " input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+
+                $(FormId + " select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+
+                $(FormId + " textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            }
+
+            dt.EnableLoadButton = function (buttonId) {
+                $("#" + buttonId).button('loading');
+            }
+
+            dt.DisableLoadButton = function (buttonId) {
+                $("#" + buttonId).button('reset');
+            }
+
+            @*dt.GetWarehouseRequestCounter = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehouseRequestCounter", "WarehouseRequest")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.WarehouseRequestCounter = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }*@
+
+            dt.BuildWarehouseRequest = function () {
+                dt.loadingSales = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetPredictedWarehouseRequest", "WarehouseRequest")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    dt.loadingSales = false;
+                    if (res.data.success) {
+                        dt.Concept.WarehouseConcept = [];
+                        for (var idx = 0; idx < res.data.data.length; idx++) {
+                            var obj = res.data.data[idx];
+                            dt.Concept.WarehouseConcept.push(
+                                {
+                                    WarehouseConceptId: obj.id,
+                                    conceptAux: {
+                                        id: obj.id,
+                                        code: obj.code,
+                                        name: obj.name,
+                                        stock: obj.stock
+                                    },
+                                    dStock: obj.sales,
+                                    minRequest: obj.sales,
+                                    id: obj.id,
+                                    name: obj.name
+                                }
+                                );
+                        }
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    dt.loadingSales = false;
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.OnInit = function () {
+                //dt.GetWarehouseRequestCounter();
+            }
+        });
+
+        var isLittlerThan = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    price: "=isLittlerThan"
+                },
+                link: function (scope, element, attributes, ngModel) {
+                    ngModel.$validators.isLittlerThan = function (cost) {
+                        return (cost >= scope.price)
+                        ||
+                            (
+                                (cost == "" || cost == undefined)
+                            &&
+                                (scope.price == "" || scope.price == undefined)
+                            );
+                    };
+                    scope.$watch("price", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        var isGreatherThan = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    maxValue: "=isGreatherThan"
+                },
+                link: function (scope, element, attributes, ngModel) {
+                    ngModel.$validators.isGreatherThan = function (minValue) {
+                        return (minValue <= scope.maxValue)
+                        ||
+                            (
+                                (minValue == "" || minValue == undefined)
+                            &&
+                                (scope.maxValue == "" || scope.maxValue == undefined)
+                            );
+                    };
+                    scope.$watch("maxValue", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        INMEDIKApp.directive("isLittlerThan", isLittlerThan);
+        INMEDIKApp.directive("isGreatherThan", isGreatherThan);
+    </script>
+
+}
+
+<div ng-controller="WarehouseRequestController as WHR" ng-init="WHR.OnInit()">
+    <ul class="nav nav-tabs">
+        <li role="presentation" class="active">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('envia');"
+               href="#Enviadas">Enviadas<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestSentFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestSentFromWarehouseCounter }}</span></a>
+        </li>
+        <li role="presentation">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('espera');"
+               href="#EnEspera">En espera<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestReceivedFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestReceivedFromWarehouseCounter }}</span></a>
+        </li>
+        <li role="presentation">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('confirma');"
+               href="#Confirmadas">Confirmadas<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestConfirmedFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestConfirmedFromWarehouseCounter }}</span></a>
+        </li>
+        <li role="presentation">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('rechaza');"
+               href="#Rechazadas">Rechazadas<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestConfirmedFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestConfirmedFromWarehouseCounter }}</span></a>
+        </li>
+        <li role="presentation">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('entrega');"
+               href="#EnEntrega">En entrega<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestInDeliveryFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestInDeliveryFromWarehouseCounter }}</span></a>
+        </li>
+        <li role="presentation">
+            <a data-toggle="tab"
+               ng-click="WHR.ReloadDatatable('recibe');"
+               href="#Recibidas">Recibidas<span class="badge badge-info" ng-if="WHR.WarehouseRequestCounter.RequestInDeliveryFromWarehouseCounter > 0">{{ WHR.WarehouseRequestCounter.RequestInDeliveryFromWarehouseCounter }}</span></a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div id="Enviadas" class="tab-pane fade in active">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>Solicitudes enviadas</h3>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-right">
+                    <span class="pull-right">
+                        <button id="LoadInitialWarehouseId" type="button" class="btn btn-primary button-header" ng-click="WHR.NewWarehouseRequest()" data-toggle="tooltip" data-placement="bottom" title="Nueva solicitud">
+                            <i class="fa fa-folder-open" aria-hidden="true"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            @*<div class="table-responsive">*@
+                <table id="BranchRequestSendTable" datatable dt-options="WHR.BranchRequestSendTableOptions" dt-columns="WHR.BranchRequestSendTableColumns" dt-instance="WHR.BranchRequestSendTableInstanceCallback" class="table table-hover table-bordered"></table>
+            @*</div>*@
+        </div>
+        <div id="EnEspera" class="tab-pane fade">
+            <div class="col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>Solicitudes en espera</h3>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            @*<div class="table-responsive">*@
+                <table id="BranchRequestOnHoldTable" datatable dt-options="WHR.BranchRequestOnHoldTableOptions" dt-columns="WHR.BranchRequestOnHoldTableColumns" dt-instance="WHR.BranchRequestOnHoldTableInstanceCallback" class="table table-hover table-bordered"></table>
+            @*</div>*@
+        </div>
+        <div id="Confirmadas" class="tab-pane fade">
+            <div class="col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>Confirmadas</h3>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            @*<div class="table-responsive">*@
+                <table id="BranchRequestConfirmedTable" datatable dt-options="WHR.BranchRequestConfirmedTableOptions" dt-columns="WHR.BranchRequestConfirmedTableColumns" dt-instance="WHR.BranchRequestConfirmedTableInstanceCallback" class="table table-hover table-bordered"></table>
+            @*</div>*@
+        </div>
+        <div id="Rechazadas" class="tab-pane fade">
+            <div class="col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>Rechazadas</h3>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            @*<div class="table-responsive">*@
+                <table id="BranchRequestRejectedTable" datatable dt-options="WHR.BranchRequestRejectedTableOptions" dt-columns="WHR.BranchRequestRejectedTableColumns" dt-instance="WHR.BranchRequestRejectedTableInstanceCallback" class="table table-hover table-bordered"></table>
+            @*</div>*@
+        </div>
+        <div id="EnEntrega" class="tab-pane fade">
+            <div class="col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>En entrega</h3>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            <table id="BranchRequestToDeliveryTable" datatable dt-options="WHR.BranchRequestToDeliveryTableOptions" dt-columns="WHR.BranchRequestToDeliveryTableColumns" dt-instance="WHR.BranchRequestToDeliveryTableInstanceCallback" class="table table-hover table-bordered"></table>
+        </div>
+        <div id="Recibidas" class="tab-pane fade">
+            <div class="col-xs-12">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 pull-left">
+                    <h3>Recibidas</h3>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            <table id="BranchRequestDeliveredTable" datatable dt-options="WHR.BranchRequestDeliveredTableOptions" dt-columns="WHR.BranchRequestDeliveredTableColumns" dt-instance="WHR.BranchRequestDeliveredTableInstanceCallback" class="table table-hover table-bordered"></table>
+        </div>
+    </div>
+    <div id="NewWarehouseRequestModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Nueva Solicitud</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <form id="NewWarehouseRequestForm" autocomplete="off" name="NewWarehouseRequestForm" class="form-horizontal">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover text-center">
+                                        <thead>
+                                            <tr>
+                                                <th class="borderless-header-cell" style="max-width:50px;">
+                                                    <span style="white-space:normal; padding-left:6px; padding-right:6px;"
+                                                          class="btn btn-default btn-info col-xs-12"
+                                                          uib-tooltip="Calcula lo productos a solicitar a partir de lo vendido desde la última solicitud recibida."
+                                                          tooltip-append-to-body="true"
+                                                          ng-disabled="WHR.loadingSales"
+                                                          ng-click="WHR.BuildWarehouseRequest()">
+                                                        <span ng-show="!WHR.loadingSales">Construir solicitud</span>
+                                                        <span ng-show="WHR.loadingSales"><span class="fa fa-spinner fa-spin"></span></span>
+                                                    </span>
+                                                </th>
+                                                <th>Nombre</th>
+                                                <th>Código</th>
+                                                <th>Cantidad</th>
+                                                <th>Inventario</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="item in WHR.Concept.WarehouseConcept">
+                                                <td>
+                                                    <div class="btn-group" data-toggle="buttons">
+                                                        <button class="btn btn-danger" ng-click="WHR.DeleteWarehouseConcept($index, 1)">
+                                                            <i class="fa fa-times" aria-hidden="true"></i>
+                                                        </button>
+                                                        <input id="InitialWarehouseIndex" name="InitialWarehouseIndex" type="number" style="display:none" ng-init="item.WarehouseConceptId = $index + 1" ng-model="item.WarehouseConceptId">
+                                                    </div>
+                                                </td>
+                                                <td ng-class="{'invalid-group': (NewWarehouseRequestForm.name.$touched && NewWarehouseRequestForm.name.$invalid)}">
+                                                    <input type="text" id="name" name="name_{{$index}}" placeholder="Escribir nombre o Código" ng-model="item.conceptAux"
+                                                           ng-disabled="WHR.loadingSales"
+                                                           uib-typeahead="item as item.name for item in WHR.GetConcepts($viewValue)"
+                                                           typeahead-loading="loading"
+                                                           typeahead-editable="false"
+                                                           typeahead-no-results="noResult"
+                                                           typeahead-on-select=""
+                                                           class="form-control"
+                                                           ng-text-change="item.id = item.conceptAux.id; item.name = item.conceptAux.name; item.minRequest = 1;" ng-blur="item.id = item.conceptAux.id; item.name = item.conceptAux.name;  item.minRequest = 1;"
+                                                           autocomplete="off" required />
+
+                                                    <span class="label label-danger" ng-if="NewWarehouseRequestForm['name_' + $index].$touched && NewWarehouseRequestForm['name_' + $index].$error.required">* Campo requerido</span>
+                                                    <span class="label label-danger" ng-if="NewWarehouseRequestForm['name_' + $index].$touched && NewWarehouseRequestForm['name_' + $index].$error.$editable">* Campo inválido</span>
+                                                </td>
+                                                <td>
+                                                    {{ item.conceptAux.code }}
+                                                </td>
+                                                <td ng-class="{'invalid-group': (NewWarehouseRequestForm.stockAux.$touched && NewWarehouseRequestForm.stockAux.$invalid)}">
+                                                    <input type="number" id="stockAux" name="stockAux_{{$index}}" ng-disabled="item.conceptAux == undefined || item.conceptAux.id <= 0" 
+                                                           min="{{item.minRequest}}" placeholder="Cantidad de productos solicitados" ng-model="item.dStock" class="form-control" autocomplete="off" required />
+                                                    <span class="label label-danger" ng-if="NewWarehouseRequestForm['stockAux_' + $index].$touched && NewWarehouseRequestForm['stockAux_' + $index].$error.required">* Campo requerido</span>
+                                                    <span class="label label-danger" ng-if="NewWarehouseRequestForm['stockAux_' + $index].$touched && NewWarehouseRequestForm['stockAux_' + $index].$error.min">* Cantidad inválida. Mínimo {{item.minRequest}}</span>
+                                                </td>
+                                                <td ng-style="item.conceptAux.stock == 0 ? {color:'red'} : {color:'black'}">{{item.conceptAux.stock}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                            <button type="button" ng-disabled="WHR.loadingSales" ng-click="WHR.AddWarehouseConcept()" class="btn btn-primary btn-block">Agregar</button>
+                        </div>
+                        <div class="col-lg-offset-8 col-md-offset-8 col-sm-offset-6 col-xs-offset-4 col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                            <button type="button" ng-click="WHR.ConfirmSaveWarehouseRequest()" id="SaveWarehouseRequestBtn" class="btn btn-success btn-block" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Guardando..." ng-disabled="NewWarehouseRequestForm.$invalid || WHR.loadingSales">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestDetailModal" class="modal fade modal-info" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose de Solicitud</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover text-center">
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Clínica</th>
+                                        <th>Solicitado</th>
+                                    </tr>
+                                    <tr>
+                                        <td> {{ WHR.AlmBranchRequest.sFolio }} </td>
+                                        <td> {{ WHR.AlmBranchRequest.clinicAux.name }} </td>
+                                        <td> {{ WHR.AlmBranchRequest.sCreated }} </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <caption class="text-center">
+                                        Descripción de la solicitud
+                                    </caption>
+                                    <tr class="text-center">
+                                        <th>Concepto</th>
+                                        <th>Código</th>
+                                        <th>Cantidad</th>
+                                    </tr>
+                                    <tr ng-repeat="almBranchRequestTransactionAux in WHR.AlmBranchRequest.almBranchRequestTransactionAux">
+                                        <td> {{ almBranchRequestTransactionAux.conceptAux.name }} </td>
+                                        <td> {{ almBranchRequestTransactionAux.conceptAux.productAux.code }} </td>
+                                        <td> {{ almBranchRequestTransactionAux.quantity }} </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-lg-offset-9 col-md-offset-9 col-sm-offset-10 col-xs-offset-10 col-lg-3 col-md-3 col-sm-2 col-xs-2">
+                            <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestResponseDetailModal" class="modal fade modal-warning" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose de la respuesta</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover text-center">
+                                <tr>
+                                    <th>
+                                        Folio Solicitud
+                                    </th>
+                                    <th>
+                                        Folio Cotización
+                                    </th>
+                                    <th>
+                                        Clínica
+                                    </th>
+                                    <th>
+                                        Envíado
+                                    </th>
+                                    <th>
+                                        Recibido
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestResponse.almBranchRequestAux.sFolio }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestResponse.sFolio }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestResponse.almBranchRequestAux.clinicAux.name }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestResponse.almBranchRequestAux.sCreated }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestResponse.sCreated }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover text-center">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Código</th>
+                                        <th>Solicitado</th>
+                                        <th>Disponible</th>
+                                        <th>Precio</th>
+                                        <th>Iva</th>
+                                        <th>Total</th>
+                                        <th>Marcar para confirmar</th>
+                                    </tr>
+                                    <tr ng-repeat="AlmBranchRequestResponseTransactionAuxList in WHR.AlmBranchRequestResponse.vwAlmBranchRequestResponseTransactionAuxList">
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.name }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.code }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.requested }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.available }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.price | currency }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.amountIva | currency }}
+                                        </td>
+                                        <td>
+                                            {{ AlmBranchRequestResponseTransactionAuxList.total | currency }}
+                                        </td>
+                                        <td>
+                                            <div class="checkbox">
+                                                <label id="confirmedBtn">
+                                                    <input id="confirmed" name="confirmed" type="checkbox" autocomplete="off" ng-model="AlmBranchRequestResponseTransactionAuxList.confirmed">
+                                                    <span class="cr"><i class="cr-icon glyphicon glyphicon-ok"></i></span>
+                                                    {{AlmBranchRequestResponseTransactionAuxList.confirmed ? 'Confirmado' : 'Rechazado'}}
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr ng-show="WHR.AlmBranchRequestResponse">
+                                        <td colspan="4" style="border-width: 0;"></td>
+                                        <td>
+                                            <strong>Total de orden:</strong>
+                                        </td>
+                                        <td>
+                                            <span ng-show="WHR.GetTotalIVAresponse()">{{WHR.GetTotalIVAresponse() | currency}}</span>
+                                        </td>
+                                        <td>
+                                            <span ng-show="WHR.GetTotalresponse()">{{WHR.GetTotalresponse() | currency}}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <label class="control-label">Observaciones</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <textarea id="ResponseRequestComment" name="ResponseRequestComment" class="form-control" ng-model="WHR.AlmBranchRequestResponse.branchComments" maxlength="1000" rows="3"></textarea>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <label class="control-label">Observaciones almacén</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <textarea id="ResponseRequestCommentWH" disabled name="ResponseRequestCommentWH" class="form-control" ng-model="WHR.AlmBranchRequestResponse.warehouseComments" maxlength="1000" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-lg-offset-8 col-md-offset-8 col-sm-offset-6 col-xs-offset-6 col-lg-2 col-md-2 col-sm-3 col-xs-3">
+                            <button type="button" class="btn btn-success btn-block" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Guardando..." 
+                                    ng-click="WHR.ConfirmSaveRequestRespnse()">Guardar</button>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 col-xs-3">
+                            <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestConfirmedDetailModal" class="modal fade modal-success" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose de la confirmación</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover">
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Clínica</th>
+                                    <th>Confirmado</th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestConfirmed.sFolio }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestConfirmed.requestResponseAux.almBranchRequestAux.clinicAux.name }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestConfirmed.sCreated }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover text-center">
+                                <tr>
+                                    <th>
+                                        Concepto
+                                    </th>
+                                    <th>
+                                        Código
+                                    </th>
+                                    <th>
+                                        Solicitado
+                                    </th>
+                                    <th>
+                                        Confirmado
+                                    </th>
+                                    <th>
+                                        Precio
+                                    </th>
+                                   <th>
+                                       Iva
+                                   </th>
+                                    <th>
+                                        Total
+                                    </th>
+                                </tr>
+                                <tr ng-repeat="TransactionAux in WHR.AlmBranchRequestConfirmed.vwAlmBranchRequestConfirmedTransactionAuxList">
+                                    <td>
+                                        {{ TransactionAux.name }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.code }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.requested }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.confirmed }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.price | currency }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.amountIva | currency }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.total | currency }}
+                                    </td>
+                                </tr>
+                                <tr ng-show="WHR.AlmBranchRequestConfirmed">
+                                    <td colspan="4" style="border-width: 0;"></td>
+                                    <td>
+                                        <strong>Total de orden:</strong>
+                                    </td>
+                                    <td>
+                                        <span ng-show="WHR.GetTotalIVAconfirmed()">{{WHR.GetTotalIVAconfirmed() | currency}}</span>
+                                    </td>
+                                    <td>
+                                        <span ng-show="WHR.GetTotalconfirmed()">{{WHR.GetTotalconfirmed() | currency}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <label class="control-label">Observaciones</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <textarea id="ResponseRequestComment" name="ResponseRequestComment" class="form-control" ng-disabled="WHR.AlmBranchRequestConfirmed.id" ng-model="WHR.AlmBranchRequestConfirmed.branchComments" maxlength="1000" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-offset-10 col-md-offset-10 col-sm-offset-9 col-xs-offset-9 col-lg-2 col-md-2 col-sm-3 col-xs-3">
+                                <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestRejectedDetailModal" class="modal fade modal-success" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose de la confirmación</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover">
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Clínica</th>
+                                    <th>Confirmado</th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestRejected.sFolio }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestRejected.requestResponseAux.almBranchRequestAux.clinicAux.name }}
+                                    </td>
+                                    <td>
+                                        {{ WHR.AlmBranchRequestRejected.sCreated }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover text-center">
+                                <tr>
+                                    <th>
+                                        Concepto
+                                    </th>
+                                    <th>
+                                        Código
+                                    </th>
+                                    <th>
+                                        Solicitado
+                                    </th>
+                                    <th>
+                                        Confirmado
+                                    </th>
+                                    <th>
+                                        Precio
+                                    </th>
+                                    <th>
+                                        Iva
+                                    </th>
+                                    <th>
+                                        Total
+                                    </th>
+                                </tr>
+                                <tr ng-repeat="TransactionAux in WHR.AlmBranchRequestRejected.vwAlmBranchRequestRejectedTransactionAuxList">
+                                    <td>
+                                        {{ TransactionAux.name }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.code }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.requested }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.rejected }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.price | currency }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.amountIva | currency }}
+                                    </td>
+                                    <td>
+                                        {{ TransactionAux.total | currency }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <label class="control-label">Observaciones</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <textarea id="ResponseRequestComment" name="ResponseRequestComment" class="form-control" ng-disabled="WHR.AlmBranchRequestRejected.id" ng-model="WHR.AlmBranchRequestRejected.comments" maxlength="1000" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row">
+                            <div class="col-lg-offset-10 col-md-offset-10 col-sm-offset-9 col-xs-offset-9 col-lg-2 col-md-2 col-sm-3 col-xs-3">
+                                <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestToDeliveryModal" class="modal modal-info fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose envío</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover">
+                                @*<caption class="text-center">Solicitud</caption>*@
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Clínica</th>
+                                    <th>Entregado</th>
+                                </tr>
+                                <tr>
+                                    <td> {{ WHR.AlmBranchRequestToDelivery.sFolio }} </td>
+                                    <td> {{ WHR.AlmBranchRequestToDelivery.requestConfirmedAux.requestResponseAux.almBranchRequestAux.clinicAux.name }} </td>
+                                    <td> {{ WHR.AlmBranchRequestToDelivery.sCreated }} </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <form id="RequestToDeliveryForm" autocomplete="off" name="RequestToDeliveryForm" class="form-horizontal">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        @*<caption class="text-center">Transacciones</caption>*@
+                                        <tr>
+                                            <th>Concepto</th>
+                                            <th>Código</th>
+                                            <th>Lote</th>
+                                            <th>Enviado</th>
+                                            <th>Recibido</th>
+                                            <th>A devolver</th>
+                                            <th>Costo</th>
+                                            <th>Precio máximo venta al público</th>
+                                            <th>Iva</th>
+                                            <th>Total</th>
+                                        </tr>
+                                        <tr ng-repeat="transaction in WHR.AlmBranchRequestToDelivery.vwrequestToDeliveryTransactionsAux">
+                                            <td> {{ transaction.concept }} </td>
+                                            <td> {{ transaction.code }} </td>
+                                            <td> {{ transaction.batch}}</td>
+                                            <td> {{ transaction.toSend }} </td>
+                                            <td ng-class="{'invalid-group': (RequestToDeliveryForm['sended_' + $index].$touched && RequestToDeliveryForm['sended_' + $index].$invalid)}">
+                                                <input type="number" id="sended_{{$index}}" name="sended_{{$index}}" min="0" max="{{ transaction.toSend }}" placeholder="Cantidad de producto recibido" 
+                                                       ng-change="WHR.evaluateIfComment()"
+                                                       ng-model="transaction.sended" class="form-control" autocomplete="off" required />
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['sended_' + $index].$touched && RequestToDeliveryForm['sended_' + $index].$error.required">* Campo requerido</span>
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['sended_' + $index].$touched && RequestToDeliveryForm['sended_' + $index].$error.min">* Cantidad inválida</span>
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['sended_' + $index].$touched && RequestToDeliveryForm['sended_' + $index].$error.max">* La cantidad no puede ser mayor a {{ transaction.toSend - transaction.toReturn }} </span>
+                                            </td>
+                                            <td ng-class="{'invalid-group': (RequestToDeliveryForm['toReturn_' + $index].$touched && RequestToDeliveryForm['toReturn_' + $index].$invalid)}">
+                                                <input type="number" id="toReturn_{{$index}}" name="toReturn_{{$index}}" min="0" max="{{ transaction.toSend - transaction.sended }}" placeholder="Devolver" 
+                                                       ng-change="WHR.evaluateIfComment()"
+                                                       ng-model="transaction.toReturn" class="form-control" autocomplete="off" required />
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['toReturn_' + $index].$touched && RequestToDeliveryForm['toReturn_' + $index].$error.required">* Campo requerido</span>
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['toReturn_' + $index].$touched && RequestToDeliveryForm['toReturn_' + $index].$error.min">* Cantidad inválida</span>
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['toReturn_' + $index].$touched && RequestToDeliveryForm['toReturn_' + $index].$error.max">* La cantidad no puede ser mayor a {{transaction.toSend - transaction.sended }} </span>
+                                            </td>
+                                            <td> {{ transaction.price | currency }} </td>
+                                            <td> {{ transaction.maxPrice | currency }} </td>
+                                            <td> {{ transaction.amountIva | currency }} </td>
+                                            <td> {{ transaction.total | currency }} </td>
+                                            @*<td ng-class="{'invalid-group': (RequestToDeliveryForm.stockAux.$touched && RequestToDeliveryForm.stockAux.$invalid)}">
+                                                <input type="number" id="minPrice" name="minPrice_{{$index}}" min="{{ transaction.price }}" is placeholder="Costo de producto" ng-model="transaction.minPrice" class="form-control" autocomplete="off" required />
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['minPrice_' + $index].$touched && RequestToDeliveryForm['minPrice_' + $index].$error.required">* Campo requerido</span>
+                                                <span class="label label-danger" ng-if="RequestToDeliveryForm['minPrice_' + $index].$touched && RequestToDeliveryForm['minPrice_' + $index].$error.min">* Cantidad inválida</span>
+                                            </td>*@
+                                        </tr>
+                                        <tr ng-show="WHR.AlmBranchRequestToDelivery">
+                                            <td colspan="7" style="border-width: 0;"></td>
+                                            <td>
+                                                <strong>Total de orden:</strong>
+                                            </td>
+                                            <td>
+                                                <span ng-show="WHR.GetTotalIVAtoDelivery()">{{WHR.GetTotalIVAtoDelivery() | currency}}</span>
+                                            </td>
+                                            <td>
+                                                <span ng-show="WHR.GetTotaltoDelivery()">{{WHR.GetTotaltoDelivery() | currency}}</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                        <label class="control-label">Observaciones</label>
+                                    </div>
+                                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                        <textarea id="ResponseToDeliveryComment" name="ResponseToDeliveryComment" ng-required="WHR.requiredObservationToDelivery" class="form-control" ng-model="WHR.AlmBranchRequestToDelivery.comments" maxlength="1000" rows="3"></textarea>
+                                        <span class="label label-danger" ng-if="RequestToDeliveryForm['ResponseToDeliveryComment'].$error.required">* Se detectaron conceptos sin devolver ni recibir. Es necesario ingresar un comentario</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-lg-offset-8 col-md-offset-8 col-sm-offset-6 col-xs-offset-4 col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                            <button type="button" id="SaveRequestToDeliveryBtn" class="btn btn-success btn-block" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Guardando..." 
+                                    ng-click="WHR.ConfirmSaveRequestToDelivery()" ng-disabled="RequestToDeliveryForm.$invalid">Guardar</button>
+
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                            <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="GetWarehouseRequestDeliveredModal" class="modal modal-info fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                    <h4 class="modal-title">Desglose envío</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover">
+                                <tr>
+                                    <th>Solicitud</th>
+                                    <th>Clínica</th>
+                                    <th>Entrada Almacén</th>
+                                </tr>
+                                <tr>
+                                    <td> {{ WHR.AlmBranchRequestDelivered.sFolio }} </td>
+                                    <td> {{ WHR.AlmBranchRequestDelivered.requestToDeliveryAux.requestConfirmedAux.requestResponseAux.almBranchRequestAux.clinicAux.name }} </td>
+                                    <td> {{ WHR.AlmBranchRequestDelivered.sCreated }} </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered table-hover">
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Código</th>
+                                    <th>Lote</th>
+                                    <th>Enviado</th>
+                                    <th>Recibido</th>
+                                    <th>Devuelto</th>
+                                    <th>Costo</th>
+                                    <th>Precio máximo al público</th>
+                                    <th>Iva</th>
+                                    <th>Total</th>
+                                </tr>
+                                <tr ng-repeat="transaction in WHR.AlmBranchRequestDelivered.vwrequestDeliveredTransactionsAux">
+                                    <td> {{ transaction.conceptName }} </td>
+                                    <td> {{ transaction.code }} </td>
+                                    <td> {{ transaction.batch}}</td>
+                                    <td> {{ transaction.toSend }} </td>
+                                    <td> {{ transaction.sended }} </td>
+                                    <td> {{ transaction.returned }} </td>
+                                    <td> {{ transaction.price | currency }} </td>
+                                    <td> {{ transaction.maxPrice | currency }} </td>
+                                    <td> {{ transaction.amountIva | currency }} </td>
+                                    <td> {{ transaction.total | currency }} </td>
+                                </tr>
+                                <tr ng-show="WHR.AlmBranchRequestDelivered">
+                                    <td colspan="7" style="border-width: 0;"></td>
+                                    <td>
+                                        <strong>Total de orden:</strong>
+                                    </td>
+                                    <td>
+                                        <span ng-show="WHR.GetTotalIVAdelivered()">{{WHR.GetTotalIVAdelivered() | currency}}</span>
+                                    </td>
+                                    <td>
+                                        <span ng-show="WHR.GetTotaldelivered()">{{WHR.GetTotaldelivered() | currency}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row" ng-if="WHR.AlmBranchRequestDelivered.comments != null">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <label class="control-label">Observaciones</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                            <textarea id="ResponseRequestComment" name="ResponseRequestComment" class="form-control" ng-model="WHR.AlmBranchRequestDelivered.comments" disabled maxlength="1000" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-lg-offset-10 col-md-offset-10 col-sm-offset-9 col-xs-offset-8 col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                            <button type="button" class="btn btn-default btn-block" data-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="WHR.errors.length != 0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="WHR.errors.length != 0">
+                        <li ng-repeat="err in WHR.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Modal para confirmar guardar el registro-->
+    <div id="ConfirmSaveWarehouseRequest" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que esta todo listo para guardar?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-loading-text="<i class='fa fa-spinner fa-spin '></i>Guardando..." ng-click="WHR.SaveWarehouseRequest($event)" ng-disabled="WHR.subbmiting" data-dismiss="modal">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="ConfirmSaveRequestResponse" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que esta todo listo para guardar?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-loading-text="<i class='fa fa-spinner fa-spin '></i>Guardando..." ng-click="WHR.SaveRequestResponse($event)" ng-disabled="WHR.subbmiting" data-dismiss="modal">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="ConfirmSaveRequestToDelivery" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que esta todo listo para guardar?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-loading-text="<i class='fa fa-spinner fa-spin '></i>Guardando..." ng-click="WHR.SaveRequestToDelivery($event)" ng-disabled="WHR.subbmiting" data-dismiss="modal">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

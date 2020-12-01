@@ -1,0 +1,1099 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .total-table {
+            border-left: none !important;
+            border-bottom: none !important;
+        }
+
+        tr.late, tr.late:hover {
+            background-color: #f9758e;
+        }
+
+        .Eliminado-class {
+            background-color: #d9534f;
+            color: #ffffff;
+        }
+
+        .Editado-class {
+            background-color: #5bc0de;
+            color: #ffffff;
+        }
+
+        .Agregado-class {
+            background-color: #5cb85c;
+            color: #ffffff;
+        }
+
+        .Original-class {
+            background-color: #428bca;
+            color: #ffffff;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/angular-animate.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ngAnimate", "ui.bootstrap", "ui.bootstrap.tpls", "datatables",'datePicker']);
+        INMEDIKApp.controller('InvoiceController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Invoice = {};
+            dt.Invoice.invoiceMovementsAux = [{}];
+            dt.deleteData = [];
+            dt.subbmiting = false;
+            dt.clinics = [];
+            dt.clinicSelected = {};
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.tax = @(ViewBag.tax);
+            dt.tax = dt.tax / 100;
+            dt.ViewTable = false;
+            dt.ViewDetail = false;
+            dt.IsEdit = false;
+            dt.message = "";
+            dt.RecordInvoice = {};
+            dt.RecordInvoice.RecordTransactionsAux = [];
+
+            dt.IvaLoaded = 0;
+            dt.TotalLoaded = 0;
+            @* Datatables *@
+            @*Recompiling so we can bind Angular directive to the DT*@
+
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                if (data.isCanceled) {
+                    $(row).addClass('late');
+                }
+                $scope.$digest();
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function viewBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadElement(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-search"></i></button></div>';
+            }
+            function editsBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-disabled="' + !full.hasEdits + '" ng-click="INMEDIKApp.LoadRecordsInvoice(' + data + ')" class="btn btn-info btn-xs"><i class="fa fa-history"></i></button></div>';
+            }
+            function cancelBtn(data, type, full, meta) {
+                return '<div class="text-center"><button type="button" ng-disabled="'+ full.isRequest + ' || ' + full.isCanceled +' || ' + full.disabledCancel + '" ng-click="INMEDIKApp.ConfirmCancelInvoice('+ data + ')" class="btn btn-danger btn-xs"><i class="fa fa-times" aria-hidden="true"></i></button></div>';
+            }
+
+            dt.LoadRecordsInvoice = function(id) {
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetRecordInvoiceVersion", "Invoice")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (response) {
+                    if (response.data.success) {
+                        dt.RecordInvoice = response.data.data;
+                        $("#ModalDetails").modal('show');
+                    }
+                    else if (response.data.success == undefined && response.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                    }
+                    else {
+                        if (response.data.errors != undefined && response.data.errors && response.data.errors.length > 0) {
+                            dt.errors = response.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = response.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(response) {
+                    console.log("error: " + response);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            }
+
+            dt.LoadElement = function(id){
+                dt.IvaLoaded = 0;
+                dt.TotalLoaded = 0;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetInvoice", "Invoice")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Invoice = res.data.data;
+                        dt.ViewDetail = true;
+
+                        for(i = 0; i < dt.Invoice.invoiceMovementsAux.length; i++)
+                        {
+                            if(dt.Invoice.invoiceMovementsAux[i].conceptAux.iva)
+                            {
+                                dt.TotalLoaded = ((dt.Invoice.invoiceMovementsAux[i].cost * dt.Invoice.invoiceMovementsAux[i].quantity) + ((dt.Invoice.invoiceMovementsAux[i].cost * dt.Invoice.invoiceMovementsAux[i].quantity) * .16)) + dt.TotalLoaded;
+                                dt.IvaLoaded = (((dt.Invoice.invoiceMovementsAux[i].cost * dt.Invoice.invoiceMovementsAux[i].quantity) * .16)) + dt.IvaLoaded;
+                            }
+                            else {
+                                dt.TotalLoaded = (dt.Invoice.invoiceMovementsAux[i].cost * dt.Invoice.invoiceMovementsAux[i].quantity) + dt.TotalLoaded;
+                            }
+                        }
+                        
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.Edit = function () {
+                dt.ViewDetail = false;
+                dt.ViewTable = false;
+                dt.IsEdit = true;
+            }
+
+            dt.EditElement = function(id) {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetInvoice", "Invoice")',
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Invoice = res.data.data;
+                        dt.ViewDetail = false;
+                        dt.ViewTable = false;
+                        dt.IsEdit = true;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+
+            dt.cleanData = function(){
+                dt.Invoice = {};
+                dt.Invoice.invoiceMovementsAux = [{}];
+                dt.deleteData = [];
+                dt.IsEdit = false;
+            }
+
+            dt.ConfirmCancelInvoice = function(id) {
+                dt.Invoice.id = id;
+                $('#ConfirmDelete').modal('show');
+            }
+
+            dt.setDeleteData = function(index,item,movement) {
+                dt.deleteData.push(movement);
+
+                dt.Invoice.invoiceMovementsAux.splice(index,item);
+            }
+
+            dt.EditInvoice = function(){
+                dt.subbmiting = true;
+                dt.Invoice.clinicAux = dt.clinicSelected;
+                dt.setDate();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("EditData", "Invoice")',
+                    data: {Invoice: dt.Invoice,
+                        deleteData: dt.deleteData
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Invoice = {};
+                        dt.Invoice.invoiceMovementsAux = [{}];
+                        $("#confirmSaved").modal("show");
+                        dt.FormTouchedAndInvalid = false;
+                        //dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+
+            dt.CancelElement = function() {
+                dt.message = "";
+                dt.subbmiting = true;
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("CancelInvoice","Invoice")',
+                    data: {InvoiceId:dt.Invoice.id},
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.message = res.data.message;
+                        dt.dtInstance.reloadData();
+                        $("#messageModal").modal('show');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                    $("#ConfirmDelete").modal('hide');
+                });
+            };
+
+            dt.AddConcept = function () {
+                dt.Invoice.invoiceMovementsAux.push({});
+            };
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                var elem = $event.target;
+                $("#InvoiceForm input").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#InvoiceForm select").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+                $("#InvoiceForm textarea").each(function () {
+                    if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                        dt.FormTouchedAndInvalid = true;
+                        return false;
+                    }
+                });
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetInvoices", "Invoice")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen facturas",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron facturas",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("code").withTitle("Código"),
+                DTColumnBuilder.newColumn("clinicAux.name").withTitle("Clínica"),
+                DTColumnBuilder.newColumn("sCancelled").withTitle("Cancelado").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("created_string").withTitle("Fecha creación").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("id").withTitle("Ver detalle").renderWith(viewBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Ver ediciones").renderWith(editsBtn).withClass('notSearchable').notSortable(),
+                DTColumnBuilder.newColumn("id").withTitle("Cancelar").renderWith(cancelBtn).withClass('notSearchable').notSortable(),
+            ];
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (!$(this).hasClass('notSearchable')) {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            dt.loadConcepts = function (val, cat) {
+                return $http.post('@Url.Action("GetConceptsOfCategory", "Invoice")', {
+                    data: JSON.stringify({ typed: val, CategoryName: cat })
+                }).then(function (response) {
+                    return response.data.data.map(function (item) {
+                        return item;
+                    })
+                });
+            };
+            dt.GetSubTotal = function()
+            {
+                var sum = 0;
+                $(dt.Invoice.invoiceMovementsAux).each(function(){
+                    sum += this.cost*this.quantity;
+                });
+                return Math.round(sum*100)/100;
+            }
+
+            dt.GetTotal = function()
+            {
+                var sum = 0;
+                $(dt.Invoice.invoiceMovementsAux).each(function(){
+                    if(this.iva)
+                    {
+                        sum += (this.cost*this.quantity) + (this.cost*this.quantity) * (this.currentIva ? this.currentIva/100 : dt.tax);
+                    }
+                    else {
+                        sum += this.cost*this.quantity;
+                    }
+                });
+                return Math.round(sum*100)/100;
+            }
+
+            dt.GetIVA = function()
+            {
+                var sum = 0;
+                $(dt.Invoice.invoiceMovementsAux).each(function(){
+                    if(this.iva)
+                    {
+                        sum += (this.cost*this.quantity) * ( this.currentIva ? this.currentIva/100 : dt.tax);
+                    }
+                });
+                return Math.round(sum*100)/100;
+            }
+
+            dt.GetCost = function(movement)
+            {
+                return Math.round(movement.quantity * movement.cost * 100)/100;
+            }
+            dt.GetCostWithTax = function(movement)
+            {
+                var cost = (movement.quantity * movement.cost) + (movement.quantity * movement.cost) * dt.tax;
+                return Math.round(cost*100)/100;
+            }
+
+            dt.setDate = function()
+            {
+                for(i = 0; i < dt.Invoice.invoiceMovementsAux.length; i++)
+                {
+                    if (dt.Invoice.invoiceMovementsAux[i].expiredDate != null)
+                    {
+                        dt.Invoice.invoiceMovementsAux[i].expiredDate = moment(dt.Invoice.invoiceMovementsAux[i].expiredDate).toDate();
+                    }
+                }
+                for (i = 0; i < dt.deleteData.length; i++)
+                {
+                    if (dt.deleteData[i].expiredDate != null)
+                    {
+                        dt.deleteData[i].expiredDate = moment(dt.deleteData[i].expiredDate).toDate();
+                    }
+                }
+            }
+
+            dt.SaveInvoice = function(){
+                dt.subbmiting = true;
+                dt.Invoice.clinicAux = dt.clinicSelected;
+                //dt.setDate();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveInvoice", "Invoice")',
+                    data: dt.Invoice,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+
+                        dt.Invoice = {};
+                        dt.Invoice.invoiceMovementsAux = [{}];
+                        $("#confirmSaved").modal("show");
+                        dt.FormTouchedAndInvalid = false;
+                        //dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetClinicsSelectForRol", "Clinic")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.clinics = res.data.data;
+                        dt.clinicSelected = dt.clinics[0];
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+            init();
+
+        });
+
+        var isLittlerThan = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    price: "=isLittlerThan"
+                },
+                link: function (scope, element, attributes, ngModel) {
+                    ngModel.$validators.isLittlerThan = function (cost) {
+                        return (cost >= scope.price)
+                        ||
+                            (
+                                (cost == "" || cost == undefined)
+                            &&
+                                (scope.price == "" || scope.price == undefined)
+                            );
+                    };
+                    scope.$watch("price", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        var isGreatherThan = function () {
+            return {
+                restrict: "A",
+                require: "ngModel",
+                scope: {
+                    maxValue: "=isGreatherThan"
+                },
+                link: function (scope, element, attributes, ngModel) {
+                    ngModel.$validators.isGreatherThan = function (minValue) {
+                        return (minValue <= scope.maxValue)
+                        ||
+                            (
+                                (minValue == "" || minValue == undefined)
+                            &&
+                                (scope.maxValue == "" || scope.maxValue == undefined)
+                            );
+                    };
+                    scope.$watch("maxValue", function () {
+                        ngModel.$validate();
+                    });
+                }
+            };
+        };
+
+        INMEDIKApp.directive("isLittlerThan", isLittlerThan);
+        INMEDIKApp.directive("isGreatherThan", isGreatherThan);
+
+    </script>
+}
+<div class="container-fluid" ng-controller="InvoiceController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <span ng-show="INMEDIKApp.ViewTable && !INMEDIKApp.ViewDetail">Agregar Factura</span>
+            <span ng-show="!INMEDIKApp.ViewTable && !INMEDIKApp.ViewDetail">Facturas</span>
+            <span ng-show="INMEDIKApp.ViewDetail">Factura {{INMEDIKApp.Invoice.code}}</span>
+            <button class="btn btn-success btn-xs pull-right" ng-show="!INMEDIKApp.ViewDetail" ng-click="INMEDIKApp.ViewTable = !INMEDIKApp.ViewTable;INMEDIKApp.cleanData();">
+                <span ng-show="!INMEDIKApp.ViewTable && !INMEDIKApp.ViewDetail">Ver facturas</span>
+                <span ng-show="INMEDIKApp.ViewTable && !INMEDIKApp.ViewDetail">Agregar factura</span>
+            </button>
+            <button ng-show="INMEDIKApp.ViewDetail" class="btn btn-success btn-xs pull-right" ng-click="INMEDIKApp.ViewDetail = !INMEDIKApp.ViewDetail">
+                <span>Regresar</span>
+            </button>
+        </div>
+        <div class="panel-body">
+            <div ng-show="!INMEDIKApp.ViewDetail">
+                <div class="col-md-12" ng-if="!INMEDIKApp.ViewTable">
+                    <form id="InvoiceForm" name="InvoiceForm">
+                        <div class="col-md-6 no-padding-right">
+                            <div class="form-group" ng-class="{'invalid-group': (InvoiceForm.code.$touched && InvoiceForm.code.$invalid)}">
+                                <label for="code" class="control-label col-md-3">Código<span class="required">*</span>: </label>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" ng-model="INMEDIKApp.Invoice.code" ng-blur="INMEDIKApp.GetTouched($event)" id="code" required name="code" placeholder="Código" maxlength="20">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 no-padding-left">
+                            <div class="form-group" ng-class="{'invalid-group': (InvoiceForm.clinicSelected.$touched && InvoiceForm.clinicSelected.$invalid)}">
+                                <label for="clinicSelected" class="control-label col-md-3">Clínica<span class="required">*</span>:</label>
+                                <div class="col-md-9">
+                                    <select @(User.IsInRole("Admin") ? "" : "disabled") name="clinicSelected" id="clinicSelected" class="form-control" ng-model="INMEDIKApp.clinicSelected" required ng-options="ct.name for ct in INMEDIKApp.clinics track by ct.id">
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <h3>Conceptos:</h3>
+                        <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Concepto
+                                        <span class="required">*</span>
+                                    </th>
+                                    <th>
+                                        Lote
+                                    </th>
+                                    <th>
+                                        Cantidad
+                                        <span class="required">*</span>
+                                    </th>
+                                    @*<th>
+                                        Costo
+                                        <span class="required">*</span>
+                                    </th>
+                                    <th>
+                                        Precio al público
+                                        <span class="required">*</span>
+                                    </th>*@
+                                    <th>
+                                        Fecha de expiración
+                                    </th>
+                                    @*<th>
+                                        Iva
+                                    </th>
+                                    <th>
+                                        Total
+                                    </th>*@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="movement in INMEDIKApp.Invoice.invoiceMovementsAux">
+                                    <td ng-class="{'invalid-group': (InvoiceForm.conceptAux.$touched && InvoiceForm.conceptAux.$invalid)}">
+                                        <div class="input-group">
+                                            <span class="input-group-btn btn-danger">
+                                                <button class="btn btn-danger" ng-disabled="movement.hasSales" ng-click="INMEDIKApp.setDeleteData($index,1,movement);" type="button">Eliminar</button>
+                                            </span>
+                                            <input type="text" placeholder="Escribir nombre o Código" name="conceptAux"
+                                                   ng-model="movement.conceptAux"
+                                                   uib-typeahead="item as item.name for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')"
+                                                   typeahead-loading="loading"
+                                                   typeahead-editable="false"
+                                                   typeahead-no-results="noResult" class="form-control"
+                                                   autocomplete="off" required />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" id="batch" name="quantity" placeholder="Lote" maxlength="50"
+                                               ng-model="movement.batch">
+                                    </td>
+                                    <td ng-class="{'invalid-group': (InvoiceForm.quantity.$touched && InvoiceForm.quantity.$invalid)}">
+                                        <input type="number" class="form-control" ng-model="movement.quantity" ng-blur="INMEDIKApp.GetTouched($event)" min="{{movement.minQuantity}}" id="quantity" required name="quantity_{{$index}}" placeholder="Cantidad" maxlength="50">
+                                        <span class="label label-danger" ng-show="InvoiceForm['quantity_' + $index].$touched && InvoiceForm['quantity_' + $index].$error.min">* La cantidad no debe ser menor a {{movement.minQuantity}}</span>
+                                    </td>
+                                    @*<td ng-class="{'invalid-group': (InvoiceForm.cost.$touched && InvoiceForm.cost.$invalid)}">
+                                        <input type="number" class="form-control" ng-model="movement.cost" ng-blur="INMEDIKApp.GetTouched($event)" id="cost" required name="cost" placeholder="Costo" maxlength="50">
+                                    </td>*@
+                                    @*<td ng-class="{'invalid-group': (InvoiceForm.price.$touched && InvoiceForm.price.$invalid)}">
+                                        <input type="number" class="form-control" ng-model="movement.price" ng-blur="INMEDIKApp.GetTouched($event)" id="price" required name="price" placeholder="Precio al público" maxlength="50">
+                                    </td>*@
+                                    <td>
+                                        <input date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control" ng-model="movement.expiredDate" id="ExpiredDate" name="dateExpired"
+                                               readonly style="background-color: #ffffff !important; cursor: pointer !important;" placeholder="Fecha de Expiración">
+                                    </td>
+                                    @*<td>
+                                        <input type="checkbox" ng-model="movement.iva" id="iva" name="iva">
+                                    </td>*@
+                                    @*<td>
+                                        <span ng-if="movement.quantity && movement.cost">
+                                            <span ng-show="!movement.iva"> {{INMEDIKApp.GetCost(movement)}}</span>
+                                            <span ng-show="movement.iva"> {{(movement.quantity * movement.cost) + (movement.quantity * movement.cost) * INMEDIKApp.tax}}</span>
+                                        </span>
+                                    </td>*@
+                                </tr>
+                                @*<tr>
+                                    <td colspan="6" style="border-width: 0;"></td>
+                                    <td>
+                                        <strong> Sub total:</strong>
+                                    </td>
+                                    <td>
+                                        <span ng-show="INMEDIKApp.GetSubTotal()"> {{INMEDIKApp.GetSubTotal()}}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" style="border-width: 0;"></td>
+                                    <td>
+                                        <strong>Iva:</strong>
+                                    </td>
+                                    <td>
+                                        <span ng-show="INMEDIKApp.GetIVA()">{{INMEDIKApp.GetIVA()}}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" style="border-width: 0;"></td>
+                                    <td>
+                                        <strong>Total:</strong>
+                                    </td>
+                                    <td>
+                                        <span ng-show="INMEDIKApp.GetTotal()">{{INMEDIKApp.GetTotal()}}</span>
+                                    </td>
+                                </tr>*@
+                            </tbody>
+                        </table>
+                        <div class="col-md-12">
+                            <a href="javascript:void(0)" class="btn btn-info" ng-click="INMEDIKApp.AddConcept()"> + Agregar</a>
+                            <button class="btn btn-success" ng-if="!INMEDIKApp.IsEdit" ng-click="INMEDIKApp.SaveInvoice()" ng-disabled="InvoiceForm.$invalid || INMEDIKApp.subbmiting || INMEDIKApp.Invoice.invoiceMovementsAux.length == 0">Guardar</button>
+                            <button class="btn btn-success" ng-if="INMEDIKApp.IsEdit" ng-click="INMEDIKApp.EditInvoice()" ng-disabled="InvoiceForm.$invalid || INMEDIKApp.subbmiting || INMEDIKApp.Invoice.invoiceMovementsAux.length == 0">Guardar edición</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-12" ng-if="INMEDIKApp.ViewTable">
+                    <div class="table-responsive">
+                        <table id="InvoiceTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                    </div>
+                </div>
+            </div>
+            <div ng-show="INMEDIKApp.ViewDetail">
+                <div class="col-md-4 no-padding-right">
+                    <div class="form-group">
+                        <label for="code" class="control-label col-md-2">Código<span class="required">*</span>: </label>
+                        <div class="col-md-7">
+                            <p> {{INMEDIKApp.Invoice.code}} </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 no-padding-right">
+                    <div class="form-group">
+                        <label for="code" class="control-label col-md-4">Fecha creación<span class="required">*</span>: </label>
+                        <div class="col-md-7">
+                            <p"> {{INMEDIKApp.Invoice.created_string}} </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 no-padding-left">
+                    <div class="form-group">
+                        <label for="clinicSelected" class="control-label col-md-2">Clínica<span class="required">*</span>:</label>
+                        <div class="col-md-7">
+                            <p>{{INMEDIKApp.Invoice.clinicAux.name}}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1 no-padding-left">
+                    <div class="form-group">
+                        <div class="col-md-7">
+                            <button type="button" class="btn btn-info" ng-click="INMEDIKApp.Edit()" ng-disabled="!INMEDIKApp.Invoice.canEdit || INMEDIKApp.Invoice.isRequest || INMEDIKApp.Invoice.isCanceled">Editar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="clearfix"></div>
+                <h3>Conceptos:</h3>
+                <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Concepto
+                            </th>
+                            <th>
+                                Lote
+                            </th>
+                            <th>
+                                Cantidad
+                            </th>
+                            <th>
+                                Costo
+                            </th>
+                            <th>
+                                Precio al público
+                            </th>
+                            <th>
+                                Fecha de caducidad
+                            </th>
+                            <th>
+                                Iva
+                            </th>
+                            <th>
+                                Total
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="movement in INMEDIKApp.Invoice.invoiceMovementsAux">
+                            <td>
+                                <p>{{movement.conceptAux.name}}</p>
+                            </td>
+                            <td>
+                                <p>{{movement.batch}}</p>
+                            </td>
+                            <td>
+                                <p>{{movement.quantity}}</p>
+                            </td>
+                            <td>
+                                <p>{{movement.cost}}</p>
+                            </td>
+                            <td>
+                                <p>{{movement.price}}</p>
+                            </td>
+                            <td>
+                                <p>{{movement.expiredDate_string}}</p>
+                            </td>
+                            <td>
+                                <p ng-show="movement.conceptAux.iva">Si</p>
+                                <p ng-show="!movement.conceptAux.iva">No</p>
+                            </td>
+                            <td>
+                                <span ng-if="movement.quantity && movement.cost">
+                                    <span ng-show="!movement.conceptAux.iva"> {{INMEDIKApp.GetCost(movement)}}</span>
+                                    <span ng-show="movement.conceptAux.iva"> {{(movement.quantity * movement.cost) + (movement.quantity * movement.cost) * movement.currentIva/100}}</span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="border-width: 0;"></td>
+                            <td>
+                                <strong> Sub total:</strong>
+                            </td>
+                            <td>
+                                <span ng-show="INMEDIKApp.GetSubTotal()"> {{INMEDIKApp.GetSubTotal()}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="border-width: 0;"></td>
+                            <td>
+                                <strong>Iva:</strong>
+                            </td>
+                            <td>
+                                <span>{{INMEDIKApp.IvaLoaded}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="border-width: 0;"></td>
+                            <td>
+                                <strong>Total:</strong>
+                            </td>
+                            <td>
+                                <span>{{INMEDIKApp.TotalLoaded}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="ModalDetails" class="modal modal-info" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Modificaciones hechas a la factura</h4>
+                </div>
+                <div class="modal-body">
+                    <!--Menu de versiones-->
+                    <div class="col-md-12" ng-repeat="versions in INMEDIKApp.RecordInvoice">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <label class="col-lg-3">{{versions.stringVersion}}</label>
+                                <label class="col-lg-3">Creada por: {{versions.stringCreatedBy}}</label>
+                                <label class="col-lg-3">Creada el día: {{versions.created_string}}</label>
+                                <span class="btn btn-info btn-xs pull-right" data-toggle="collapse" data-target="#panelBody{{$index}}"><i class="fas fa-bars"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="panel-body collapse" id="panelBody{{$index}}">
+                                <div class="col-lg-6">
+                                    <label class="pull-left">Codigo: </label>
+                                    <label>{{versions.code}}</label>
+                                </div>
+                                <div class="col-lg-6">
+                                    <label class="pull-left">Clinica: </label>
+                                    <label>{{versions.clinicAux.name}}</label>
+                                </div>
+                                <br />
+                                <hr />
+                                <div>
+                                    <table class="table table-condensed table-bordered table-striped, table-responsive total-table">
+                                        <thead class="">
+                                            <tr>
+                                                <th>
+                                                    Tipo de modificación
+                                                </th>
+                                                <th>
+                                                    Lote
+                                                </th>
+                                                <th>
+                                                    Concepto
+                                                </th>
+                                                <th>
+                                                    Cantidad
+                                                </th>
+                                                <th>
+                                                    Iva
+                                                </th>
+                                                <th>
+                                                    Costo
+                                                </th>
+                                                <th>
+                                                    Precio Máximo
+                                                </th>
+                                                <th>
+                                                    Fecha de Expiración
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="transaction in versions.recordTransactionAux">
+                                                <td class="{{transaction.typeOfModification}}-class">{{transaction.typeOfModification}}</td>
+                                                <td>{{transaction.batch}}</td>
+                                                <td>{{transaction.conceptAux.name}}</td>
+                                                <td>{{transaction.quantity}}</td>
+                                                <td>{{transaction.stringIva}}</td>
+                                                <td>{{transaction.cost}}</td>
+                                                <td>{{transaction.price}}</td>
+                                                <td>{{transaction.expiredDate_string}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                    <!--Fin-->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Salir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="messageModal" class="modal modal-success fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    {{INMEDIKApp.message}}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="confirmSaved" class="modal modal-success fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    Operación realizada con exito
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea cancelar la factura?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.CancelElement()" ng-disabled="INMEDIKApp.subbmiting" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

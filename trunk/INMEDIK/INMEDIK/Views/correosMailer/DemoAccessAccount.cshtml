@@ -1,0 +1,23 @@
+﻿@using Mvc.Mailer
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Creaciondeviaje</title>
+</head>
+<body>
+    <div class="alert alert-info">
+        <h4>@ViewBag.nombre</h4>
+        <span>Se ha creado una cuenta de demostración para usted.</span><br />
+        <span>Su cuenta expira en 7 días.</span><br />
+        <p>Usuario: @ViewBag.usuario</p>
+        <p>Contraseña: @ViewBag.pass</p>
+        <a href="http://clinicademo.alluretec.com/">http://clinicademo.alluretec.com</a>
+    </div>
+</body>
+</html>

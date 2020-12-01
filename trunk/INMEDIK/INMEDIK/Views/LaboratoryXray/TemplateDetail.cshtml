@@ -1,0 +1,44 @@
+﻿<div class="form-horizontal" style="padding-top:5px;" ng-init="clssInput= 'col-xs-12 col-md-10 col-lg-5'; clssLabel= 'col-xs-12 col-md-2 col-lg-1';">
+    <div class="form-group">
+        <label class="{{clssLabel}}">Medico:</label>
+        <div class="{{clssInput}}">
+            <input class="form-control" value="{{INMEDIKApp.DetailObj.ExamAux.MedicAux.personAux.fullName}}" readonly/>
+        </div>
+    @*</div>
+    <div class="form-group">*@
+        <label class="{{clssLabel}}">Paciente:</label>
+        <div class="{{clssInput}}">
+            <input class="form-control" value="{{INMEDIKApp.DetailObj.ExamAux.PatientAux.personAux.fullName}}" readonly/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="{{clssLabel}}">Edad:</label>
+        <div class="{{clssInput}}">
+            <input class="form-control" value="{{INMEDIKApp.DetailObj.Age}}" readonly/>
+        </div>
+    @*</div>
+    <div class="form-group">*@
+        <label class="{{clssLabel}}">Fecha:</label>
+        <div class="{{clssInput}}">
+            <input class="form-control" value="{{INMEDIKApp.DetailObj.sUpdated}}" readonly/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="{{clssLabel}}">Concepto:</label>
+        <div class="{{clssInput}}">
+            <input class="form-control" value="{{INMEDIKApp.DetailObj.ExamAux.ConceptAux.name}}" readonly/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="{{clssLabel}}">Notas:</label>
+        <div class="col-xs-12 col-md-10 col-lg-11">
+            <textarea class="form-control" rosws="4" style="max-width:100%; min-height:50px" readonly>{{INMEDIKApp.DetailObj.ExamAux.Notes}}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="{{clssLabel}}">Resultados:</label>
+        <div class="col-xs-12 col-md-10 col-lg-11">
+            <textarea class="form-control" rows="5" maxlength="300" style="max-width:100%; min-height:100px" ng-model="INMEDIKApp.DetailObj.Comment"></textarea>
+        </div>
+    </div>
+</div>

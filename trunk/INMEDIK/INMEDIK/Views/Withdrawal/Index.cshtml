@@ -1,0 +1,262 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+
+        .invalid-group {
+            color: #f86c6b;
+        }
+
+        .tab-pane {
+            padding-top: 20px;
+        }
+
+        .form-control-danger {
+            background-color: #d9534f !important;
+            color: white;
+        }
+
+        .form-control-success {
+            background-color: #5cb85c !important;
+            color: white;
+        }
+
+        .table tbody > tr > td {
+            padding: 5px !important;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datepicker/angular-datepicker.js"></script>
+    <script src="~/Scripts/bootstrap-notify.min.js"></script>
+    <script src="~/Scripts/pdfmake/pdfmake.js"></script>
+    <script src="~/Scripts/pdfmake/vfs_fonts.js"></script>
+    <script src="~/Scripts/pdfmake/ticketCierrePDF.js?0"></script>
+    <script type="text/javascript">
+
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker']);
+        INMEDIKApp.controller('WithdrawalController', function ($scope, $compile, $sce, $http) {
+            var dt = this;
+            dt.subbmiting = false;
+            dt.saveComplete = false;
+            dt.errors = [];
+            dt.Retiro = {};
+            dt.Retiro.denominationWithrawalAux = [];
+            dt.Retiro.expensesAux = [];
+
+            dt.DenominationsList = JSON.parse('@Html.Raw(ViewBag.DenominationsList)');
+
+            dt.SaveElement = function () {
+                var TotalLogico = 0;
+                dt.Retiro.denominationWithrawalAux.forEach(function (item, idx) {
+                    if (item.Quantity != undefined) {
+                        TotalLogico += (item.Quantity * item.Value);
+                    }
+                });
+                dt.errors = [];
+                TotalLogico = Math.round(TotalLogico * 100) / 100;
+                if (TotalLogico != dt.Retiro.total) {
+                    dt.errors.push("El total ingresado ($ " + dt.Retiro.total + ") no coincide con la suma de las cantidades ingresadas.");
+                    $("#resultModal").modal("show");
+                }
+                else {
+                    $("#ConfirmSave").modal("show");
+                }
+
+            };
+            dt.ConfirmSave = function () {
+                dt.subbmiting = true;
+                mostrarPantallaCarga();
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("SaveWithdrawal", "Withdrawal")',
+                    data: dt.Retiro,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    quitarPantallaCarga();
+                    if (res.data.success) {
+                        dt.saveComplete = true;
+                        dt.subbmiting = false;
+                        $("#ConfirmSave").modal("hide");
+                        $.notify({
+                            // options
+                            icon: 'glyphicon glyphicon-ok',
+                            title: "<strong>Operación exitosa</strong>",
+                            message: 'Retiro de $' + dt.Retiro.total + ' exitoso',
+                        }, {
+                            // settings
+                            element: 'body',
+                            position: null,
+                            type: "success",
+                            allow_dismiss: false,
+                            newest_on_top: false,
+                            showProgressbar: false,
+                            placement: {
+                                from: "top",
+                                align: "center"
+                            },
+                            offset: 20,
+                            spacing: 10,
+                            z_index: 1031,
+                            delay: 1000,
+                            timer: 1000,
+                            animate: {
+                                enter: 'animated fadeInDown',
+                                exit: 'animated fadeOutUp'
+                            },
+                        });
+                        PrintTicketCierre( res.data.Clinica, res.data.Usuario, res.data.Retiro );
+                        setTimeout(function () { window.location.href = '@Url.Action("Index", "Dashboard")'; }, 3000);
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        dt.subbmiting = false;
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    quitarPantallaCarga();
+                    console.log("error: " + res);
+                    dt.subbmiting = false;
+                });
+            }
+            dt.numberWithCommas = function (n) {
+                return Ut_numberWithCommas(n);
+            }
+            function init() {
+            }
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="WithdrawalController as INMEDIKApp">
+    <div class="panel panel-default">
+        <div class="panel-heading">Retiro de efectivo</div>
+        <div class="panel-body">
+            <form class="form-horizontal" name="RetiroObjForm" id="RetiroObjForm">
+                <div>
+                    <div class="alert alert-danger">
+                        Debe realizar retiro de efectivo antes de realizar mas ventas.
+                    </div>
+                    <div class="form-group">
+                        <label class="col-xs-12">Detalle de efectivo: </label>
+                        <div ng-repeat="item in INMEDIKApp.DenominationsList" class="col-xs-12 col-sm-4 col-md-3 col-lg-2" ng-if="!INMEDIKApp.detail">
+                            <label class="col-xs-12 col-sm-3 col-md-4 no-padding-left">
+                                {{( item.Name != 'CC' && item.Name != 'Vales' ) ? INMEDIKApp.numberWithCommas(item.Name) : item.Name}}:
+                            </label>
+                            <div class="col-xs-12 col-sm-9 col-md-8 no-padding-sides">
+                                <input type="number" class="put-tooltip form-control"
+                                       ng-init="INMEDIKApp.Retiro.denominationWithrawalAux[$index].idDenomination = item.id;
+                                INMEDIKApp.Retiro.denominationWithrawalAux[$index].Value = item.Value;
+                                INMEDIKApp.Retiro.denominationWithrawalAux[$index].Value = item.Value;
+                                INMEDIKApp.Retiro.denominationWithrawalAux[$index].denominationAux.Name = item.Name"
+                                       ng-model="INMEDIKApp.Retiro.denominationWithrawalAux[$index].Quantity"
+                                       min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+
+                <div class="form-group">
+                    <label class="col-xs-12 col-sm-3 col-md-1">Total: </label>
+                    <div class="col-xs-12 col-sm-9 col-md-11">
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
+                            <input type="number" class="put-tooltip form-control" min="0"
+                                   ng-model="INMEDIKApp.Retiro.total"
+                                   id="nTotalFinDeDia" required name="nTotalFinDeDia">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-12 col-sm-3 col-md-1">Comentarios: </label>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        <textarea type="text" class="form-control" maxlength="2000"
+                                  ng-model="INMEDIKApp.Retiro.comment"
+                                  id="comentario" name="comentario"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-12">
+                        <div class="col-xs-12">
+                            <button type="button" class="col-xs-12 col-md-3 btn btn-primary pull-right" data-loading-text="Guardando..."
+                                    ng-click="INMEDIKApp.SaveElement()" ng-disabled="RetiroObjForm.$invalid || INMEDIKApp.subbmiting">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="ConfirmSave" class="modal modal-primary fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Aviso</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Esta seguro que desea realizar el retiro de ${{INMEDIKApp.Retiro.total}}?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="INMEDIKApp.ConfirmSave()" ng-disabled="INMEDIKApp.subbmiting" data-dismiss="modal">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

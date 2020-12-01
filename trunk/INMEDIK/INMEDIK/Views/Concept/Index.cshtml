@@ -1,0 +1,823 @@
+﻿@section styles
+{
+
+    <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/ui-bootstrap-csp.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/select.css" />
+
+
+
+    <style type="text/css">
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        #NewElementModal .alert {
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-top: 5px;
+        }
+
+        input.ng-touched.ng-invalid {
+            border-color: #f86c6b;
+        }
+    </style>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/DataTables/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-datatables.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/dataTables.responsive.js"></script>
+    <script type="text/javascript" src="~/Scripts/DataTables/responsive.bootstrap.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-sanitize.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/select.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect-template.js"></script>
+    <script type="text/javascript" src="~/Scripts/angular-ui/angular-bootstrap-multiselect.js"></script>
+
+    <script type="text/javascript">
+        var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", "datatables", 'ngSanitize', 'ui.select', 'btorfs.multiselect']);
+        INMEDIKApp.controller('ConceptController', function ($scope, $compile, $sce, $http, DTOptionsBuilder, DTColumnBuilder) {
+            var dt = this;
+            dt.dtInstance = {};
+            dt.Concept = {};
+            dt.categories = [];
+            dt.warehouses = [];
+            dt.concpeptsSelect = [];
+            dt.warehouseObjAux = [];
+            dt.clinics = [];
+            dt.subbmiting = false;
+            dt.Concept.packageConceptAux = [];
+            dt.FormTouchedAndInvalid = false;
+            dt.errors = [];
+            dt.TotalConcepts = 0;
+            @* Datatables *@
+            function validateName(name) {
+                return /^Internamiento\sde\s\d\d?\sa\s\d\d?\shoras/.test(name);
+            }
+            @*Recompiling so we can bind Angular directive to the DT*@
+            function createdRow(row, data, dataIndex) {
+                $compile(angular.element(row).contents())($scope);
+                $scope.$digest();
+            }
+            @* Enumera las filas del DT *@
+            function pageCount(data, type, full) {
+                _cont++;
+                return _cont;
+            }
+            function editBtn(data, type, full, meta) {
+
+                return '<div class="text-center"><button type="button" ng-disabled="' + full.IsWarehouse + '" ng-click="INMEDIKApp.LoadElement(' + data + ', \'' + full.categoryName + '\')" class="btn btn-info btn-xs">Editar</button></div>';
+            }
+            function deleteBtn(data, type, full, meta) {
+                if (validateName(full.name))
+                    return '<div class="text-center"><button type="button" class="btn btn-default btn-xs" disabled>Borrar</button></div>';
+                else
+                    return '<div class="text-center"><button type="button" ng-disabled="' + full.IsWarehouse + '" ng-click="INMEDIKApp.DeleteElement(' + data + ', \'' + full.categoryName + '\')" class="btn btn-danger btn-xs">Borrar</button></div>';
+            }
+            dt.concpeptsSelectFn = function (index) {
+                return dt.concpeptsSelect.filter(function (concept) {
+                    var alreadySelected = false;
+                    $(dt.Concept.packageConceptAux).each(function (idx) {
+                        if (this.conceptAux && this.conceptAux.id == concept.id && index != idx) {
+                            alreadySelected = true;
+                            return;
+                        }
+                    });
+                    return !alreadySelected;
+                });
+            }
+            dt.AddConcept = function () {
+                dt.Concept.packageConceptAux.push({});
+            }
+
+            dt.AddWarehouse = function () {
+                dt.Concept.productAux.productWarehouseAux.push({});
+            }
+
+            dt.AddClinic = function () {
+                dt.warehouseObjAux.push({});
+            }
+            dt.RemoveClinic = function ($index) {
+                if (dt.warehouseObjAux.length > 1) {
+                    dt.warehouseObjAux.splice($index, 1);
+                }
+            }
+            dt.ClearConcepts = function () {
+                dt.Concept.packageConceptAux = [];
+            }
+            dt.RemoveConcept = function (item) {
+                var index = dt.Concept.packageConceptAux.indexOf(item);
+                if (dt.Concept.packageConceptAux.length > 1) {
+                    dt.Concept.packageConceptAux.splice(index, 1);
+                }
+            }
+
+            dt.RemoveWarehouse = function (item) {
+                var index = dt.Concept.productAux.productWarehouseAux.indexOf(item);
+                if (dt.Concept.productAux.productWarehouseAux.length > 0) {
+                    dt.Concept.productAux.productWarehouseAux.splice(index, 1);
+                }
+            }
+
+            dt.SelectClosed = function (isOpen, obj) {
+                if (!isOpen) {
+                    dt.FormTouchedAndInvalid = obj.conceptAux ? true : false;
+                }
+            }
+            dt.LoadConcepts = function () {
+                if (!dt.Concept.id) {
+                    dt.ClearConcepts();
+                    dt.AddConcept();
+                }
+            }
+            dt.GetTouched = function ($event) {
+                dt.FormTouchedAndInvalid = false;
+                if ($event) {
+                    var elem = $event.target;
+                    $("#ConceptForm input").each(function () {
+                        if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                            dt.FormTouchedAndInvalid = true;
+                            return false;
+                        }
+                    });
+                    if (dt.FormTouchedAndInvalid) {
+                        return;
+                    }
+                    $("#ConceptForm select").each(function () {
+                        if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                            dt.FormTouchedAndInvalid = true;
+                            return false;
+                        }
+                    });
+                    if (dt.FormTouchedAndInvalid) {
+                        return;
+                    }
+                    $("#ConceptForm textarea").each(function () {
+                        if ($(this).hasClass("ng-invalid") && ($(this).hasClass("ng-touched") || this == elem)) {
+                            dt.FormTouchedAndInvalid = true;
+                            return false;
+                        }
+                    });
+                }
+                if (dt.FormTouchedAndInvalid) {
+                    return;
+                }
+            };
+            dt.LoadElement = function (id, category) {
+                var url = '';
+                if (category == 'Paquetes') {
+                    url = '@Url.Action("GetPackage", "Concept")';
+                }
+                else {
+                    url = '@Url.Action("GetConcept", "Concept")';
+                }
+                $http({
+                    method: 'POST',
+                    url: url,
+                    params: {
+                        "id": id
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.Concept = res.data.data;
+                        dt.Concept.CanEdit = !validateName(dt.Concept.name);
+
+                        $("#NewElementModal").modal("show");
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            };
+
+            dt.DeleteElement = function (id, category) {
+                dt.Concept.id = id;
+                dt.DeleteCategory = category;
+                $("#ConfirmDelete").modal("show");
+            };
+            dt.ConfirmDelete = function () {
+                var url = '';
+                if (dt.DeleteCategory == 'Paquetes') {
+                    url = '@Url.Action("DeletePackage", "Concept")';
+                }
+                else {
+                    url = '@Url.Action("DeleteConcept", "Concept")';
+                }
+                $http({
+                    method: 'POST',
+                    url: url,
+                    data: dt.Concept,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            dt.NewElement = function () {
+                dt.Concept = {
+                    CanEdit: true,
+                    productAux: {
+                        productWarehouseAux: []
+                    }
+                };
+                dt.warehouseObjAux.push({});
+                $("#NewElementModal").modal("show");
+            };
+
+            $("#NewElementModal").on("hidden.bs.modal", function () {
+                $scope.ConceptForm.$setUntouched();
+                dt.FormTouchedAndInvalid = false;
+                dt.Concept = {};
+                init();
+            });
+            dt.EmailRegExp = /^(([^<>()\[\]\\.,;:\s@@"]+(\.[^<>()\[\]\\.,;:\s@@"]+)*)|(".+"))@@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+            dt.SaveElement = function () {
+                dt.subbmiting = true;
+                var url = "";
+                if (dt.Concept.categoryAux.name == 'Paquetes') {
+                    url = '@Url.Action("SavePackage", "Concept")';
+                }
+                else {
+                    url = '@Url.Action("SaveConcept", "Concept")';
+                }
+                $http({
+                    method: 'POST',
+                    url: url,
+                    data: dt.Concept,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+
+                    if (res.data.success) {
+                        dt.dtInstance.reloadData();
+                        $("#NewElementModal").modal('hide');
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                }).finally(function () {
+                    dt.subbmiting = false;
+                });
+            };
+            dt.dtOptions = DTOptionsBuilder.newOptions()
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetConcepts", "Concept")"
+                })
+                .withDataProp("data")
+                .withPaginationType('full_numbers')
+                .withOption('createdRow', createdRow)
+                .withOption('serverSide', true)
+                .withOption('responsive', true)
+                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
+                .withLanguage({
+                    "sEmptyTable": "No existen conceptos",
+                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
+                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
+                    "sInfoPostFix": "",
+                    "sInfoThousands": ",",
+                    "sLengthMenu": "Mostrando _MENU_ entradas",
+                    "sLoadingRecords": "Cargando...",
+                    "sProcessing": "Procesando...",
+                    "sSearch": "Buscar:",
+                    "sZeroRecords": "No se encontraron conceptos",
+                    "oPaginate": {
+                        "sFirst": "Primero",
+                        "sLast": "Ultimo",
+                        "sNext": "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": ascendiente",
+                        "sSortDescending": ": descendiente"
+                    }
+                });
+
+            dt.getTotalConcepts = function () {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetTotalConceptProducts", "Concept")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.TotalConcepts = res.data.data.total;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+            }
+            @* Definicion de las columnas del DT *@
+            dt.dtColumns = [
+                DTColumnBuilder.newColumn("id").withTitle("ID").withOption("visible", false),
+                DTColumnBuilder.newColumn("categoryName").withTitle("Categoría"),
+                DTColumnBuilder.newColumn("name").withTitle("Nombre"),
+                DTColumnBuilder.newColumn("inStock").withTitle("Existencia").withClass('notSearchable'),
+                DTColumnBuilder.newColumn("cost").withTitle("Costo"),
+                DTColumnBuilder.newColumn("price").withTitle("Precio"),
+                //DTColumnBuilder.newColumn("discount").withTitle("Descuento").renderWith(NumberPercent),
+                DTColumnBuilder.newColumn("active").withTitle("Activo").renderWith(boolToText),
+                DTColumnBuilder.newColumn("id").withTitle("Editar").renderWith(editBtn).withOption("orderable", false),
+                DTColumnBuilder.newColumn("id").withTitle("Borrar").renderWith(deleteBtn).withOption("orderable", false)
+            ];
+
+            function boolToText(data, type, full) {
+                return (data ? 'Si' : 'No');
+            }
+            function NumberPercent(data, type, full) {
+                return (data + '%');
+            }
+            dt.InstanceCallback = function (instance) {
+                // Setup - add a text input to each footer cell
+                dt.dtInstance = instance;
+                var id = '#' + dt.dtInstance.id;
+                $(id + ' thead th').each(function () {
+                    var title = $(id + ' thead th').eq($(this).index()).text();
+                    if (title != "Editar" && title != "Borrar") {
+                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
+                    }
+                });
+
+                var table = dt.dtInstance.DataTable;
+                // Apply the search
+                table.columns().every(function () {
+                    var that = this;
+
+                    $('input', this.header()).on('keyup change', function (e) {
+                        e.stopPropagation()
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                    $('input', this.header()).on('click', function (e) {
+                        e.stopPropagation()
+                    });
+                });
+            };
+
+            function init() {
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetCategoriesSelect", "Category")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.categories = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetWarehousesSelect", "Warehouse")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.warehouses = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetConceptsSelect", "Concept")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.concpeptsSelect = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+                $http({
+                    method: 'POST',
+                    url: '@Url.Action("GetClinicsSelect", "Clinic")',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (res) {
+                    if (res.data.success) {
+                        dt.clinics = res.data.data;
+                    }
+                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
+                        dt.errors[0] = "La sesión ha caducado.";
+                        $("#resultModal").modal('show');
+                    }
+                    else {
+                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
+                            dt.errors = res.data.errors;
+                        }
+                        else {
+                            dt.errors[0] = res.data.message;
+                        }
+                        $("#resultModal").modal('show');
+                    }
+
+                }, function errorCallback(res) {
+                    console.log("error: " + res);
+                });
+
+            };
+            init();
+        });
+    </script>
+}
+<div class="container-fluid" ng-controller="ConceptController as INMEDIKApp">
+    <div class="modal fade" id="NewElementModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myModalLabel"><span ng-show="!INMEDIKApp.Concept.id">Agregar</span><span ng-show="INMEDIKApp.Concept.id">Editar</span> Concepto</h4>
+                </div>
+                <div class="alert alert-danger" ng-show="ConceptForm.$invalid && INMEDIKApp.FormTouchedAndInvalid">
+                    <div class="col-mb-12">
+                        Revise los siguientes campos antes de continuar
+                    </div>
+                    <p ng-show="ConceptForm.name.$touched && ConceptForm.name.$error.required"><strong>Nombre</strong>: Campo obligatorio</p>
+                    <p ng-show="ConceptForm.categoryAux.$touched && ConceptForm.categoryAux.$error.required"><strong>Categoría</strong>: Campo obligatorio</p>
+                    <p ng-show="ConceptForm.cost.$touched && ConceptForm.cost.$error.required"><strong>Costo</strong>: Campo obligatorio</p>
+                    <p ng-show="ConceptForm.price.$touched && ConceptForm.price.$error.required"><strong>Precio</strong>: Campo obligatorio</p>
+                    @*<p ng-show="ConceptForm.discount.$touched && ConceptForm.discount.$error.required"><strong>Descuento</strong>: Campo obligatorio</p>*@
+                    @*<p ng-show="ConceptForm.sale_first.$invalid"><strong>Oferta</strong>: Ambos campos son necesarios</p>
+                        <p ng-show="ConceptForm.sale_second.$invalid"><strong>Oferta</strong>: Ambos campos son necesarios</p>*@
+                    <p ng-show="ConceptForm.testType.$touched && ConceptForm.testType.$invalid"><strong>Tipo de exámen</strong>: Campo requerido</p>
+                    <p ng-show="ConceptForm.conceptAux.$touched && ConceptForm.conceptAux.$invalid"><strong>Concepto</strong>: Campo requerido</p>
+                    <p ng-show="ConceptForm.quantity.$touched && ConceptForm.quantity.$invalid"><strong>Cantidad</strong>: Campo requerido</p>
+                    <p ng-show="ConceptForm.minStock.$touched && ConceptForm.minStock.$invalid"><strong>Inventario mínimo</strong>: Campo requerido</p>
+                    <p ng-show="ConceptForm.warehouseAux.$touched && ConceptForm.warehouseAux.$invalid"><strong>Almacén</strong>: Campo requerido</p>
+                    <p ng-show="ConceptForm.code.$touched && ConceptForm.code.$invalid"><strong>Código</strong>: Campo requerido</p>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <form class="form-horizontal" name="ConceptForm" id="ConceptForm">
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ConceptForm.name.$touched && ConceptForm.name.$invalid)}">
+                                    <label for="name" class="control-label col-md-3">Nombre: </label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" ng-if="INMEDIKApp.Concept.CanEdit"
+                                               ng-model="INMEDIKApp.Concept.name" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="name" required name="name" placeholder="Nombre" maxlength="100">
+                                        <input type="text" class="form-control" ng-if="!INMEDIKApp.Concept.CanEdit"
+                                               value="{{INMEDIKApp.Concept.name}}" id="name" required name="name" placeholder="Nombre" maxlength="100" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left">
+                                <div class="form-group " ng-class="{'invalid-group': (ConceptForm.categoryAux.$touched && ConceptForm.categoryAux.$invalid)}">
+                                    <label for="state" class="control-label col-md-3">Categoría: </label>
+                                    <div class="col-md-9">
+                                        <select ng-disabled="INMEDIKApp.Concept.id" name="categoryAux" id="categoryAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.Concept.categoryAux" required ng-options="ct.name for ct in INMEDIKApp.categories track by ct.id">
+                                            <option value="">Seleccione...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ConceptForm.cost.$touched && ConceptForm.cost.$invalid)}">
+                                    <label for="cost" class="control-label col-md-3">Costo: </label>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" ng-model="INMEDIKApp.Concept.cost" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="cost" required name="cost" placeholder="Costo">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 no-padding-left">
+                                <div class="form-group" ng-class="{'invalid-group': (ConceptForm.price.$touched && ConceptForm.price.$invalid)}">
+                                    <label for="price" class="control-label col-md-3">Precio: </label>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" ng-model="INMEDIKApp.Concept.price" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="price" required name="price" placeholder="Precio">
+                                    </div>
+                                </div>
+                            </div>
+                            @*<div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (ConceptForm.discount.$touched && ConceptForm.discount.$invalid)}">
+                                        <label for="discount" class="control-label col-md-3">Descuento: </label>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control" ng-model="INMEDIKApp.Concept.discount" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="discount" required name="discount" placeholder="Descuento">
+                                        </div>
+                                    </div>
+                                </div>*@
+                            <div class="col-md-3 no-padding-right">
+                                <div class="form-group" ng-class="{'invalid-group': (ConceptForm.iva.$touched && ConceptForm.iva.$invalid)}">
+                                    <label for="iva" class="control-label col-md-5">Iva: </label>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" ng-model="INMEDIKApp.Concept.iva" id="iva" name="iva" placeholder="Iva">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 no-padding-left">
+                                <div class="form-group" ng-class="{'invalid-group': (ConceptForm.deleted.$touched && ConceptForm.deleted.$invalid)}">
+                                    <label for="active" class="control-label col-md-5">Activo: </label>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" ng-disabled="true" ng-checked="true" ng-model="INMEDIKApp.Concept.active" id="active" name="active">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div ng-if="INMEDIKApp.Concept.categoryAux.name == 'Productos'">
+                                @*<div class="col-md-6 no-padding-right">
+                                        <div class="form-group" ng-class="{'invalid-group': (ConceptForm.sale_first.$invalid) || (ConceptForm.sale_second.$invalid)}">
+                                            <label for="sale" class="control-label col-md-3">Oferta: </label>
+                                            <div class="col-md-9">
+                                                <div class="input-group" style="max-width:200px;">
+                                                    <input type="number" class="form-control" ng-model="INMEDIKApp.Concept.productAux.sale_first" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-required="INMEDIKApp.Concept.productAux.sale_second" id="sale" name="sale_first">
+                                                    <span class="input-group-addon"> x </span>
+                                                    <input type="number" class="form-control" ng-model="INMEDIKApp.Concept.productAux.sale_second" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-required="INMEDIKApp.Concept.productAux.sale_first" id="sale" name="sale_second">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>*@
+
+                                <div class="col-md-3 no-padding-left">
+                                    <div class="form-group" ng-class="{'invalid-group': (ConceptForm.nurse.$touched && ConceptForm.nurse.$invalid)}">
+                                        <label for="licenseRequired" class="control-label col-md-9">Enfermería: </label>
+                                        <div class="col-md-3">
+                                            <input type="checkbox" ng-model="INMEDIKApp.Concept.productAux.nurse" id="nurse" name="nurse">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 no-padding-left">
+                                    <div class="form-group" ng-class="{'invalid-group': (ConceptForm.licenseRequired.$touched && ConceptForm.licenseRequired.$invalid)}">
+                                        <label for="licenseRequired" class="control-label col-md-9">Requiere cédula de médico: </label>
+                                        <div class="col-md-3">
+                                            <input type="checkbox" ng-model="INMEDIKApp.Concept.productAux.licenseRequired" id="licenseRequired" name="licenseRequired">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (INMEDIKApp.Concept.productAux.code.$touched && INMEDIKApp.Concept.productAux.code.$invalid)}">
+                                        <label for="sale" class="control-label col-md-3">Código: </label>
+                                        <div class="col-md-9">
+                                            <input type="text" maxlength="50" class="form-control" ng-model="INMEDIKApp.Concept.productAux.code" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required id="code" name="code">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                                <div class="col-md-12 no-padding-sides">
+                                    <div ng-repeat="wat in INMEDIKApp.Concept.productAux.productWarehouseAux">
+                                        <div class="col-md-6 no-padding-right">
+                                            <div class="form-group" ng-class="{'invalid-group': (ConceptForm.warehouseAux.$touched && ConceptForm.warehouseAux.$invalid)}">
+                                                <label for="warehouses" class="control-label col-md-3">Almacén: </label>
+                                                <div class="col-md-9">
+                                                    <select name="warehouseAux" id="warehouseAux" ng-model="wat.warehouseAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required ng-options="ct.name for ct in INMEDIKApp.warehouses track by ct.id">
+                                                        <option value="">Seleccione...</option>
+                                                    </select>
+                                                </div>
+                                                @*<div class="col-md-9">
+                                                        <multiselect ng-model="INMEDIKApp.Concept.productAux.warehouses" show-select-all="true" show-unselect-all="true" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" required options="INMEDIKApp.warehouses" display-prop="name" id-prop="id" labels="INMEDIKApp.labels" placeholder="Seleccione..."></multiselect>
+                                                    </div>*@
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5 no-padding-sides">
+                                            <div class="form-group" ng-class="{'invalid-group': (ConceptForm.minStock.$touched && ConceptForm.minStock.$invalid)}">
+                                                <label for="warehouses" class="control-label col-md-6">Inventario mínimo: </label>
+                                                <div class="col-md-4">
+                                                    <input type="number" class="form-control" ng-model="wat.minStock" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="minStock" required name="minStock" placeholder="Inventario mínimo">
+                                                </div>
+                                                <span class="btn btn-danger" ng-click="INMEDIKApp.RemoveWarehouse(wat)"><i class="fa fa-trash"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="btn btn-success col-md-12" ng-click="INMEDIKApp.AddWarehouse()"> + Agregar almacén</div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Concept.categoryAux.name == 'Exámenes'" ng-class="{'invalid-group': (ConceptForm.testType.$touched && ConceptForm.testType.$invalid)}">
+                                <div class="col-md-6 no-padding-left">
+                                    <div class="form-group">
+                                        <label for="testyperx" class="control-label col-md-9">Rayos X: </label>
+                                        <div class="col-md-3">
+                                            <input type="checkbox" ng-model="INMEDIKApp.Concept.testAux.xray" id="testyperx" name="testType" ng-required="!INMEDIKApp.Concept.testAux.laboratory" ng-change="INMEDIKApp.Concept.testAux.laboratory = false;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group">
+                                        <label for="testtypelab" class="control-label col-md-9">Laboratorio: </label>
+                                        <div class="col-md-3">
+                                            <input type="checkbox" ng-model="INMEDIKApp.Concept.testAux.laboratory" id="testtypelab" name="testType" ng-required="!INMEDIKApp.Concept.testAux.xray" ng-change="INMEDIKApp.Concept.testAux.xray = false;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-if="INMEDIKApp.Concept.categoryAux.name == 'Paquetes'" class="col-md-12" ng-init="INMEDIKApp.LoadConcepts();">
+                                <div ng-repeat="packageElm in INMEDIKApp.Concept.packageConceptAux">
+                                    <div class="col-md-6 no-padding-sides">
+                                        <div class="form-group " ng-class="{'invalid-group': (ConceptForm.conceptAux.$touched && ConceptForm.conceptAux.$invalid)}">
+                                            <label for="conceptAux" class="control-label col-md-3">Concepto: </label>
+                                            <div class="col-md-9">
+                                                <ui-select on-select="INMEDIKApp.GetTouched($event)" uis-open-close="INMEDIKApp.SelectClosed(isOpen, packageElm)" ng-model="packageElm.conceptAux" theme="bootstrap" name="conceptAux" required>
+                                                    <ui-select-match placeholder="Seleccione un concepto...">{{$select.selected.name}}</ui-select-match>
+                                                    <ui-select-choices repeat="item in INMEDIKApp.concpeptsSelectFn($index) | filter: $select.search">
+                                                        <div ng-bind-html="item.name | highlight: $select.search"></div>
+                                                    </ui-select-choices>
+                                                </ui-select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 no-padding-sides">
+                                        <div class="form-group" ng-class="{'invalid-group': (ConceptForm.quantity.$touched && ConceptForm.quantity.$invalid)}">
+                                            <label for="quantity" class="control-label col-md-3">Cantidad: </label>
+                                            <div class="col-md-6">
+                                                <input type="number" class="form-control" ng-model="packageElm.quantity" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="quantity" required name="quantity" placeholder="Cantidad">
+                                            </div>
+                                            <span class="btn btn-danger" ng-click="INMEDIKApp.RemoveConcept(packageElm)"><i class="fa fa-trash"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="btn btn-success col-md-12" ng-click="INMEDIKApp.AddConcept()"> + Agregar concepto</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElement()" ng-disabled="ConceptForm.$invalid || INMEDIKApp.subbmiting">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Concepto <button class="btn btn-xs btn-success pull-right" ng-click="INMEDIKApp.NewElement()">Crear Nuevo</button></div>
+        <div class="panel-body">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table id="ConceptTable" datatable dt-options="INMEDIKApp.dtOptions" dt-columns="INMEDIKApp.dtColumns" dt-instance="INMEDIKApp.InstanceCallback" class="table-hover table-bordered compact"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-sm-2 ">Total de productos en pesos:</label>
+        <div class="col-sm-1">
+            <div class="input-group" ng-init="INMEDIKApp.getTotalConcepts()">
+                <div style="border:inset;min-width:150px;min-height:20px;overflow:auto;" class="text-center">
+                    {{INMEDIKApp.TotalConcepts | currency}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resultModal" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 ng-show="INMEDIKApp.errors.length!=0" class="modal-title">Errores encontrados</h4>
+                </div>
+                <div class="modal-body">
+                    <ul ng-show="INMEDIKApp.errors.length!=0">
+                        <li ng-repeat="err in INMEDIKApp.errors">{{err}}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="ConfirmDelete" class="modal modal-danger fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Alerta</h4>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea borrar el registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.ConfirmDelete()" data-dismiss="modal">Borrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
