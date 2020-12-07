@@ -680,8 +680,14 @@
                     }
                 }).then(function (res) {
                     if (res.data.success) {
-
-                        }
+                        Swal.fire({
+                            icon: 'success',
+                            width: 600,
+                            title: 'se han guardado los signos vitales, puede continuar.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }
                 }, function errorCallback(res) {
                     console.log("error: " + res);
                 }).finally(function () {

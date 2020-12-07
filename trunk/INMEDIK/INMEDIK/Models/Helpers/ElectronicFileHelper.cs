@@ -1341,163 +1341,161 @@ namespace INMEDIK.Models.Helpers
                     try
                     {
                         if (evolution.id > 0)
-                        {
-                            if (toPrint)
+                        { 
+                            
+                            ElectronicFile elecFileDb = db.ElectronicFile.Where(e => e.Id == electronicFileId).FirstOrDefault();
+                            Patient patientdb = db.Patient.Where(p => p.id == elecFileDb.PatientId).FirstOrDefault();
+
+                            PatientAux aux = new PatientAux();
+                            DataHelper.fill(aux, patientdb);
+                            DataHelper.fill(aux.personAux, patientdb.Person);
+                            EvolutionNote evolutionDb = db.EvolutionNote.Where(p => p.Id == evolution.id).FirstOrDefault();
+
+                            ElectronicFileUpdate electronicFileUpdate = new ElectronicFileUpdate();
+                            electronicFileUpdate.UpdatedBy = res.User.id.Value;
+                            electronicFileUpdate.UpdatedDate = evolutionDb.Created;
+                            electronicFileUpdate.ElectronicFileId = elecFileDb.Id;
+                            electronicFileUpdate.Source = "Nota de evolución";
+                            db.ElectronicFileUpdate.Add(electronicFileUpdate);
+
+                            db.SaveChanges();
+
+                            EvolCurrentCondition conditionDb = db.EvolCurrentCondition.Where(e => e.Id == evolutionDb.EvolCurrentConditionId).FirstOrDefault();
+                            if (conditionDb != null)
                             {
-                                result.success = true;
-                                result.data.id = evolution.id;
-                                result.data.currentIndex = idx;
+                                conditionDb.TipeConsult = evolution.evolutionConditionAux.tipeConsult;
+                                conditionDb.ReasonForConsultation = evolution.evolutionConditionAux.reasonForConsultation;
+                                conditionDb.Subjective = evolution.evolutionConditionAux.subjective;
+                                conditionDb.Objective = evolution.evolutionConditionAux.objective;
+                                conditionDb.Analysis = evolution.evolutionConditionAux.analysis;
+
+                                db.SaveChanges();
                             }
                             else
                             {
-                                ElectronicFile elecFileDb = db.ElectronicFile.Where(e => e.Id == electronicFileId).FirstOrDefault();
-                                Patient patientdb = db.Patient.Where(p => p.id == elecFileDb.PatientId).FirstOrDefault();
-
-                                PatientAux aux = new PatientAux();
-                                DataHelper.fill(aux, patientdb);
-                                DataHelper.fill(aux.personAux, patientdb.Person);
-                                EvolutionNote evolutionDb = db.EvolutionNote.Where(p => p.Id == evolution.id).FirstOrDefault();
-
-                                ElectronicFileUpdate electronicFileUpdate = new ElectronicFileUpdate();
-                                electronicFileUpdate.UpdatedBy = res.User.id.Value;
-                                electronicFileUpdate.UpdatedDate = evolutionDb.Created;
-                                electronicFileUpdate.ElectronicFileId = elecFileDb.Id;
-                                electronicFileUpdate.Source = "Nota de evolución";
-                                db.ElectronicFileUpdate.Add(electronicFileUpdate);
+                                EvolCurrentCondition conditionData = db.EvolCurrentCondition.Create();
+                                conditionData.TipeConsult = evolution.evolutionConditionAux.tipeConsult;
+                                conditionData.ReasonForConsultation = evolution.evolutionConditionAux.reasonForConsultation;
+                                conditionData.Subjective = evolution.evolutionConditionAux.subjective;
+                                conditionData.Objective = evolution.evolutionConditionAux.objective;
+                                conditionData.Analysis = evolution.evolutionConditionAux.analysis;
+                                db.EvolCurrentCondition.Add(conditionData);
 
                                 db.SaveChanges();
 
-                                EvolCurrentCondition conditionDb = db.EvolCurrentCondition.Where(e => e.Id == evolutionDb.EvolCurrentConditionId).FirstOrDefault();
-                                if (conditionDb != null)
-                                {
-                                    conditionDb.TipeConsult = concept.name;
-                                    conditionDb.ReasonForConsultation = evolution.evolutionConditionAux.reasonForConsultation;
-                                    conditionDb.Subjective = evolution.evolutionConditionAux.subjective;
-                                    conditionDb.Objective = evolution.evolutionConditionAux.objective;
-                                    conditionDb.Analysis = evolution.evolutionConditionAux.analysis;
-
-                                    db.SaveChanges();
-                                }
-                                else
-                                {
-                                    EvolCurrentCondition conditionData = db.EvolCurrentCondition.Create();
-                                    conditionData.TipeConsult = concept.name;
-                                    conditionData.ReasonForConsultation = evolution.evolutionConditionAux.reasonForConsultation;
-                                    conditionData.Subjective = evolution.evolutionConditionAux.subjective;
-                                    conditionData.Objective = evolution.evolutionConditionAux.objective;
-                                    conditionData.Analysis = evolution.evolutionConditionAux.analysis;
-                                    db.EvolCurrentCondition.Add(conditionData);
-
-                                    db.SaveChanges();
-
-                                    evolutionDb.EvolCurrentConditionId = conditionData.Id;
-                                    result.data.evolutionConditionAux.id = conditionData.Id;
-                                }
-                                EvolExploration explorationDb = db.EvolExploration.Where(e => e.Id == evolutionDb.EvolExplorationId).FirstOrDefault();
-                                if (explorationDb != null)
-                                {
-                                    explorationDb.Habitus = evolution.evolutionExplorationAux.habitus;
-                                    explorationDb.Temperature = evolution.evolutionExplorationAux.temperature;
-                                    explorationDb.TA_Sistolica = evolution.evolutionExplorationAux.ta_sistolica;
-                                    explorationDb.TA_Diastolica = evolution.evolutionExplorationAux.ta_diastolica;
-                                    explorationDb.HeartRate = evolution.evolutionExplorationAux.heartRate;
-                                    explorationDb.BreathingFrequency = evolution.evolutionExplorationAux.breathingFrequency;
-                                    explorationDb.OxygenSaturation = evolution.evolutionExplorationAux.oxygenSaturation;
-                                    explorationDb.Weight = evolution.evolutionExplorationAux.weight;
-                                    explorationDb.Size = evolution.evolutionExplorationAux.size;
-                                    explorationDb.HipCircumference = evolution.evolutionExplorationAux.hipCircumference;
-                                    explorationDb.WaistCircumference = evolution.evolutionExplorationAux.waistCircumference;
-                                    explorationDb.IMC = evolution.evolutionExplorationAux.imc;
-                                    if (aux.personAux.age >= 8)
-                                    {
-                                        explorationDb.PainScale = evolution.evolutionExplorationAux.painScaleAdult.ToString();
-                                        explorationDb.PainScaleAdult = evolution.evolutionExplorationAux.painScaleAdult;
-                                    }
-                                    else
-                                    {
-                                        explorationDb.PainScale = evolution.evolutionExplorationAux.painScale;
-                                        explorationDb.PainScaleAdult = Convert.ToInt32(evolution.evolutionExplorationAux.painScale);
-                                    }
-
-                                    db.SaveChanges();
-                                }
-                                else
-                                {
-                                    EvolExploration explorationData = db.EvolExploration.Create();
-                                    explorationData.Habitus = evolution.evolutionExplorationAux.habitus;
-                                    explorationData.Temperature = evolution.evolutionExplorationAux.temperature;
-                                    explorationData.TA_Sistolica = evolution.evolutionExplorationAux.ta_sistolica;
-                                    explorationData.TA_Diastolica = evolution.evolutionExplorationAux.ta_diastolica;
-                                    explorationData.HeartRate = evolution.evolutionExplorationAux.heartRate;
-                                    explorationData.BreathingFrequency = evolution.evolutionExplorationAux.breathingFrequency;
-                                    explorationData.OxygenSaturation = evolution.evolutionExplorationAux.oxygenSaturation;
-                                    explorationData.Weight = evolution.evolutionExplorationAux.weight;
-                                    explorationData.Size = evolution.evolutionExplorationAux.size;
-                                    explorationData.HipCircumference = evolution.evolutionExplorationAux.hipCircumference;
-                                    explorationData.WaistCircumference = evolution.evolutionExplorationAux.waistCircumference;
-                                    explorationData.IMC = evolution.evolutionExplorationAux.imc;
-                                    if (aux.personAux.age >= 8)
-                                    {
-                                        explorationDb.PainScale = evolution.evolutionExplorationAux.painScaleAdult.ToString();
-                                        explorationDb.PainScaleAdult = evolution.evolutionExplorationAux.painScaleAdult;
-                                    }
-                                    else
-                                    {
-                                        explorationDb.PainScale = evolution.evolutionExplorationAux.painScale;
-                                        explorationDb.PainScaleAdult = Convert.ToInt32(evolution.evolutionExplorationAux.painScale);
-                                    }
-
-                                    db.EvolExploration.Add(explorationData);
-                                    db.SaveChanges();
-                                    evolutionDb.EvolExplorationId = explorationData.Id;
-                                    result.data.evolutionExplorationAux.id = explorationData.Id;
-                                    result.data.evolutionExplorationAux.saveVitalSigns = false;
-                                }
-
-                                EvolComments commentsDb = db.EvolComments.Where(e => e.Id == evolutionDb.EvolCommentsId).FirstOrDefault();
-                                if (commentsDb != null)
-                                {
-                                    commentsDb.Notes = evolution.commentsAux.notes;
-                                    db.SaveChanges();
-                                }
-                                else
-                                {
-                                    EvolComments commentsData = db.EvolComments.Create();
-                                    commentsData.Notes = evolution.commentsAux.notes;
-
-                                    db.EvolComments.Add(commentsData);
-                                    db.SaveChanges();
-
-                                    evolutionDb.EvolCommentsId = commentsData.Id;
-                                    result.data.commentsAux.id = commentsData.Id;
-                                }
-
-                                Recipe recipeDb = db.Recipe.Create();
-                                recipeDb.EvolutionNoteId = evolution.id;
-                                recipeDb.RecipeText = evolution.objRecipe.recipe;
-
-                                db.Recipe.Add(recipeDb);
-                                db.SaveChanges();
-
-                                foreach (var medicaments in evolution.medicamstock)
-                                {
-                                    var consept = db.Concept.FirstOrDefault(c => c.id == medicaments.medicamento.id);
-                                    Product products = db.Product.Create();
-                                    products.ConceptId = medicaments.medicamento.id;
-                                    products.Quantity = medicaments.quantity;
-                                    products.CreatedBy = res.User.id.Value;
-                                    products.Created = DateTime.UtcNow;
-
-                                    evolutionDb.Product.Add(products);
-
-                                    var stock = db.Stock.FirstOrDefault(s => s.ConceptId == medicaments.medicamento.id);
-                                    stock.InStock -= medicaments.quantity;
-                                }
-                                evolutionDb.Updated = DateTime.UtcNow;
-                                evolutionDb.UpdatedBy = res.User.id.Value;
-                                result.data.id = evolution.id;
-                                result.data.currentIndex = idx;
+                                evolutionDb.EvolCurrentConditionId = conditionData.Id;
+                                result.data.evolutionConditionAux.id = conditionData.Id;
                             }
+                            EvolExploration explorationDb = db.EvolExploration.Where(e => e.Id == evolutionDb.EvolExplorationId).FirstOrDefault();
+                            if (explorationDb != null)
+                            {
+                                explorationDb.Habitus = evolution.evolutionExplorationAux.habitus;
+                                explorationDb.Temperature = evolution.evolutionExplorationAux.temperature;
+                                explorationDb.TA_Sistolica = evolution.evolutionExplorationAux.ta_sistolica;
+                                explorationDb.TA_Diastolica = evolution.evolutionExplorationAux.ta_diastolica;
+                                explorationDb.HeartRate = evolution.evolutionExplorationAux.heartRate;
+                                explorationDb.BreathingFrequency = evolution.evolutionExplorationAux.breathingFrequency;
+                                explorationDb.OxygenSaturation = evolution.evolutionExplorationAux.oxygenSaturation;
+                                explorationDb.Weight = evolution.evolutionExplorationAux.weight;
+                                explorationDb.Size = evolution.evolutionExplorationAux.size;
+                                explorationDb.HipCircumference = evolution.evolutionExplorationAux.hipCircumference;
+                                explorationDb.WaistCircumference = evolution.evolutionExplorationAux.waistCircumference;
+                                explorationDb.IMC = evolution.evolutionExplorationAux.imc;
+                                if (aux.personAux.age >= 8)
+                                {
+                                    explorationDb.PainScale = evolution.evolutionExplorationAux.painScaleAdult.ToString();
+                                    explorationDb.PainScaleAdult = evolution.evolutionExplorationAux.painScaleAdult;
+                                }
+                                else
+                                {
+                                    explorationDb.PainScale = evolution.evolutionExplorationAux.painScale;
+                                    explorationDb.PainScaleAdult = Convert.ToInt32(evolution.evolutionExplorationAux.painScale);
+                                }
+
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                EvolExploration explorationData = db.EvolExploration.Create();
+                                explorationData.Habitus = evolution.evolutionExplorationAux.habitus;
+                                explorationData.Temperature = evolution.evolutionExplorationAux.temperature;
+                                explorationData.TA_Sistolica = evolution.evolutionExplorationAux.ta_sistolica;
+                                explorationData.TA_Diastolica = evolution.evolutionExplorationAux.ta_diastolica;
+                                explorationData.HeartRate = evolution.evolutionExplorationAux.heartRate;
+                                explorationData.BreathingFrequency = evolution.evolutionExplorationAux.breathingFrequency;
+                                explorationData.OxygenSaturation = evolution.evolutionExplorationAux.oxygenSaturation;
+                                explorationData.Weight = evolution.evolutionExplorationAux.weight;
+                                explorationData.Size = evolution.evolutionExplorationAux.size;
+                                explorationData.HipCircumference = evolution.evolutionExplorationAux.hipCircumference;
+                                explorationData.WaistCircumference = evolution.evolutionExplorationAux.waistCircumference;
+                                explorationData.IMC = evolution.evolutionExplorationAux.imc;
+                                if (aux.personAux.age >= 8)
+                                {
+                                    explorationDb.PainScale = evolution.evolutionExplorationAux.painScaleAdult.ToString();
+                                    explorationDb.PainScaleAdult = evolution.evolutionExplorationAux.painScaleAdult;
+                                }
+                                else
+                                {
+                                    explorationDb.PainScale = evolution.evolutionExplorationAux.painScale;
+                                    explorationDb.PainScaleAdult = Convert.ToInt32(evolution.evolutionExplorationAux.painScale);
+                                }
+
+                                db.EvolExploration.Add(explorationData);
+                                db.SaveChanges();
+                                evolutionDb.EvolExplorationId = explorationData.Id;
+                                result.data.evolutionExplorationAux.id = explorationData.Id;
+                                result.data.evolutionExplorationAux.saveVitalSigns = false;
+                            }
+
+                            EvolComments commentsDb = db.EvolComments.Where(e => e.Id == evolutionDb.EvolCommentsId).FirstOrDefault();
+                            if (commentsDb != null)
+                            {
+                                commentsDb.Notes = evolution.commentsAux.notes;
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                EvolComments commentsData = db.EvolComments.Create();
+                                commentsData.Notes = evolution.commentsAux.notes;
+
+                                db.EvolComments.Add(commentsData);
+                                db.SaveChanges();
+
+                                evolutionDb.EvolCommentsId = commentsData.Id;
+                                result.data.commentsAux.id = commentsData.Id;
+                            }
+
+                            Recipe recipeDb = db.Recipe.Create();
+                            recipeDb.EvolutionNoteId = evolution.id;
+                            recipeDb.RecipeText = evolution.objRecipe.recipe;
+
+                            db.Recipe.Add(recipeDb);
+                            db.SaveChanges();
+
+                            if (recipeDb.Id > 0)
+                            {
+                                result.data.objRecipe.id = recipeDb.Id;
+                            }
+
+                            foreach (var medicaments in evolution.medicamstock)
+                            {
+                                var consept = db.Concept.FirstOrDefault(c => c.id == medicaments.medicamento.id);
+                                Product products = db.Product.Create();
+                                products.ConceptId = medicaments.medicamento.id;
+                                products.Quantity = medicaments.quantity;
+                                products.CreatedBy = res.User.id.Value;
+                                products.Created = DateTime.UtcNow;
+
+                                evolutionDb.Product.Add(products);
+
+                                var stock = db.Stock.FirstOrDefault(s => s.ConceptId == medicaments.medicamento.id);
+                                stock.InStock -= medicaments.quantity;
+                            }
+                            evolutionDb.Updated = DateTime.UtcNow;
+                            evolutionDb.UpdatedBy = res.User.id.Value;
+                            result.data.id = evolution.id;
+                            result.data.currentIndex = idx;
+                            
                         }
                         else
                         {
@@ -1509,7 +1507,7 @@ namespace INMEDIK.Models.Helpers
                             DataHelper.fill(aux.personAux, patientdb.Person);
 
                             EvolCurrentCondition conditionData = db.EvolCurrentCondition.Create();
-                            conditionData.TipeConsult = concept.name;
+                            conditionData.TipeConsult = evolution.evolutionConditionAux.tipeConsult;
                             conditionData.ReasonForConsultation = evolution.evolutionConditionAux.reasonForConsultation;
                             conditionData.Subjective = evolution.evolutionConditionAux.subjective;
                             conditionData.Objective = evolution.evolutionConditionAux.objective;

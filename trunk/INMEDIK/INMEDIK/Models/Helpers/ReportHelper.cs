@@ -887,7 +887,7 @@ namespace INMEDIK.Models.Helpers
                 db.Database.CommandTimeout = 300;
                 try
                 {
-                    var query = db.vwProductivityConcept.Where(c => !c.IsCanceled);
+                    var query = db.vwProductivityConcept.AsQueryable();
 
                     //Aplicar filtros
                     #region filtros

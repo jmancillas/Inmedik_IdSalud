@@ -21,6 +21,5 @@ namespace INMEDIK.Models.Entity
         public string CategoryName { get; set; }
         public Nullable<int> ClinicId { get; set; }
         public int Quantity { get; set; }
-        public bool IsCanceled { get; set; }
     }
 }
