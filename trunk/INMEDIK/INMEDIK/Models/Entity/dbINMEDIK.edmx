@@ -4092,7 +4092,6 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwProductivityConcept'
             <PropertyRef Name="ConceptName" />
             <PropertyRef Name="CategoryId" />
             <PropertyRef Name="CategoryName" />
-            <PropertyRef Name="Quantity" />
           </Key>
           <Property Name="Orderid" Type="int" Nullable="false" />
           <Property Name="ConceptName" Type="nvarchar" MaxLength="100" Nullable="false" />
@@ -4100,7 +4099,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwProductivityConcept'
           <Property Name="CategoryId" Type="int" Nullable="false" />
           <Property Name="CategoryName" Type="nvarchar" MaxLength="100" Nullable="false" />
           <Property Name="ClinicId" Type="int" />
-          <Property Name="Quantity" Type="int" Nullable="false" />
+          <Property Name="Quantity" Type="int" />
         </EntityType>
         <!--Errores durante la generación:
 advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwProductivityMedic' no tiene definida ninguna clave principal. Se ha inferido la clave y la definición se creado como una vista o tabla de solo lectura.-->
@@ -13331,7 +13330,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
             <End Role="Role" EntitySet="Role" />
             <End Role="User" EntitySet="User" />
           </AssociationSet>
-        </EntityContainer>
+          </EntityContainer>
         <ComplexType Name="sp_getConceptsAutoComplete_Result">
           <Property Type="Int32" Name="id" Nullable="false" />
           <Property Type="String" Name="categoryname" Nullable="false" MaxLength="100" />
@@ -17887,7 +17886,6 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
             <PropertyRef Name="ConceptName" />
             <PropertyRef Name="CategoryId" />
             <PropertyRef Name="CategoryName" />
-            <PropertyRef Name="Quantity" />
           </Key>
           <Property Name="Orderid" Type="Int32" Nullable="false" />
           <Property Name="ConceptName" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
@@ -17895,7 +17893,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
           <Property Name="CategoryId" Type="Int32" Nullable="false" />
           <Property Name="CategoryName" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Name="ClinicId" Type="Int32" />
-          <Property Name="Quantity" Type="Int32" Nullable="false" />
+          <Property Name="Quantity" Type="Int32" />
         </EntityType>
         <EntityType Name="vwProductivityMedic">
           <Key>
@@ -22253,7 +22251,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
           <End Type="dbIdSalud_expressModel.Role" Role="Role" Multiplicity="*" />
           <End Type="dbIdSalud_expressModel.User" Role="User" Multiplicity="*" />
         </Association>
-      </Schema>
+        </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
@@ -26188,7 +26186,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
               <ScalarProperty Name="id" ColumnName="RoleId" />
             </EndProperty>
           </AssociationSetMapping>
-        </EntityContainerMapping>
+          </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
   </edmx:Runtime>

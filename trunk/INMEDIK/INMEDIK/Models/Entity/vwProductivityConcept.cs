@@ -20,6 +20,6 @@ namespace INMEDIK.Models.Entity
         public int CategoryId { get; set; }
         public string CategoryName { get; set; }
         public Nullable<int> ClinicId { get; set; }
-        public int Quantity { get; set; }
+        public Nullable<int> Quantity { get; set; }
     }
 }

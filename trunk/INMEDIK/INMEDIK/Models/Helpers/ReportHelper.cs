@@ -873,6 +873,8 @@ namespace INMEDIK.Models.Helpers
             string order = "";
             string orderColumn = "";
 
+            if (extraFilter.categoryName == "Productos") extraFilter.categoryName = "Medicamentos";
+
             if (!string.IsNullOrEmpty(filter.Order.First().Dir) && !string.IsNullOrEmpty(filter.Order.First().Data))
             {
                 order = filter.Order.First().Dir;
@@ -915,22 +917,6 @@ namespace INMEDIK.Models.Helpers
                     {
                         query = query.Where(q => q.CategoryName == extraFilter.categoryName);
                     }
-                    // filtro solo si la categoria es examenes
-                    //if (extraFilter.categoryName == "Exámenes")
-                    //{
-                    //    if (extraFilter.laboratory == true && extraFilter.xray == false)
-                    //    {
-                    //        query = query.Where(q => q.Laboratory == true);
-                    //    }
-                    //    if (extraFilter.laboratory == false && extraFilter.xray == true)
-                    //    {
-                    //        query = query.Where(q => q.XRay == true);
-                    //    }
-                    //    if (extraFilter.laboratory == false && extraFilter.xray == false)
-                    //    {
-                    //        query = query.Where(q => q.XRay == true && q.Laboratory == true);
-                    //    }
-                    //}
                     #endregion
 
                     //Agrupar y sumatoria
@@ -942,7 +928,7 @@ namespace INMEDIK.Models.Helpers
                                   {
                                       categoryName = g.FirstOrDefault().CategoryName,
                                       conceptName = g.FirstOrDefault().ConceptName,
-                                      quantity = g.Sum(c => c.Quantity)
+                                      quantity = g.Sum(c => (int)c.Quantity)
                                   };
                     #endregion
 
@@ -971,39 +957,6 @@ namespace INMEDIK.Models.Helpers
                                 grouped = grouped.OrderByDescending(g => g.quantity);
                             }
                         }
-                        //if (orderColumn == "price")
-                        //{
-                        //    if (order.ToUpper() == "ASC")
-                        //    {
-                        //        grouped = grouped.OrderBy(g => g.price);
-                        //    }
-                        //    else
-                        //    {
-                        //        grouped = grouped.OrderByDescending(g => g.price);
-                        //    }
-                        //}
-                        //if (orderColumn == "cost")
-                        //{
-                        //    if (order.ToUpper() == "ASC")
-                        //    {
-                        //        grouped = grouped.OrderBy(g => g.cost);
-                        //    }
-                        //    else
-                        //    {
-                        //        grouped = grouped.OrderByDescending(g => g.cost);
-                        //    }
-                        ////}
-                        //if (orderColumn == "profit")
-                        //{
-                        //    if (order.ToUpper() == "ASC")
-                        //    {
-                        //        grouped = grouped.OrderBy(g => g.profit);
-                        //    }
-                        //    else
-                        //    {
-                        //        grouped = grouped.OrderByDescending(g => g.profit);
-                        //    }
-                        //}
                     }
                     #endregion
 
