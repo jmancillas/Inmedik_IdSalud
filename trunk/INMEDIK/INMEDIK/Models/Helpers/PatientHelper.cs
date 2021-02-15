@@ -551,6 +551,7 @@ namespace INMEDIK.Models.Helpers
                         Person person = patientDB.Person;
                         patient.personAux.fillDB(ref person);
                         person.Curp = patient.personAux.curp;
+                        person.CompanyName = patient.personAux.companyName;
                         person.SecondLastName = patient.personAux.secondlastname;
                         //patientDB.Person.NationalityId = patient.personAux.nationalityAux.id;
 
@@ -567,6 +568,7 @@ namespace INMEDIK.Models.Helpers
                             person = db.Person.Where(p => p.id == patient.personAux.id).FirstOrDefault();
                             patient.personAux.fillDB(ref person);
                             person.Curp = patient.personAux.curp;
+                            person.CompanyName = patient.personAux.companyName;
                             person.SecondLastName = patient.personAux.secondlastname;
                             address = db.Address.Where(a => a.id == patient.personAux.addressId).FirstOrDefault();
                         }
@@ -575,6 +577,7 @@ namespace INMEDIK.Models.Helpers
                             person = db.Person.Create();
                             patient.personAux.fillDB(ref person);
                             person.Curp = patient.personAux.curp;
+                            person.CompanyName = patient.personAux.companyName;
                             person.SecondLastName = patient.personAux.secondlastname;
                             address = db.Address.Create();
                         }

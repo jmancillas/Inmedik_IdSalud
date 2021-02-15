@@ -105,25 +105,24 @@
 
             dt.regularExpretions = Ut_getRegularExpretions();
             dt.Lists = {};
-            dt.Lists.Disease = JSON.parse('@Html.Raw(ViewBag.Disease)');
-            dt.Lists.ChronicDisease = JSON.parse('@Html.Raw(ViewBag.ChronicDisease)');
-            dt.Lists.Medics = JSON.parse('@Html.Raw(ViewBag.Medics)');
-            dt.Lists.Status = JSON.parse('@Html.Raw(ViewBag.Status)');
+            dt.Lists.Disease = JSON.parse('[{\"id\":6,\"name\":\"HERPES SIMPLE v2\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":7,\"name\":\"CONJUNTIVITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":8,\"name\":\"HERPES ZOSTER\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":9,\"name\":\"NEUMONIA Y BRONCONEUMONIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":10,\"name\":\"FIEBRE TIFOIDEA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":11,\"name\":\"HIPERTENSION  ARTERIAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":12,\"name\":\"DIABETES MELLITUS INSULINODEPENDIENTE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":13,\"name\":\"ERISIPELA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":14,\"name\":\"INFECCION DE VIAS URINARIAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":15,\"name\":\"PIELO NEFRITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":17,\"name\":\"ASMA Y ESTADO ASMATICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":18,\"name\":\"LARINGOTRAQUEITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":19,\"name\":\"BRONQUIOLITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":20,\"name\":\"ACNE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":21,\"name\":\"LABERINTITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":22,\"name\":\"EDEMA, PROTEINURIA, Y OTROS TRASTORNOS HIPERTENSIVOS DEL EMBARAZO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":23,\"name\":\"ECLAMPSIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":24,\"name\":\"CONVULSIONES POR FIEBRE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":25,\"name\":\"EPILEPSIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":26,\"name\":\"EPOC\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":27,\"name\":\"COLITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":28,\"name\":\"GASTRITIS, ULCERA Y DUODENITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":29,\"name\":\"COLICO RENAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":30,\"name\":\"COLECISTOLITIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":31,\"name\":\"CRISIS DE ANSIEDAD\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":32,\"name\":\"CRISIS DE HISTERIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":33,\"name\":\"OTITIS MEDIA AGUDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":34,\"name\":\"OTITIS EXTERNA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":35,\"name\":\"IMPETIGO SIMPLE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":36,\"name\":\"EPISTAXIS ANTERIOR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":37,\"name\":\"EPISTAXIS POSTERIOR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":38,\"name\":\"DERMATITIS DEL PAÑAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":39,\"name\":\"SINUSITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":40,\"name\":\"DERMATITIS ATOPICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":41,\"name\":\"VARICELA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":42,\"name\":\"OTRA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":43,\"name\":\"ORZUELO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":44,\"name\":\"CHALAZION\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":45,\"name\":\"MICOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":46,\"name\":\"ABSCESO PERIANAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":47,\"name\":\"FISTULA PERIANAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":48,\"name\":\"ANEMIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":49,\"name\":\"QUISTE DE OVARIO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":50,\"name\":\"QUISTE PILONIDAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":51,\"name\":\"APENDICITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":52,\"name\":\"MIOMATOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":53,\"name\":\"VARICOCELE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":54,\"name\":\"METRORRAGIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":55,\"name\":\"AMENORREA PRIMARIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":56,\"name\":\"AMENORREA SECUNDARIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":57,\"name\":\"DISMENORREA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":58,\"name\":\"HEPATITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":59,\"name\":\"CIRROSIS HEPATICA NO ALCOHOLICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":60,\"name\":\"AMENAZA DE ABORTO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":61,\"name\":\"NEUROPATIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":62,\"name\":\"MIGRAÑA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":63,\"name\":\"ANGINA DE PECHO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":64,\"name\":\"DOLOR CIATICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":65,\"name\":\"LUMBALGIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":66,\"name\":\"HIPERREACTIVIDAD BRONQUIAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":68,\"name\":\"ULCERA VARICOSA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":69,\"name\":\"SCABIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":70,\"name\":\"HIPERTIROIDISMO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":71,\"name\":\"HIPOTIROIDISMO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":72,\"name\":\"DIABETES GESTACIONAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":73,\"name\":\"CONDILOMAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":74,\"name\":\"DESHIDRATACION\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":75,\"name\":\"ESGUINCE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":77,\"name\":\"Neuralgia\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":78,\"name\":\"COSTOCONDRITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":79,\"name\":\"HEMORROIDES\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":80,\"name\":\"LITIASIS RENAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":81,\"name\":\"AMEBIASISINTESTINAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":82,\"name\":\"PAROTIDITIS INFECCIOSA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":83,\"name\":\"LIPOMA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":84,\"name\":\"HIPOREXIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":85,\"name\":\"HIPOSPERMIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":86,\"name\":\"HEPATOMEGALIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":87,\"name\":\"HEMATOMA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":88,\"name\":\"FRACTURA DE TOBILLO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":89,\"name\":\"FRACTURA DE CADERA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":90,\"name\":\"RINITIS \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":91,\"name\":\"HERNIA INGUINAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":92,\"name\":\"HERNIA UMBILICAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":93,\"name\":\"HERNIA DE DISCO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":94,\"name\":\"HERNIA HIATAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":95,\"name\":\"ESCABIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":96,\"name\":\"ALERGIA POR ALIMENTOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":97,\"name\":\"ALERGIA POR MEDICAMENTOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":98,\"name\":\"MORDEDURA POR PERRO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":99,\"name\":\"MORDEDURA POR OTROS MAMIFEROS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":100,\"name\":\"PICADURA DE ABEJA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":101,\"name\":\"INTOX. POR PICADURA DE ALACRÁN \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":102,\"name\":\"FRACTURA DE RADIO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":103,\"name\":\"FRACTURA DE CUBITO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":104,\"name\":\"HIPERTENSION VENTRICULAR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":105,\"name\":\"HERPES GENITAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":106,\"name\":\"ODONTALGIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:40\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:40\"},{\"id\":107,\"name\":\"LARINGITIS \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":108,\"name\":\"ESTREÑIMIENTO \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":109,\"name\":\"EPIDIDIMITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":110,\"name\":\"QUEMADURA 1ER GRADO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":111,\"name\":\"QUEMADURA 2 DO GRADO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":112,\"name\":\"QUEMADURA 3 ER GRADO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":113,\"name\":\"HMR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":114,\"name\":\"CARDIOMEGALIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":115,\"name\":\"COLICOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":116,\"name\":\"ABSCESO   \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":117,\"name\":\"TAQUICARDIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":118,\"name\":\"COPROSTASIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":119,\"name\":\"NEURALGIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":120,\"name\":\"REFLUJO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":121,\"name\":\"ESPOLÓN CAL CANEO \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":122,\"name\":\"DIARREA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":123,\"name\":\"TIFOIDEA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":124,\"name\":\"TETANOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":125,\"name\":\"DIFTERIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":126,\"name\":\"SARAMPION\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":127,\"name\":\"RUBEOLA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":128,\"name\":\"HEPATITIS AGUDA TIPO B\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":129,\"name\":\"HEPATITIS AGUDA TIPO A\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":130,\"name\":\"COLERA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":131,\"name\":\"PARATIFOIDEA Y OTRAS SALMONELOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":132,\"name\":\"SHIGELOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":133,\"name\":\"INTOXICACION ALIMENTARIA BACTERIANA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":134,\"name\":\"GIARDIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":135,\"name\":\"ASCARIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":136,\"name\":\"TUBERCULOSIS RESPIRATORIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":137,\"name\":\"SIFILIS ADQUIRIDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":138,\"name\":\"LINFOGRANULOMA VENEREO POR CLAMIDIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":139,\"name\":\"INFECCION GONOCOCICA GENITOURINARIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":140,\"name\":\"CHANCRO BLANDO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":141,\"name\":\"VIRUS DEL PAPILOMA HUMANO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":142,\"name\":\"TRICOMONIASIS UROGENITAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":143,\"name\":\"CANDIDIASIS UROGENITAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":144,\"name\":\"MASTITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":145,\"name\":\"CODO DE NIÑERA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":146,\"name\":\"HIDROCELE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":147,\"name\":\"CONTROL PRENATAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":148,\"name\":\"INFLAMACIÓN PELVICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":149,\"name\":\"GONORREA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":150,\"name\":\"HIPOGLICEMIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":151,\"name\":\"ECCEMA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":152,\"name\":\"PRURIGO POR INSECTOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":153,\"name\":\"URTICARIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":154,\"name\":\"INTOLERANCIA A LA LACTOSA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":155,\"name\":\"DISPEPSIA DEL LACTANTE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":156,\"name\":\"CONTRL DE NIÑO SANO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":157,\"name\":\"FIMOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":158,\"name\":\"MENINGITIS TUBERCULOSA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":159,\"name\":\"TOS FERINA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":160,\"name\":\"RUBEOLA CONGENITA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":161,\"name\":\"INF. INT.POR OTROS ORGANISMOS Y LAS MAL DEFINIDAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":162,\"name\":\"OTRAS INF. INTESTINALES DEBIDAS A PROTOZOARIOS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":163,\"name\":\"TENIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":164,\"name\":\"ENTEROBIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":165,\"name\":\"OTRAS HELMINTIASIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":166,\"name\":\"FARINGITIS Y AMIGDALITIS ESTREPTOCOCICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":167,\"name\":\"INFECCIONES RESPIRATORIAS AGUDAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":168,\"name\":\"SIFILIS CONGENITA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":169,\"name\":\"DENGUE CLASICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":170,\"name\":\"DENGUE HEMORRAGICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":171,\"name\":\"LEISHMANIASIS \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":172,\"name\":\"ENFERMEDAD DE CHAGAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":173,\"name\":\"ONCOCERCOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":174,\"name\":\"BRUCELOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":175,\"name\":\"LEPTOSPIROSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":176,\"name\":\"RABIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":177,\"name\":\"CISTICERCOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":178,\"name\":\"ESCARLATINA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":179,\"name\":\"ENFERMEDAD FEBRIL EXANTEMATICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":180,\"name\":\"TUBERCULOSIS OTRAS FORMAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":181,\"name\":\"LEPRA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":182,\"name\":\"HEPATITIS TIPO C\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":183,\"name\":\"FRACTURA DE FALANGE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":184,\"name\":\"CRISIS HIPERTENSIVA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":185,\"name\":\"OTRAS HEPATITIS VIRALES AGUDAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":186,\"name\":\"SIDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":187,\"name\":\"MENINGITIS MENINGOCOCICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":188,\"name\":\"MENINGITIS \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":189,\"name\":\"PARÁLISIS FLÁCIDA \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":190,\"name\":\"SINDROME COQUELUCHOIDE \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":191,\"name\":\"INFECCION ASINTOMATICA POR VIH\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":192,\"name\":\"BOCIO ENDEMICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":193,\"name\":\"DIABETES MELLITUS NO INSULINO DEPENDIENTE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":194,\"name\":\"INTOXICACION AGUDA POR ALCOHOL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":195,\"name\":\"FIEBRE REUMATICA AGUDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":196,\"name\":\"ENF. ISQUEMICA DEL CORAZON\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":197,\"name\":\"ENFERMEDAD CEREBROVASCULAR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":198,\"name\":\"GINGIVITIS Y ENFERMEDAD PERIODONTAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":199,\"name\":\"ENFERMEDAD ALCOHOLICA DEL HIGADO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":200,\"name\":\"INTOXICACION POR PLAGUICIDAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":201,\"name\":\"INTOX. POR PONZOÑA DE ANIMALES \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":202,\"name\":\"DESNUTRICION LEVE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":203,\"name\":\"DESNUTRICION MODERADA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":204,\"name\":\"DESNUTRICION SEVERA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":205,\"name\":\"TUMOR MALIGNO DE MAMAS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":206,\"name\":\"TUMOR MALIGNO DEL CUELLO DEL UTERO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":207,\"name\":\"DISPLASIA CERVICAL LEVE Y MODERADA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":208,\"name\":\"DISPLASIA CERVICAL SEVERA Y CACU IN SITU\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":209,\"name\":\"ENCEFALOCELE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":210,\"name\":\"ESPINA BIFIDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":211,\"name\":\"LABIO Y PALADAR HENDIDO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":212,\"name\":\"QUEMADURA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":213,\"name\":\"PEATON LESIONADO EN ACCIDENTE DE TRANSITO \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":214,\"name\":\"ACCIDENTE DE TRANSPORTE EN VEHÍCULO CON MOTOR \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":215,\"name\":\"MORDEDURA POR SERPIENTE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":216,\"name\":\"VIOLENCIA INTRAFAMILIAR\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":217,\"name\":\"INFLUENZA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":218,\"name\":\"ABSCESO HEPATICO AMIBIANO \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":219,\"name\":\"TRIQUINOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":220,\"name\":\"TOXOPLASMOSIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:41\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:41\"},{\"id\":221,\"name\":\"INSUFI\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":222,\"name\":\"INSUFICIENCIA VENOSA PERIFERICA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":223,\"name\":\"TUMOR MALIGNO DE ESTOMAGO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":224,\"name\":\"TUMOR MALIGNO DE BRONQUIOS Y PULMON\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":225,\"name\":\"MENINGO ENCEFALITIS AMEBIANA PRIMARIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":226,\"name\":\"POLIOMELITIS AGUDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":227,\"name\":\"FIEBRE AMARILLA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":228,\"name\":\"TIFO EPIDEMICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":229,\"name\":\"FIEBRE RECURRENTE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":230,\"name\":\"FIEBRE MANCHADA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":231,\"name\":\"ENCEFALITIS EQUINA VENEZOLANA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":232,\"name\":\"EFECTOS INDESEA. POR VACUNA Y SUST.BIOL. \",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":233,\"name\":\"INFECCION INVASIVA POR H. INFLUENZAE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":234,\"name\":\"RESFRIADO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":235,\"name\":\"FARINGITIS AGUDA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":236,\"name\":\"BRONQUILITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":237,\"name\":\"GASTROENTERITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":238,\"name\":\"SINDROME DEL TUNEL DEL CARPO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":239,\"name\":\"RINOFARINGITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":240,\"name\":\"DEPRESION\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":241,\"name\":\"OBITO FETAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":242,\"name\":\"ARTRITIS REUMATOIDE\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":243,\"name\":\"LUPUS ERITEMATOSO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":244,\"name\":\"EMBARAZO ECTOPICO\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":245,\"name\":\"GOTA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":246,\"name\":\"DOLOR ABDOMINAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":247,\"name\":\"AMIGDALITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":248,\"name\":\"AMIBIASIS INTESTINAL\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":249,\"name\":\"PRECLANCIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":250,\"name\":\"ORQUIDOEPIDIDIMITIS\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":251,\"name\":\"GINECOMASTIA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":252,\"name\":\"FRACTURA DE CLAVICULA\",\"deleted\":false,\"created\":\"13/02/2019\",\"created_string\":\"13/02/2019 17:53:42\",\"updated\":\"13/02/2019\",\"updated_string\":\"13/02/2019 17:53:42\"},{\"id\":253,\"name\":\"MIALGIA\",\"deleted\":false,\"created\":\"29/04/2019\",\"created_string\":\"29/04/2019 14:13:17\",\"updated\":\"29/04/2019\",\"updated_string\":\"29/04/2019 14:13:17\"},{\"id\":254,\"name\":\"SEGUIMIENTO\",\"deleted\":false,\"created\":\"02/07/2019\",\"created_string\":\"02/07/2019 11:06:45\",\"updated\":\"02/07/2019\",\"updated_string\":\"02/07/2019 11:06:45\"},{\"id\":255,\"name\":\"LABORATORIO\",\"deleted\":false,\"created\":\"02/07/2019\",\"created_string\":\"02/07/2019 11:07:11\",\"updated\":\"02/07/2019\",\"updated_string\":\"02/07/2019 11:07:11\"},{\"id\":256,\"name\":\"ACCIDENTE\",\"deleted\":false,\"created\":\"02/07/2019\",\"created_string\":\"02/07/2019 11:07:18\",\"updated\":\"02/07/2019\",\"updated_string\":\"02/07/2019 11:07:18\"},{\"id\":257,\"name\":\"URGENCIA\",\"deleted\":false,\"created\":\"02/07/2019\",\"created_string\":\"02/07/2019 11:07:24\",\"updated\":\"02/07/2019\",\"updated_string\":\"02/07/2019 11:07:24\"},{\"id\":258,\"name\":\"CEFALEA\",\"deleted\":false,\"created\":\"19/08/2019\",\"created_string\":\"19/08/2019 09:37:22\",\"updated\":\"19/08/2019\",\"updated_string\":\"19/08/2019 09:37:22\"},{\"id\":259,\"name\":\"INDIGESTIÓN\",\"deleted\":false,\"created\":\"18/09/2019\",\"created_string\":\"18/09/2019 15:59:25\",\"updated\":\"18/09/2019\",\"updated_string\":\"18/09/2019 15:59:25\"},{\"id\":260,\"name\":\"ACÚFENOS\",\"deleted\":false,\"created\":\"24/09/2019\",\"created_string\":\"24/09/2019 12:34:17\",\"updated\":\"24/09/2019\",\"updated_string\":\"24/09/2019 12:34:17\"},{\"id\":261,\"name\":\"PARESTESIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:06:02\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:06:02\"},{\"id\":262,\"name\":\"PARESIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:06:07\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:06:07\"},{\"id\":263,\"name\":\"HIPERCOLESTEROLEMIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:08:31\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:08:31\"},{\"id\":264,\"name\":\"SINDROME METABOLICO\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:08:46\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:08:46\"},{\"id\":265,\"name\":\"DEFICIENCIA CIRCULATORIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:09:35\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:09:35\"},{\"id\":266,\"name\":\"ARTRALGIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:25:15\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:25:15\"},{\"id\":267,\"name\":\"ERGONOMIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:25:25\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:25:25\"},{\"id\":268,\"name\":\"ARTROSIS\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 09:30:13\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 09:30:13\"},{\"id\":269,\"name\":\"INTOXICACION ALIMENTARIA\",\"deleted\":false,\"created\":\"30/09/2019\",\"created_string\":\"30/09/2019 11:21:19\",\"updated\":\"30/09/2019\",\"updated_string\":\"30/09/2019 11:21:19\"},{\"id\":270,\"name\":\"ROTAVIRUS\",\"deleted\":false,\"created\":\"01/10/2019\",\"created_string\":\"01/10/2019 09:29:10\",\"updated\":\"01/10/2019\",\"updated_string\":\"01/10/2019 09:29:10\"},{\"id\":271,\"name\":\"TENDINITIS\",\"deleted\":false,\"created\":\"01/10/2019\",\"created_string\":\"01/10/2019 16:30:34\",\"updated\":\"01/10/2019\",\"updated_string\":\"01/10/2019 16:30:34\"},{\"id\":272,\"name\":\"RADIOLOGIA\",\"deleted\":false,\"created\":\"02/10/2019\",\"created_string\":\"02/10/2019 09:51:49\",\"updated\":\"02/10/2019\",\"updated_string\":\"02/10/2019 09:51:49\"},{\"id\":273,\"name\":\"CONTUSION\",\"deleted\":false,\"created\":\"02/10/2019\",\"created_string\":\"02/10/2019 09:53:10\",\"updated\":\"02/10/2019\",\"updated_string\":\"02/10/2019 09:53:10\"},{\"id\":274,\"name\":\"HIPOACUSIA\",\"deleted\":false,\"created\":\"29/10/2019\",\"created_string\":\"29/10/2019 14:57:32\",\"updated\":\"29/10/2019\",\"updated_string\":\"29/10/2019 14:57:32\"},{\"id\":275,\"name\":\"EMBARAZO 1 TRIMESTRE\",\"deleted\":false,\"created\":\"04/11/2019\",\"created_string\":\"04/11/2019 10:01:08\",\"updated\":\"04/11/2019\",\"updated_string\":\"04/11/2019 10:01:08\"},{\"id\":276,\"name\":\"EMBARAZO 2 TRIMESTRE\",\"deleted\":false,\"created\":\"04/11/2019\",\"created_string\":\"04/11/2019 10:01:17\",\"updated\":\"04/11/2019\",\"updated_string\":\"04/11/2019 10:01:17\"},{\"id\":277,\"name\":\"EMBARAZO 3 TRIMESTRE\",\"deleted\":false,\"created\":\"04/11/2019\",\"created_string\":\"04/11/2019 10:01:25\",\"updated\":\"04/11/2019\",\"updated_string\":\"04/11/2019 10:01:25\"},{\"id\":278,\"name\":\"MAREO Y NAUSEA\",\"deleted\":false,\"created\":\"04/11/2019\",\"created_string\":\"04/11/2019 10:01:55\",\"updated\":\"04/11/2019\",\"updated_string\":\"04/11/2019 10:01:55\"},{\"id\":279,\"name\":\"EN ESTUDIO\",\"deleted\":false,\"created\":\"07/11/2019\",\"created_string\":\"07/11/2019 13:05:03\",\"updated\":\"07/11/2019\",\"updated_string\":\"07/11/2019 13:05:03\"},{\"id\":280,\"name\":\"PARASITOSIS\",\"deleted\":false,\"created\":\"07/11/2019\",\"created_string\":\"07/11/2019 13:06:38\",\"updated\":\"07/11/2019\",\"updated_string\":\"07/11/2019 13:06:38\"},{\"id\":281,\"name\":\"PROBABLE\",\"deleted\":false,\"created\":\"07/11/2019\",\"created_string\":\"07/11/2019 13:06:51\",\"updated\":\"07/11/2019\",\"updated_string\":\"07/11/2019 13:06:51\"},{\"id\":282,\"name\":\"COLICO BILIAR\",\"deleted\":false,\"created\":\"09/01/2020\",\"created_string\":\"09/01/2020 11:10:59\",\"updated\":\"09/01/2020\",\"updated_string\":\"09/01/2020 11:10:59\"},{\"id\":283,\"name\":\"DOLOR\",\"deleted\":false,\"created\":\"10/01/2020\",\"created_string\":\"10/01/2020 11:28:57\",\"updated\":\"10/01/2020\",\"updated_string\":\"10/01/2020 11:28:57\"},{\"id\":284,\"name\":\"RECETA\",\"deleted\":false,\"created\":\"20/01/2020\",\"created_string\":\"20/01/2020 14:19:07\",\"updated\":\"20/01/2020\",\"updated_string\":\"20/01/2020 14:19:08\"},{\"id\":285,\"name\":\"FOLICULITIS\",\"deleted\":false,\"created\":\"27/01/2020\",\"created_string\":\"27/01/2020 15:08:59\",\"updated\":\"27/01/2020\",\"updated_string\":\"27/01/2020 15:08:59\"},{\"id\":286,\"name\":\"SINOVITIS\",\"deleted\":false,\"created\":\"05/02/2020\",\"created_string\":\"05/02/2020 14:06:41\",\"updated\":\"05/02/2020\",\"updated_string\":\"05/02/2020 14:06:41\"},{\"id\":287,\"name\":\"CONTRACTURA MUSCULAR\",\"deleted\":false,\"created\":\"10/02/2020\",\"created_string\":\"10/02/2020 11:30:01\",\"updated\":\"10/02/2020\",\"updated_string\":\"10/02/2020 11:30:01\"},{\"id\":288,\"name\":\"SINDROME GRIPAL\",\"deleted\":false,\"created\":\"14/02/2020\",\"created_string\":\"14/02/2020 08:20:48\",\"updated\":\"14/02/2020\",\"updated_string\":\"14/02/2020 08:20:48\"},{\"id\":289,\"name\":\"OTALGIA\",\"deleted\":false,\"created\":\"17/02/2020\",\"created_string\":\"17/02/2020 10:36:55\",\"updated\":\"17/02/2020\",\"updated_string\":\"17/02/2020 10:36:55\"},{\"id\":290,\"name\":\"SUB LUXACION\",\"deleted\":false,\"created\":\"20/02/2020\",\"created_string\":\"20/02/2020 13:01:22\",\"updated\":\"20/02/2020\",\"updated_string\":\"20/02/2020 13:01:22\"},{\"id\":291,\"name\":\"LUXACION\",\"deleted\":false,\"created\":\"20/02/2020\",\"created_string\":\"20/02/2020 13:01:48\",\"updated\":\"20/02/2020\",\"updated_string\":\"20/02/2020 13:01:48\"},{\"id\":1290,\"name\":\"TOS NO PRODUCTIVA\",\"deleted\":false,\"created\":\"12/03/2020\",\"created_string\":\"12/03/2020 14:18:55\",\"updated\":\"12/03/2020\",\"updated_string\":\"12/03/2020 14:18:55\"},{\"id\":1291,\"name\":\"TOS PRODUCTIVA\",\"deleted\":false,\"created\":\"12/03/2020\",\"created_string\":\"12/03/2020 14:19:16\",\"updated\":\"12/03/2020\",\"updated_string\":\"12/03/2020 14:19:16\"},{\"id\":1292,\"name\":\"REVALORACIÓN\",\"deleted\":false,\"created\":\"13/03/2020\",\"created_string\":\"13/03/2020 08:27:06\",\"updated\":\"13/03/2020\",\"updated_string\":\"13/03/2020 08:27:06\"},{\"id\":1294,\"name\":\"HERIDA\",\"deleted\":false,\"created\":\"03/06/2020\",\"created_string\":\"03/06/2020 10:49:46\",\"updated\":\"03/06/2020\",\"updated_string\":\"03/06/2020 10:49:46\"},{\"id\":1295,\"name\":\"COVID-19\",\"deleted\":false,\"created\":\"22/06/2020\",\"created_string\":\"22/06/2020 09:28:45\",\"updated\":\"22/06/2020\",\"updated_string\":\"22/06/2020 09:28:45\"},{\"id\":1296,\"name\":\"RECUPERACION\",\"deleted\":false,\"created\":\"22/06/2020\",\"created_string\":\"22/06/2020 09:28:57\",\"updated\":\"22/06/2020\",\"updated_string\":\"22/06/2020 09:28:57\"},{\"id\":1297,\"name\":\"REHABILITACION\",\"deleted\":false,\"created\":\"22/06/2020\",\"created_string\":\"22/06/2020 09:29:15\",\"updated\":\"22/06/2020\",\"updated_string\":\"22/06/2020 09:29:15\"},{\"id\":1298,\"name\":\"DORSALGIA\",\"deleted\":false,\"created\":\"22/09/2020\",\"created_string\":\"22/09/2020 13:56:50\",\"updated\":\"22/09/2020\",\"updated_string\":\"22/09/2020 13:56:50\"},{\"id\":1299,\"name\":\"GANGLION\",\"deleted\":false,\"created\":\"20/10/2020\",\"created_string\":\"20/10/2020 10:41:11\",\"updated\":\"20/10/2020\",\"updated_string\":\"20/10/2020 10:41:11\"},{\"id\":1300,\"name\":\"ONICOMICOSIS\",\"deleted\":false,\"created\":\"18/11/2020\",\"created_string\":\"18/11/2020 15:05:13\",\"updated\":\"18/11/2020\",\"updated_string\":\"18/11/2020 15:05:13\"},{\"id\":1301,\"name\":\"TIÑA PEDIS\",\"deleted\":false,\"created\":\"18/11/2020\",\"created_string\":\"18/11/2020 15:05:20\",\"updated\":\"18/11/2020\",\"updated_string\":\"18/11/2020 15:05:20\"},{\"id\":1302,\"name\":\"ALTA\",\"deleted\":false,\"created\":\"29/12/2020\",\"created_string\":\"29/12/2020 08:36:31\",\"updated\":\"29/12/2020\",\"updated_string\":\"29/12/2020 08:36:31\"},{\"id\":1303,\"name\":\"CAIDA\",\"deleted\":false,\"created\":\"27/01/2021\",\"created_string\":\"27/01/2021 10:53:09\",\"updated\":\"27/01/2021\",\"updated_string\":\"27/01/2021 10:53:09\"}]');
+            dt.Lists.ChronicDisease = JSON.parse('[{\"code\":\"DM\",\"id\":1,\"name\":\"Diabetes\",\"deleted\":false,\"created\":\"10/01/2018\",\"created_string\":\"10/01/2018 10:27:25\",\"updated\":\"10/01/2018\",\"updated_string\":\"10/01/2018 10:27:25\"},{\"code\":\"HTA\",\"id\":2,\"name\":\"Hipertension Arterial\",\"deleted\":false,\"created\":\"10/01/2018\",\"created_string\":\"10/01/2018 10:27:33\",\"updated\":\"10/01/2018\",\"updated_string\":\"10/01/2018 10:27:33\"},{\"code\":\"COL\",\"id\":3,\"name\":\"Colesterol\",\"deleted\":false,\"created\":\"10/01/2018\",\"created_string\":\"10/01/2018 10:27:37\",\"updated\":\"10/01/2018\",\"updated_string\":\"10/01/2018 10:27:37\"},{\"code\":\"TR\",\"id\":4,\"name\":\"Trigliceridos\",\"deleted\":false,\"created\":\"10/01/2018\",\"created_string\":\"10/01/2018 10:27:41\",\"updated\":\"10/01/2018\",\"updated_string\":\"10/01/2018 10:27:41\"}]');
+            dt.Lists.Medics = JSON.parse('[{\"id\":3,\"personId\":4,\"personAux\":{\"id\":4,\"addressId\":5,\"addressAux\":{\"id\":0,\"countyAux\":{\"id\":0,\"name\":null,\"cityAux\":{\"id\":0,\"name\":null,\"stateAux\":{\"id\":0,\"name\":null}}},\"addressLine\":null,\"postalCode\":null,\"fullAddress\":\"   \"},\"name\":\"Israel\",\"lastName\":\"Villegas\",\"License\":\"10896098                                          \",\"University\":\"UANL\",\"socialSecurity\":null,\"fullName\":\"Israel Villegas\",\"birthDate\":\"02/09/1990\",\"birthDate_string\":\"domingo 02/09/1990\",\"age\":30,\"sex\":\"M\",\"email\":\"dr.villegas19@gmail.com\",\"phoneNumber\":null,\"mobile\":\"8115880755\",\"deleted\":false,\"created\":\"19/03/2019\",\"created_string\":\"martes 19/03/2019 16:49:21\",\"updated\":\"22/03/2019\",\"updated_string\":\"viernes 22/03/2019 11:49:30\"},\"userId\":3,\"userAux\":{\"id\":null,\"account\":null,\"password\":null,\"nombre\":null,\"active\":false,\"rolAux\":{\"id\":0,\"name\":null,\"description\":null,\"menuViewAux\":[]},\"updatedBy\":0,\"createdBy\":0,\"isDemo\":null,\"createdDate\":null,\"updatedDate\":null,\"expirationDate\":null,\"sExpiration\":\"\",\"authenticator\":false,\"rolesselect\":[],\"menuViewAux\":[]},\"clinicId\":0,\"clinicAux\":[],\"specialtyId\":33,\"specialtyAux\":{\"id\":0,\"Name\":null,\"Created\":null,\"Updated\":null},\"code\":\"3\",\"deleted\":false,\"canCancel\":false,\"active\":\"Si\",\"created\":\"19/03/2019\",\"created_string\":\"19/03/2019 16:49:21\",\"updated\":\"23/04/2019\",\"updated_string\":\"23/04/2019 11:50:30\",\"signature\":null,\"signatureBytes\":null}]');
+            dt.Lists.Status = JSON.parse('[{\"id\":1,\"Name\":\"Enfermeria\",\"Deleted\":false},{\"id\":2,\"Name\":\"Medico\",\"Deleted\":false},{\"id\":3,\"Name\":\"Terminado\",\"Deleted\":false},{\"id\":4,\"Name\":\"En proceso\",\"Deleted\":false},{\"id\":1004,\"Name\":\"Pendiente\",\"Deleted\":false},{\"id\":1005,\"Name\":\"Solicitado\",\"Deleted\":false}]');
 
             dt.StatTerm = dt.Lists.Status.filter(function (item) { return item.Name == "Terminado"; })[0];
             dt.StatEnfe = dt.Lists.Status.filter(function (item) { return item.Name == "Enfermeria"; })[0];
             dt.StatEnProces = dt.Lists.Status.filter(function (item) { return item.Name == "En proceso"; })[0];
-            dt.PatientId = '@ViewBag.PatientId';
-            dt.RefreshTime = '@ViewBag.RefreshTime';
-            dt.PatId = 0;
+            dt.PatientId = '';
+            dt.RefreshTime = '60000';
 
-            var str_save_Consult = '@Url.Action("SaveConsult", "Schedule")';
-            var str_save_Service = '@Url.Action("SaveService", "Schedule")';
-            var str_save_Exam = '@Url.Action("SaveExam", "Schedule")';
+            var str_save_Consult = '/Schedule/SaveConsult';
+            var str_save_Service = '/Schedule/SaveService';
+            var str_save_Exam = '/Schedule/SaveExam';
 
             //Metodo para imprimir receta
             dt.ShowPdfPrenscription = function () {
-                window.open('@Url.Action("BuildPrenscription", "Schedule")?consultId=' + dt.DetailObj.id);
+                window.open('/Schedule/BuildPrenscription?consultId=' + dt.DetailObj.id);
             }
 
 
@@ -131,70 +130,22 @@
                 autoplay: true,
                 infinite: true,
                 autoplaySpeed: 1000,
-                slidesToShow: 1,
-                slidesToScroll: 1,
+                slidesToShow: 2,
+                slidesToScroll: 2,
                 swipe: false,
                 arrows: false,
-                variableWidth: true,
                 method: {}
             };
 
             dt.FindConsultsByUser = function (PatientId) {
-                var win = window.open('@Url.Action("Index", "Schedule")?PatientId=' + PatientId, '_blank');
+                var win = window.open('/Schedule?PatientId=' + PatientId, '_blank');
 
             }
-
-            dt.GetConsult = function (id) {
-                mostrarPantallaCarga();
-                $http({
-                    method: 'POST',
-                    url: '@Url.Action("LoadPreviousConsult", "Schedule")',
-                    data: { id: id },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (res) {
-                    quitarPantallaCarga();
-                    if (res.data.success) {
-                        dt.DetailObj.AHF = res.data.data.ConsultAux.AHF;
-                        dt.DetailObj.APP = res.data.data.ConsultAux.APP;
-                        dt.DetailObj.APNP = res.data.data.ConsultAux.APNP;
-                        dt.DetailObj.AGO = res.data.data.ConsultAux.AGO;
-                        dt.DetailObj.PA = res.data.data.ConsultAux.PA;
-                        dt.DetailObj.PhisicalExploration = res.data.data.ConsultAux.PhisicalExploration;
-                        dt.DetailObj.DiseaseAux = res.data.data.ConsultAux.DiseaseAux;
-                        dt.DetailObj.Treatment = res.data.data.ConsultAux.Treatment;
-
-                        $("#ConsultsModal").modal('hide');
-                        $("#detailModal").modal('show');
-
-                        dt.DetailObj.Recurrent = "true"
-
-                    }
-                    else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
-                        dt.errors[0] = "La sesión ha caducado.";
-                        $("#resultModal").modal('show');
-                    }
-                    else {
-                        if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
-                            dt.errors = res.data.errors;
-                        }
-                        else {
-                            dt.errors[0] = res.data.message;
-                        }
-                        $("#resultModal").modal('show');
-                    }
-                }, function errorCallback(res) {
-                    quitarPantallaCarga();
-                    console.log("error: " + res);
-                });
-            }
-
             dt.LoadDetail = function (CategoryName, id) {
                 mostrarPantallaCarga();
                 $http({
                     method: 'POST',
-                    url: '@Url.Action("LoadDetail", "Schedule")',
+                    url: '/Schedule/LoadDetail',
                     data: { CategoryName: CategoryName, id: id },
                     headers: {
                         'Content-Type': 'application/json'
@@ -205,7 +156,6 @@
                         dt.DetailObj.dmm = "00000";
                         dt.DetailObj = res.data.data;
                         dt.DetailObj.CategoryName = CategoryName;
-                        dt.PatId = dt.DetailObj.PatientId;
 
                         switch (CategoryName) {
                             case "Consultas":
@@ -222,22 +172,8 @@
                                 break;
                         }
 
-
-                        if (res.data.data.Recurrent && dt.DetailObj.StatusAux.Name != "Terminado") {
-                            dt.dtInstanceRecurrent.reloadData();
-                            $("#ConsultsModal").modal("show");
-                        }
-                        else {
-                            $("#detailModal").modal("show");
-                            dt.RefreshTypedKeyWords();
-                                if (dt.DetailObj.Recurrent) {
-                                    dt.DetailObj.Recurrent = "true"
-                            }
-                                else {
-                                    dt.DetailObj.Recurrent = "false"
-                            }
-                        }
-
+                        $("#detailModal").modal("show");
+                        dt.RefreshTypedKeyWords();
                     }
                     else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
                         dt.errors[0] = "La sesión ha caducado.";
@@ -263,14 +199,6 @@
                     case "Consultas":
                         dt.DetailObj.ChronicDiseaseAux = dt.Lists.ChronicDisease.filter(function (item) { return item.selected; });
                         dt.SaveObj(str_save_Consult);
-                        if (dt.DetailObj.StatusAux.id == 1) {
-                            dt.saveSecondEndDate()
-                        }
-                        else {
-                            if (dt.DetailObj.StatusAux.id == 2) {
-                                dt.saveThirdEndDate()
-                            }
-                        }
                         break;
                     case "Servicios":
                         dt.SaveObj(str_save_Service);
@@ -355,100 +283,12 @@
                     console.log("error: " + res);
                 });
             }
-
-            @*dt.saveSecondDate = function (id) {
-                $http({
-                    method: 'POST',
-                    url: '@Url.Action("SaveSecondDate", "WaitingTimes")',
-                    data: { consultId:id },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (res) {
-                    if (res.data.success) {
-                    }
-                }, function errorCallback(res) {
-                    console.log("error: " + res);
-                });
-            };
-
-            dt.saveSecondEndDate = function () {
-                $http({
-                    method: 'POST',
-                    url: '@Url.Action("SaveSecondEndDate", "WaitingTimes")',
-                    data: { currentTimeId: dt.currentTimeId },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (res) {
-                    if (res.data.success) {
-                    }
-                }, function errorCallback(res) {
-                    console.log("error: " + res);
-                });
-            };*@
-
-            @*dt.saveThirdDate = function () {
-                $http({
-                    method: 'POST',
-                    url: '@Url.Action("SaveThirdDate", "WaitingTimes")',
-                    data: { currentTimeId: dt.currentTimeId },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (res) {
-                    if (res.data.success) {
-                    }
-                }, function errorCallback(res) {
-                    console.log("error: " + res);
-                });
-            };
-
-            dt.saveThirdEndDate = function () {
-                $http({
-                    method: 'POST',
-                    url: '@Url.Action("SaveThirdEndDate", "WaitingTimes")',
-                    data: { currentTimeId: dt.currentTimeId },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (res) {
-                    if (res.data.success) {
-                    }
-                }, function errorCallback(res) {
-                    console.log("error: " + res);
-                });
-            };*@
-            @*dt.SaveWaitingTimes = function() {
-                 $http({
-                    method: 'POST',
-                    url: '@Url.Action("SaveWaitingTimes", "WaitingTimes")',
-                    data: data,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                 }).then(function (res) {
-
-                         if (res.data.errors != undefined && res.data.errors && res.data.errors.length > 0) {
-                             dt.errors = res.data.errors;
-                         }
-                         else {
-                             dt.errors[0] = res.data.message;
-                         }
-                         $("#resultModal").modal('show');
-
-                     quitarPantallaCarga();
-                 }, function errorCallback(res) {
-                     quitarPantallaCarga();
-                     console.log("error: " + res);
-                 });
-            }*@
             /*-------------------------------------------ConsultsTable-----------------------------------------------*/
             dt.dtOptionsConsults = DTOptionsBuilder.newOptions()
                 .withOption("ajax", {
                     dataType: "json",
                     type: "POST",
-                    url: "@Url.Action("GetSchedule", "Schedule")",
+                    url: "/Schedule/GetSchedule",
                     data: function (d) {
                         mostrarPantallaCarga();
                         d.tabClicked = dt.tabClicked;
@@ -490,8 +330,7 @@
                     }
                 });
 
-            @*Funciones de las columnas*@
-            @*Recompiling so we can bind Angular directive to the DT*@
+
             function createdRow(row, data, dataIndex) {
                 $compile(angular.element(row).contents())($scope);
             }
@@ -508,7 +347,7 @@
                 return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.LoadDetail(\'' + full.CategoryName + '\',' + data + ')" class="btn btn-info btn-xs ' + ClassTrRed + '"><i class="fa fa-pencil" aria-hidden="true"></i> Detalle</button></div>';
             }
 
-            @* Definicion de las columnas del DT *@
+
             dt.dtColumnsConsults = [
                 DTColumnBuilder.newColumn("id").withTitle("ID").withOption("visible", false),
                 DTColumnBuilder.newColumn("PatientName").withTitle("Paciente"),
@@ -556,11 +395,11 @@
             /*-------------------------------------------END ConsultsTable-----------------------------------------------*/
             /*---------------------------------------------DiseaseTable-------------------------------------------------*/
             dt.dtOptionsDisease = DTOptionsBuilder.newOptions()
-            .withOption("ajax", {
-                dataType: "json",
-                type: "POST",
-                url: "@Url.Action("GetDiseases", "Disease")"
-            })
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "/Disease/GetDiseases"
+                })
                 .withDataProp("data")
                 .withPaginationType('full_numbers')
                 .withOption('createdRow', createdRow)
@@ -590,7 +429,6 @@
                     }
                 });
 
-            @* Definicion de las columnas del DT *@
             dt.dtColumnsDisease = [
                 DTColumnBuilder.newColumn("id").withTitle("ID"),
                 DTColumnBuilder.newColumn("name").withTitle("Nombre"),
@@ -628,101 +466,7 @@
             function AddDiseaseBtn(data, type, full, meta) {
                 return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.AddDisease(' + data + '); INMEDIKApp.RefreshTypedKeyWords();" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
             }
-
             /*-------------------------------------------END DiseaseTable-----------------------------------------------*/
-            /*-------------------------------------------RecurrentConsultsTable-----------------------------------------------*/
-
-            dt.dtOptionsConsultsRecurrent = DTOptionsBuilder.newOptions()
-              .withOption("ajax", {
-                  dataType: "json",
-                  type: "POST",
-                  url: "@Url.Action("GetPreviousConsults", "Schedule")",
-                data: function (d) {
-                mostrarPantallaCarga();
-                d.PatientId = dt.PatId;
-            }
-        })
-                .withDataProp("data")
-                .withPaginationType('full_numbers')
-                .withOption('order', [6, 'desc'])
-                .withOption('createdRow', createdRow)
-                .withOption('serverSide', true)
-                .withOption('sDom', '<"top"l>rt<"bottom"ip><"clear">')
-                .withOption('drawCallback', function (settings) {
-                    $(".ClassTrRed").parent().parent().parent().addClass("bg-danger");
-                    $(".ClassTrRed").toggleClass("btn-danger btn-info");
-                    quitarPantallaCarga();
-                })
-                .withLanguage({
-                    "sEmptyTable": "No existen registros",
-                    "sInfo": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
-                    "sInfoEmpty": "Mostrando de 0 a 0 de 0 entradas",
-                    "sInfoFiltered": "(Filtrado de un todal de _MAX_ entradas)",
-                    "sInfoPostFix": "",
-                    "sInfoThousands": ",",
-                    "sLengthMenu": "Mostrando _MENU_ entradas",
-                    "sLoadingRecords": "Cargando...",
-                    "sProcessing": "Procesando...",
-                    "sSearch": "Buscar:",
-                    "sZeroRecords": "No se encontraron registros",
-                    "oPaginate": {
-                        "sFirst": "Primero",
-                        "sLast": "Ultimo",
-                        "sNext": "Siguiente",
-                        "sPrevious": "Anterior"
-                    },
-                    "oAria": {
-                        "sSortAscending": ": ascendiente",
-                        "sSortDescending": ": descendiente"
-                    }
-                });
-
-            @* Definicion de las columnas del DT *@
-
-            dt.dtColumnsConsultsRecurrent = [
-               DTColumnBuilder.newColumn("consultId").withTitle("Consulta"),
-               DTColumnBuilder.newColumn("patientId").withTitle("Paciente"),
-               DTColumnBuilder.newColumn("fullName").withTitle("Nombre"),
-               DTColumnBuilder.newColumn("employeeId").withTitle("Médico").withOption("visible", false),
-               DTColumnBuilder.newColumn("ticket").withTitle("Ticket"),
-               DTColumnBuilder.newColumn("stringCreated").withTitle("Fecha de venta").withClass('notSearchable'),
-               DTColumnBuilder.newColumn("consultId").withTitle("").renderWith(AddConsultDataBtn).withClass('notSearchable text-center').notSortable()
-            ];
-
-            dt.InstanceCallbackRecurrent = function (instance) {
-                // Setup - add a text input to each footer cell
-                dt.dtInstanceRecurrent = instance;
-                var id = '#' + dt.dtInstanceRecurrent.id;
-                $(id + ' thead th').each(function () {
-                    var title = $(id + ' thead th').eq($(this).index()).text();
-                    if (!$(this).hasClass('notSearchable')) {
-                        $(this).html('<input type="text" class="form-control" placeholder="' + title + '" />');
-                    }
-                });
-
-                var tableRecurrent = dt.dtInstanceRecurrent.DataTable;
-                // Apply the search
-                tableRecurrent.columns().every(function () {
-                    var that = this;
-
-                    $('input', this.header()).on('keyup change', function (e) {
-                        e.stopPropagation()
-                        if (that.search() !== this.value) {
-                            that
-                                .search(this.value)
-                                .draw();
-                        }
-                    });
-                    $('input', this.header()).on('click', function (e) {
-                        e.stopPropagation()
-                    });
-                });
-            };
-            function AddConsultDataBtn(data, type, full, meta) {
-                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.GetConsult(' + data + ');" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
-            }
-
-            /*-------------------------------------------END RecurrentConsultsTable-----------------------------------------------*/
             dt.numberWithCommas = function (n) {
                 return Ut_numberWithCommas(n);
             }
@@ -815,7 +559,7 @@
                 setInterval(function () { dt.reDrawTable(dt.tabClicked); }, dt.RefreshTime);
                 $http({
                     method: 'POST',
-                    url: '@Url.Action("GetActiveAds", "Ads")',
+                    url: '/Ads/GetActiveAds',
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -845,7 +589,7 @@
         });
     </script>
     <script type="text/ng-template" id="tpl.html">
-        <img ng-src="@Url.Action("GetAdImage","Schedule")?adId={{slide.id}}" style="margin:auto; height:200px; width:300px;">
+        <img ng-src="/Schedule/GetAdImage?adId={{slide.id}}" style="margin:auto; height:200px; width:300px;">
     </script>
 
 }
@@ -878,7 +622,7 @@
         </div>
     </div>
     <div id="detailModal" class="modal modal-primary fade" role="dialog">
-        <div class="modal-dialog" ng-class="INMEDIKApp.DetailObj.CategoryName == 'Consultas' ? 'modal-lg':''">
+        <div style="width: 80%;" class="modal-dialog" ng-class="INMEDIKApp.DetailObj.CategoryName == 'Consultas' ? 'modal-lg':''">
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -908,26 +652,6 @@
                 <div class="modal-body">
                     <div class="table-responsive">
                         <table id="DiseaseTable" datatable dt-options="INMEDIKApp.dtOptionsDisease" dt-columns="INMEDIKApp.dtColumnsDisease" dt-instance="INMEDIKApp.InstanceCallbackDisease" class="table-hover table-bordered compact"></table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-    <div id="ConsultsModal" class="modal modal-primary fade" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Citas anteriores</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table id="RecurrentConsultsTable" datatable dt-options="INMEDIKApp.dtOptionsConsultsRecurrent" dt-columns="INMEDIKApp.dtColumnsConsultsRecurrent" dt-instance="INMEDIKApp.InstanceCallbackRecurrent" class="table-hover table-bordered"></table>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -79,8 +79,8 @@
         <div class="form-group">
             <label class="col-md-2">En Proceso</label>
             <div class="col-md-10">
-                    <input ng-model="INMEDIKApp.DetailObj[0].StatusId" ng-true-value="{{INMEDIKApp.StatEnProces.id}}" ng-false-value="{{INMEDIKApp.StatTerm.id}}"
-                           class="form-control checkbox" type="checkbox" ng-disabled="INMEDIKApp.DetailObj[0].StatusAux.Name == 'Terminado'" />
+                <input ng-model="INMEDIKApp.DetailObj[0].StatusId" ng-true-value="{{INMEDIKApp.StatEnProces.id}}" ng-false-value="{{INMEDIKApp.StatTerm.id}}"
+                       class="form-control checkbox" type="checkbox" ng-disabled="INMEDIKApp.DetailObj[0].StatusAux.Name == 'Terminado'" />
             </div>
         </div>
         @*<div class="form-group">
@@ -181,19 +181,8 @@
                     <div class="col-md-10">
                         <div class="form-check" ng-repeat="d in INMEDIKApp.Lists.ChronicDisease">
                             <input type="checkbox" class="form-check-input" ng-model="d.selected"
-                                    ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">
+                                   ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">
                             <label class="form-check-label" for="exampleCheck1">{{d.name}}</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-2">Tipo de cita</label>
-                    <div class="col-md-10">
-                        <div class="form-check">
-                            <input id="false" type="radio" name="appointment" class="form-check-input" value="false" ng-model="INMEDIKApp.DetailObj.Recurrent"
-                                  ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">Padecimiento nuevo<br>
-                            <input id="true" type="radio" name="appointment" class="form-check-input" value="true" ng-model="INMEDIKApp.DetailObj.Recurrent"
-                                  ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name == 'Terminado'">Padecimiento recurrente<br>
                         </div>
                     </div>
                 </div>
@@ -269,7 +258,7 @@
                 <div class="form-group">
                     <label class="col-md-2">Tratamiento</label>
                     <div class="col-md-10">
-                        <textarea class="form-control maxRows" rows="20" onkeypress="return validar(event,this)"  ng-model="INMEDIKApp.DetailObj.Treatment" maxlength="1764" ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
+                        <textarea class="form-control maxRows" rows="20" onkeypress="return validar(event,this)" ng-model="INMEDIKApp.DetailObj.Treatment" maxlength="1764" ng-change="INMEDIKApp.RefreshTypedKeyWords();" ng-disabled="INMEDIKApp.DetailObj.StatusAux.Name != 'Medico'"></textarea>
                     </div>
                 </div>
                 <div class="form-group">

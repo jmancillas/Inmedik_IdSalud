@@ -2596,9 +2596,9 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="col-md-4">Nacionalidad: </label>
+                            <label class="col-md-4">Empresa: </label>
                             <div class="col-md-8">
-                                {{INMEDIKApp.ConsultFile.identificationAux.nationality_string}}
+                                {{INMEDIKApp.ConsultFile.patientAux.personAux.companyName}}
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -4557,6 +4557,18 @@
                                         <label for="name" class="control-label col-md-3">Referencia: </label>
                                         <div class="col-md-9">
                                             <input type="text" class="form-control" ng-model="INMEDIKApp.Patient.reference" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" id="ref" name="reference" placeholder="Referencia" maxlength="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 no-padding-right">
+                                    <div class="form-group" ng-class="{'invalid-group': (PatientForms.reference.$touched && PatientForms.reference.$invalid)}">
+                                        <label for="name" class="control-label col-md-3">Empresa: </label>
+                                        <div class="col-md-9">
+                                            <select name="stateAux" id="stateAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.person.companyName" required>
+                                                <option value="">Seleccione...</option>
+                                                <option value="PYOSA">Pyosa</option>
+                                                <option value="REACTIMEX">Reactimex</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

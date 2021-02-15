@@ -25,6 +25,7 @@ namespace INMEDIK.Models.Helpers
         public string License { get; set; }
         public string University { get; set; }
         public string socialSecurity { get; set; }
+        public string companyName { get; set; }
         public string fullName
         {
             get

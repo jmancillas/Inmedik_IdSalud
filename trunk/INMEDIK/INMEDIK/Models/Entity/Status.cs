@@ -22,6 +22,7 @@ namespace INMEDIK.Models.Entity
             this.Laboratory = new HashSet<Laboratory>();
             this.RequestMaterial = new HashSet<RequestMaterial>();
             this.Service = new HashSet<Service>();
+            this.ServiceOld = new HashSet<ServiceOld>();
             this.Xray = new HashSet<Xray>();
         }
     
@@ -39,6 +40,8 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<RequestMaterial> RequestMaterial { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Service> Service { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ServiceOld> ServiceOld { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Xray> Xray { get; set; }
     }

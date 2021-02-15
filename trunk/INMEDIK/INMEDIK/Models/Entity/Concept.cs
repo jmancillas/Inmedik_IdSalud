@@ -52,6 +52,7 @@ namespace INMEDIK.Models.Entity
             this.RecordTransactionInvoice = new HashSet<RecordTransactionInvoice>();
             this.RequestedMaterial = new HashSet<RequestedMaterial>();
             this.Service = new HashSet<Service>();
+            this.ServiceOld = new HashSet<ServiceOld>();
             this.Stock = new HashSet<Stock>();
             this.tabletCartConcepts = new HashSet<tabletCartConcepts>();
             this.Test = new HashSet<Test>();
@@ -143,6 +144,8 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<RequestedMaterial> RequestedMaterial { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Service> Service { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ServiceOld> ServiceOld { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Stock> Stock { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

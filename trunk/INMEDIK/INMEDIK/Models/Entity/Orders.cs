@@ -25,6 +25,8 @@ namespace INMEDIK.Models.Entity
             this.OrderPromotionDiscountApplied = new HashSet<OrderPromotionDiscountApplied>();
             this.OrdersConcepts = new HashSet<OrdersConcepts>();
             this.Payment = new HashSet<Payment>();
+            this.ServiceOld = new HashSet<ServiceOld>();
+            this.Exam = new HashSet<Exam>();
         }
     
         public int id { get; set; }
@@ -66,5 +68,9 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<OrdersConcepts> OrdersConcepts { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Payment> Payment { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<ServiceOld> ServiceOld { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<Exam> Exam { get; set; }
     }
 }

@@ -26,8 +26,6 @@ namespace INMEDIK.Models.Entity
             this.ProductNote = new HashSet<ProductNote>();
             this.ReferenceNote = new HashSet<ReferenceNote>();
             this.Service = new HashSet<Service>();
-            this.ChronicDisease = new HashSet<ChronicDisease>();
-            this.Disease = new HashSet<Disease>();
         }
     
         public int Id { get; set; }
@@ -62,9 +60,5 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<ReferenceNote> ReferenceNote { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Service> Service { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<ChronicDisease> ChronicDisease { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Disease> Disease { get; set; }
     }
 }

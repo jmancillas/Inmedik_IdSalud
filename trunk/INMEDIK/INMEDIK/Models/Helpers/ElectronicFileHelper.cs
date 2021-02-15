@@ -24,6 +24,7 @@ namespace INMEDIK.Models.Helpers
         public string sex { get; set; }
         public string nationality { get; set; }
         public bool deleted { get; set; }
+        public string companyName { get; set; }
 
         public string sex_string
         {
@@ -2154,7 +2155,7 @@ namespace INMEDIK.Models.Helpers
                         if (patientDb.APP != null)
                         {
                             var ChronicDisease = db.ChronicDisease.ToList();
-                            ChronicDisease = ChronicDisease.Where(c => c.ElectronicFile.Contains(fileDb)).ToList();
+                            //ChronicDisease = ChronicDisease.Where(c => c.ElectronicFile.Contains(fileDb)).ToList();
                             if (ChronicDisease.Count() > 0)
                             {
                                 foreach (var item in ChronicDisease)
@@ -2961,10 +2962,10 @@ namespace INMEDIK.Models.Helpers
                                 chronicDisease.Add(hta);
                             }
 
-                            foreach (ChronicDisease item in chronicDisease)
-                            {
-                                fileDb.ChronicDisease.Add(item);
-                            }
+                            //foreach (ChronicDisease item in chronicDisease)
+                            //{
+                            //    fileDb.ChronicDisease.Add(item);
+                            //}
 
                             db.SaveChanges();
 
@@ -3329,10 +3330,10 @@ namespace INMEDIK.Models.Helpers
 
                             db.ElectronicFile.Add(consultFileInDb);
 
-                            foreach (ChronicDisease item in chronicDisease)
-                            {
-                                consultFileInDb.ChronicDisease.Add(item);
-                            }
+                            //foreach (ChronicDisease item in chronicDisease)
+                            //{
+                            //    consultFileInDb.ChronicDisease.Add(item);
+                            //}
                             db.SaveChanges();
 
                             result.data.id = consultFileInDb.Id;

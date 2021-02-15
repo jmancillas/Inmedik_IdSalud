@@ -33,6 +33,7 @@ namespace INMEDIK.Models.Entity
         public Nullable<int> CreatedBy { get; set; }
         public Nullable<System.DateTime> Created { get; set; }
         public string Age { get; set; }
+        public Nullable<int> OrderId { get; set; }
     
         public virtual Clinic Clinic { get; set; }
         public virtual Concept Concept { get; set; }
@@ -47,5 +48,6 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<Laboratory> Laboratory { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Xray> Xray { get; set; }
+        public virtual Orders Orders { get; set; }
     }
 }

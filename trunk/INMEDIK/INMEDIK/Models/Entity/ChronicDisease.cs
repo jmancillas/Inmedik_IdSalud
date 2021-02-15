@@ -14,20 +14,11 @@ namespace INMEDIK.Models.Entity
     
     public partial class ChronicDisease
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public ChronicDisease()
-        {
-            this.ElectronicFile = new HashSet<ElectronicFile>();
-        }
-    
         public int id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public bool Deleted { get; set; }
         public Nullable<System.DateTime> Created { get; set; }
         public Nullable<System.DateTime> Updated { get; set; }
-    
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<ElectronicFile> ElectronicFile { get; set; }
     }
 }
