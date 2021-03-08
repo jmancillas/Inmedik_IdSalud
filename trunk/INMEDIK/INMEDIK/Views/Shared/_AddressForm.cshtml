@@ -37,7 +37,7 @@
     </div>
     <div class="col-md-6 no-padding-right">
         <div class="form-group " ng-class="{'invalid-group': (currentForm.countyAux.$touched && currentForm.countyAux.$invalid)}">
-            <label for="state" class="control-label col-md-3">Departamento<span class="required">*</span>: </label>
+            <label for="state" class="control-label col-md-3">Colonia<span class="required">*</span>: </label>
             <div class="col-md-9">
                 <select name="countyAux" id="countyAux" class="form-control" ng-text-change="INMEDIKApp.GetTouched($event)" ng-blur="INMEDIKApp.GetTouched($event)" ng-model="INMEDIKApp.address.countyAux" required ng-options="ct.name for ct in INMEDIKApp.counties track by ct.id" ng-disabled="INMEDIKApp.selectedCity == undefined">
                     <option value="">Seleccione...</option>

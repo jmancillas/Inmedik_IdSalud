@@ -183,12 +183,12 @@ namespace INMEDIK.Models.Entity
         public virtual DbSet<RouteOfAdministration> RouteOfAdministration { get; set; }
         public virtual DbSet<Schedule> Schedule { get; set; }
         public virtual DbSet<Service> Service { get; set; }
-        public virtual DbSet<ServiceOld> ServiceOld { get; set; }
         public virtual DbSet<Specialty> Specialty { get; set; }
         public virtual DbSet<State> State { get; set; }
         public virtual DbSet<Status> Status { get; set; }
         public virtual DbSet<Stock> Stock { get; set; }
         public virtual DbSet<Supplier> Supplier { get; set; }
+        public virtual DbSet<sysdiagrams> sysdiagrams { get; set; }
         public virtual DbSet<tabletCart> tabletCart { get; set; }
         public virtual DbSet<tabletCartConcepts> tabletCartConcepts { get; set; }
         public virtual DbSet<Template> Template { get; set; }
@@ -278,6 +278,5 @@ namespace INMEDIK.Models.Entity
         public virtual DbSet<vwUserTimeHandler> vwUserTimeHandler { get; set; }
         public virtual DbSet<vwWaitingTimes> vwWaitingTimes { get; set; }
         public virtual DbSet<vwWarehouseStock> vwWarehouseStock { get; set; }
-        public virtual DbSet<vwSchedule> vwSchedule { get; set; }
     }
 }

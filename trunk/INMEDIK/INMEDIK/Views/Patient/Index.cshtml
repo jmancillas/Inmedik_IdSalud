@@ -639,7 +639,7 @@
                     <p ng-show="PatientForm.postalCode.$touched && PatientForm.postalCode.$error.required"><strong>Código Postal</strong>: Campo obligatorio</p>
                     <p ng-show="PatientForm.stateAux.$touched && PatientForm.stateAux.$error.required"><strong>Estado</strong>: Campo obligatorio</p>
                     <p ng-show="PatientForm.cityAux.$touched && PatientForm.cityAux.$error.required"><strong>Municipio</strong>: Campo obligatorio</p>
-                    <p ng-show="PatientForm.countyAux.$touched && PatientForm.countyAux.$error.required"><strong>Departamento</strong>: Campo obligatorio</p>
+                    <p ng-show="PatientForm.countyAux.$touched && PatientForm.countyAux.$error.required"><strong>Colonia</strong>: Campo obligatorio</p>
                     <p ng-show="PatientForm.email.$touched && PatientForm.email.$error.email"><strong>Correo</strong>: formato incorrecto</p>
                     <p ng-show="PatientForm.curp.$touched && PatientForm.curp.$error.pattern"><strong>Curp</strong>: {{INMEDIKApp.regularExpretions.CURP.msg}} </p>
                     <p ng-show="PatientForm.SocialSecurity.$touched && PatientForm.SocialSecurity.$error.pattern"><strong>Número de seguridad social</strong>: {{INMEDIKApp.regularExpretions.NSS.msg}}</p>
@@ -694,7 +694,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            @*<div class="col-md-12">
                                 <div class="col-md-6">
                                     <div class="form-group" ng-class="{'invalid-group': (PatientForm.reference.$touched && PatientForm.reference.$invalid)}">
                                         <label for="name" class="control-label col-md-3">Empresa: </label>
@@ -707,7 +707,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>*@
                             <div class="clearfix"></div>
                         </div>
                     </form>

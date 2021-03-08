@@ -19,7 +19,6 @@ namespace INMEDIK.Models.Entity
         {
             this.Consult = new HashSet<Consult>();
             this.Laboratory = new HashSet<Laboratory>();
-            this.ServiceOld = new HashSet<ServiceOld>();
             this.Xray = new HashSet<Xray>();
         }
     
@@ -50,8 +49,6 @@ namespace INMEDIK.Models.Entity
         public virtual ICollection<Laboratory> Laboratory { get; set; }
         public virtual Orders Orders { get; set; }
         public virtual Stock Stock { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<ServiceOld> ServiceOld { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Xray> Xray { get; set; }
     }

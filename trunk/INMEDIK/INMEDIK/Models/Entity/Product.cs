@@ -29,7 +29,7 @@ namespace INMEDIK.Models.Entity
         public Nullable<bool> Nurse { get; set; }
         public string Notes { get; set; }
         public Nullable<int> CreatedBy { get; set; }
-        public Nullable<System.DateTime> Created { get; set; }
+        public System.DateTime Created { get; set; }
         public Nullable<int> ProductNoteId { get; set; }
         public Nullable<int> Quantity { get; set; }
         public Nullable<int> EvolutionNoteId { get; set; }
