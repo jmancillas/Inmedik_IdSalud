@@ -1352,6 +1352,7 @@ namespace INMEDIK.Models.Helpers
                             DataHelper.fill(aux.personAux, patientdb.Person);
                             EvolutionNote evolutionDb = db.EvolutionNote.Where(p => p.Id == evolution.id).FirstOrDefault();
 
+                            evolutionDb.ConceptId = concept.id;
                             ElectronicFileUpdate electronicFileUpdate = new ElectronicFileUpdate();
                             electronicFileUpdate.UpdatedBy = res.User.id.Value;
                             electronicFileUpdate.UpdatedDate = evolutionDb.Created;

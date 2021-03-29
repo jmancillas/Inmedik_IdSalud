@@ -185,216 +185,206 @@ namespace INMEDIK.Models.Helpers
 
     class ScheduleHelper
     {
-        public static vwScheduleResult GetSchedule(DTParameterModel filter, string tabClicked, string PatientId, string RolName, int roleId, int employeeId, int? clinicId = null)
-        {
-            vwScheduleResult result = new vwScheduleResult();
+        //public static vwScheduleResult GetSchedule(DTParameterModel filter, string tabClicked, string PatientId, string RolName, int roleId, int employeeId, int? clinicId = null)
+        //{
+        //    vwScheduleResult result = new vwScheduleResult();
 
-            string order = "";
-            string orderColumn = "";
-            if (!string.IsNullOrEmpty(filter.Order.First().Dir) && !string.IsNullOrEmpty(filter.Order.First().Data))
-            {
-                order = filter.Order.First().Dir;
-                orderColumn = filter.Order.First().Data;
-            }
-            using (dbINMEDIK db = new dbINMEDIK())
-            {
-                try
-                {
-                    //var query = db.vwSchedule.AsQueryable();
-                    //if (!string.IsNullOrEmpty(tabClicked))
-                    //{
-                    //    DateTime currentDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)"));
-                    //    if (tabClicked == "Consult")
-                    //    {
-                    //        query = query.Where(q => q.Scheduled.Value <= currentDateTime || q.Scheduled == null);
-                    //    }
-                    //    else
-                    //    {
-                    //        query = query.Where(q => q.Scheduled > currentDateTime);
-                    //    }
-                    //}
-                    //#region filtros extra que no provienen de columnas
+        //    string order = "";
+        //    string orderColumn = "";
+        //    if (!string.IsNullOrEmpty(filter.Order.First().Dir) && !string.IsNullOrEmpty(filter.Order.First().Data))
+        //    {
+        //        order = filter.Order.First().Dir;
+        //        orderColumn = filter.Order.First().Data;
+        //    }
+        //    using (dbINMEDIK db = new dbINMEDIK())
+        //    {
+        //        try
+        //        {
+        //            var query = db.vwSchedule.AsQueryable();
+        //            result.total.value = query.Count();
+        //            //if (!string.IsNullOrEmpty(tabClicked))
+        //            //{
+        //            //    DateTime currentDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)"));
+        //            //    if (tabClicked == "Consult")
+        //            //    {
+        //            //        // query = query.Where(q => q.Scheduled.Value <= currentDateTime || q.Scheduled == null);
+        //            //    }
+        //            //    else
+        //            //    {
+        //            //        query = query.Where(q => q.Scheduled > currentDateTime);
+        //            //    }
+        //            //}
+        //            #region filtros extra que no provienen de columnas
 
-                    ///*si se manda el id de paciente, es para traer el historial, en este caso, se ignora la clinica y el rol para que se vean todas sus consultas*/
-                    //if (!string.IsNullOrEmpty(PatientId))
-                    //{
-                    //    query = query.Where(q => q.PatientId.ToString() == PatientId);
-                    //}
-                    //else
-                    //{
-                    //    if (RolName == "Nurse")
-                    //    {
-                    //        query = query.Where(q => q.StatusName == "Enfermeria" || q.StatusName == "En proceso" || q.StatusName == "Medico");
-                    //    }
-                    //    if (RolName == "Medic")
-                    //    {
-                    //        query = query.Where(q => q.StatusName != "Enfermeria" && q.MedicId.HasValue && q.MedicId.Value == employeeId);
-                    //    }
+        //            /*si se manda el id de paciente, es para traer el historial, en este caso, se ignora la clinica y el rol para que se vean todas sus consultas*/
+        //            if (!string.IsNullOrEmpty(PatientId))
+        //            {
+        //                query = query.Where(q => q.PatientId.ToString() == PatientId);
+        //            }
+        //            else
+        //            {
+        //                if (RolName == "Nurse")
+        //                {
+        //                    query = query.Where(q => q.StatusName == "Enfermeria" || q.StatusName == "En proceso" || q.StatusName == "Medico");
+        //                }
+        //                if (RolName == "Medic")
+        //                {
+        //                    query = query.Where(q => q.StatusName != "Enfermeria" && q.MedicId.HasValue && q.MedicId.Value == employeeId);
+        //                }
 
-                    //    if (clinicId != null)
-                    //    {
-                    //        query = query.Where(q => q.ClinicId == clinicId);
-                    //    }
-                    //}
+        //                if (clinicId != null)
+        //                {
+        //                    //query = query.Where(q => q.ClinicId == clinicId);
+        //                }
+        //            }
+        //            result.total.value = query.Count();
+        //            #endregion
+        //            #region filtros
+        //            foreach (DTColumn column in filter.Columns)
+        //            {
+        //                if (column.Data == "PatientId" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.PatientId.ToString() == column.Search.Value);
+        //                }
+        //                if (column.Data == "PatientName" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.PatientName.Contains(column.Search.Value));
+        //                }
+        //                if (column.Data == "MedicName" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.MedicName.Contains(column.Search.Value));
+        //                }
 
-                    //#endregion
-                    //#region filtros
-                    //foreach (DTColumn column in filter.Columns)
-                    //{
-                    //    if (column.Data == "PatientId" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.PatientId.ToString() == column.Search.Value);
-                    //    }
-                    //    if (column.Data == "PatientName" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.PatientName.Contains(column.Search.Value));
-                    //    }
-                    //    if (column.Data == "MedicName" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.MedicName.Contains(column.Search.Value));
-                    //    }
+        //                if (column.Data == "StatusName" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.StatusName.Contains(column.Search.Value));
+        //                }
+        //                if (column.Data == "CategoryName" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.CategoryName.Contains(column.Search.Value));
+        //                }
+        //                if (column.Data == "ConceptName" && !String.IsNullOrEmpty(column.Search.Value))
+        //                {
+        //                    query = query.Where(q => q.ConceptName.Contains(column.Search.Value));
+        //                }
 
-                    //    if (column.Data == "StatusName" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.StatusName.Contains(column.Search.Value));
-                    //    }
-                    //    if (column.Data == "CategoryName" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.CategoryName.Contains(column.Search.Value));
-                    //    }
-                    //    if (column.Data == "ConceptName" && !String.IsNullOrEmpty(column.Search.Value))
-                    //    {
-                    //        query = query.Where(q => q.ConceptName.Contains(column.Search.Value));
-                    //    }
+        //            }
+        //            result.total.value = query.Count();
+        //            #endregion
+        //            #region orden
+        //            if (!string.IsNullOrEmpty(order) && !string.IsNullOrEmpty(orderColumn))
+        //            {
+        //                if (orderColumn == "PatientId")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.PatientId);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.PatientId);
+        //                    }
+        //                }
+        //                if (orderColumn == "PatientName")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.PatientName);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.PatientName);
+        //                    }
+        //                }
+        //                if (orderColumn == "MedicName")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.MedicName);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.MedicName);
+        //                    }
+        //                }
+        //                if (orderColumn == "stringOrderCreated")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.OrderCreated);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.OrderCreated);
+        //                    }
+        //                }
+        //                if (orderColumn == "StatusName")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.StatusName);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.StatusName);
+        //                    }
+        //                }
+        //                if (orderColumn == "CategoryName")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.CategoryName);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.CategoryName);
+        //                    }
+        //                }
+        //                if (orderColumn == "ConceptName")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.ConceptName);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.ConceptName);
+        //                    }
+        //                }
+        //                if (orderColumn == "stringScheduled")
+        //                {
+        //                    if (order.ToUpper() == "ASC")
+        //                    {
+        //                        query = query.OrderBy(q => q.Scheduled);
+        //                    }
+        //                    else
+        //                    {
+        //                        query = query.OrderByDescending(q => q.Scheduled);
+        //                    }
+        //                }
+        //            }
+        //            #endregion
 
-                    //}
+        //            result.total.value = query.Count();
 
-                    //#endregion
-                    //#region orden
-                    //if (!string.IsNullOrEmpty(order) && !string.IsNullOrEmpty(orderColumn))
-                    //{
-                    //    if (orderColumn == "id")
-                    //    {
-                    //        //if (order.ToUpper() == "ASC")
-                    //        //{
-                    //        //    query = query.OrderBy(q => q.id);
-                    //        //}
-                    //        //else
-                    //        //{
-                    //        query = query.OrderByDescending(q => q.id);
-                    //        //}
-                    //    }
-                    //    if (orderColumn == "PatientId")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.PatientId);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.PatientId);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "PatientName")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.PatientName);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.PatientName);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "MedicName")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.MedicName);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.MedicName);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "stringOrderCreated")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.OrderCreated);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.OrderCreated);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "StatusName")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.StatusName);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.StatusName);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "CategoryName")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.CategoryName);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.CategoryName);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "ConceptName")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.ConceptName);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.ConceptName);
-                    //        }
-                    //    }
-                    //    if (orderColumn == "stringScheduled")
-                    //    {
-                    //        if (order.ToUpper() == "ASC")
-                    //        {
-                    //            query = query.OrderBy(q => q.Scheduled);
-                    //        }
-                    //        else
-                    //        {
-                    //            query = query.OrderByDescending(q => q.Scheduled);
-                    //        }
-                    //    }
-                    //}
-                    //#endregion
-
-                    //result.total.value = query.Count();
-
-                    //query = query.Skip(filter.Start).Take(filter.Length);
-                    //foreach (var scheduleDb in query.ToList())
-                    //{
-                    //    vwScheduleAux aux = new vwScheduleAux();
-                    //    DataHelper.fill(aux, scheduleDb);
-                    //    result.data_list.Add(aux);
-                    //}
-                    result.success = true;
-                }
-                catch (Exception ex)
-                {
-                    result.success = false;
-                    result.exception = ex;
-                    result.message = "Ocurrió un error inesperado. " + result.exception_message;
-                }
-            }
-            return result;
-        }
+        //            query = query.Skip(filter.Start).Take(filter.Length);
+        //            foreach (var scheduleDb in query.ToList())
+        //            {
+        //                vwScheduleAux aux = new vwScheduleAux();
+        //                DataHelper.fill(aux, scheduleDb);
+        //                result.data_list.Add(aux);
+        //            }
+        //            result.success = true;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            result.success = false;
+        //            result.exception = ex;
+        //            result.message = "Ocurrió un error inesperado. " + result.exception_message;
+        //        }
+        //    }
+        //    return result;
+        //}
 
         public static ConsultResult LoadDetailConsult(int id)
         {
@@ -943,96 +933,74 @@ namespace INMEDIK.Models.Helpers
             return result;
         }
 
-        public static GenericResult BuildPrenscription(int consultId, string userName)
+        public static GenericResult BuildPrenscription(int consultId, string userName, int noteid)
         {
             GenericResult result = new GenericResult();
-            using (dbINMEDIK model = new dbINMEDIK())
+            using (dbINMEDIK db = new dbINMEDIK())
             {
                 try
                 {
-                    var mConsult = model.Consult.Where(cons => cons.id == consultId).FirstOrDefault();
-                    var mUser = model.User.Where(user => user.UserAccount == userName).FirstOrDefault();
-                    var mRoleUser = UserHelper.GetUser(userName);
-
-                    if (mUser != null)
+                    //RECETA EXPRESS
+                    int ElectronicFileId = consultId;
+                    var ElectronicFile = db.ElectronicFile.FirstOrDefault(e => e.Id == ElectronicFileId);
+                    var User = db.User.FirstOrDefault(u => u.UserAccount == userName);
+                    var Patient = db.Patient.FirstOrDefault(p => p.id == ElectronicFile.PatientId);
+                    var Recipedb = db.Recipe.FirstOrDefault(e => e.Id == noteid);
+                    var Speciality = db.Specialty.FirstOrDefault(s => s.id == ElectronicFile.Employee.SpecialtyId);
+                    var Date = DateTime.UtcNow;
+                    if (User != null)
                     {
-                        if (mConsult != null)
+                        if (ElectronicFile.Employee.UserId == User.id)
                         {
-                            if (mConsult.Employee.UserId == mUser.id || mRoleUser.User.rolAux.name == "Admin")
-                            {
-                                PersonAux employee = new PersonAux();
-                                SpecialtyAux specialty = new SpecialtyAux();
-                                DataHelper.fill(employee, mConsult.Employee.Person);
-                                DataHelper.fill(specialty, mConsult.Employee.Specialty);
+                            PersonAux personAux = new PersonAux();
+                            DataHelper.fill(personAux, ElectronicFile.Employee.Person);
+                            string specialityDoctor;
+                            string templateName = "RecetaExp";
+                            string doctorName = ElectronicFile.Employee.Person.Name + " " + ElectronicFile.Employee.Person.LastName;
+                            string licenseDoctor = ElectronicFile.Employee.Person.License;
+                            string universityDoctor = ElectronicFile.Employee.Person.University;
+                            if (Speciality != null) specialityDoctor = Speciality.Name; specialityDoctor = "Admin";
+                            string patientName = Patient.Person.Name + " " + Patient.Person.LastName;
+                            string consultDate = Date.ToString("dd/MM/yyyy", new CultureInfo("es-MX"));
 
-                                string templateName = "Receta Medica";
-                                string doctorName = mConsult.Employee.Person.Name + " " + mConsult.Employee.Person.LastName;
-                                string licenseDoctor = mConsult.Employee.Person.License;
-                                //string universityDoctor = mConsult.Employee.Person.University;
-                                string specialityDoctor = specialty.Name;
-                                string patientName = mConsult.Patient.Person.Name + " " + mConsult.Patient.Person.LastName;
-                                string consultDate = TimeZoneInfo.ConvertTimeFromUtc(
-                                                     new DateTime(mConsult.Updated.Ticks, DateTimeKind.Utc),
-                                                     TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)")
-                                                     ).ToString("dd/MM/yyyy", new CultureInfo("es-MX"));
+                            string clinicName = ElectronicFile.Clinic.Name;
+                            string patientExp = Patient.Person.id.ToString();
+                            string patientAge = PatientHelper.GetPatientAge(ElectronicFile.PatientId).string_value;
 
-                                string clinicName = mConsult.Clinic.Name;
-                                string patientExp = mConsult.Patient.Person.id.ToString();
-                                string patientAge = PatientHelper.GetPatientAge(mConsult.PatientId).string_value;
-                                string treatment = mConsult.Treatment;
+                            string treatment = Recipedb.RecipeText;
+                            List<string> treatmentList = new List<string>();
 
+                            string clinicCounty = ElectronicFile.Clinic.Address.County.Name;
+                            string clinicAdressLine = ElectronicFile.Clinic.Address.AddressLine;
+                            string clinicAdress = clinicAdressLine + " Col. " + clinicCounty;
+                            string clinicEmail = ElectronicFile.Clinic.Email;
+                            string clinicPhone = ElectronicFile.Clinic.PhoneNumber;
+                            string logoName = "varaEsculapio.png";
 
+                            var template = db.Template.Where(tem => tem.TemplateID == 8);
+                            List<KeyValuePair<string, string>> ListKey_Value = new List<KeyValuePair<string, string>>();
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$logo", HostingEnvironment.MapPath("~/Content/Images/" + logoName)));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$doctorName", doctorName));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$doctorLicense", licenseDoctor));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$doctorUniversity", universityDoctor));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$doctorSpeciality", specialityDoctor));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$patientName", patientName));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$consultDate", consultDate));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$patientExp", patientExp));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$patienAge", patientAge));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$treatment", treatment));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$clinicName", clinicName));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$clinicAdress", clinicAdress));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$clinicEmail", clinicEmail));
+                            ListKey_Value.Add(new KeyValuePair<string, string>("$clinicPhone", clinicPhone));
 
-                                if (!string.IsNullOrEmpty(treatment))
-                                {
-                                    treatment = treatment.Replace("\n", "<br/>");
-                                }
+                            result.string_value = BuildTemplateHelper.GenerateTemplate(templateName, ListKey_Value).string_value;
+                            result.success = true;
 
-                                string clinicCounty = mConsult.Clinic.Address.County.Name;
-                                string clinicAdressLine = mConsult.Clinic.Address.AddressLine;
-                                string clinicAdress = clinicAdressLine + " Col. " + clinicCounty;
-                                string clinicEmail = mConsult.Clinic.Email;
-                                string clinicPhone = mConsult.Clinic.PhoneNumber;
-                                string logoName = "varaEsculapio.png";
-
-                                var template = model.Template.Where(tem => tem.Name == "Receta Medica");
-                                List<KeyValuePair<string, string>> ListKey_Value = new List<KeyValuePair<string, string>>();
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$logo", HostingEnvironment.MapPath("~/Content/Images/" + logoName)));
-                                if (WebConfigurationManager.AppSettings.AllKeys.Contains("Settings.RecipeEmail"))
-                                {
-                                    ListKey_Value.Add(new KeyValuePair<string, string>("$pageInmedika", WebConfigurationManager.AppSettings["Settings.RecipeEmail"]));
-                                }
-                                else
-                                {
-                                    ListKey_Value.Add(new KeyValuePair<string, string>("$pageInmedika", ""));
-                                }
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$doctorName", doctorName));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$doctorLicense", licenseDoctor));
-                                //ListKey_Value.Add(new KeyValuePair<string, string>("$doctorUniversity", universityDoctor));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$doctorSpeciality", specialityDoctor));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$patientName", patientName));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$consultDate", consultDate));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$patientExp", patientExp));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$patienAge", patientAge));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$treatment", treatment));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$clinicName", clinicName));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$clinicAdress", clinicAdress));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$clinicEmail", clinicEmail));
-                                ListKey_Value.Add(new KeyValuePair<string, string>("$clinicPhone", clinicPhone));
-
-
-                                result.string_value = BuildTemplateHelper.GenerateTemplate(templateName, ListKey_Value).string_value;
-                                result.success = true;
-                            }
-                            else
-                            {
-                                result.string_value = BuildTemplateHelper.GenerateTemplateError("No se puede acceder a esta información").string_value;
-                                return result;
-                            }
                         }
                         else
                         {
-                            result.string_value = BuildTemplateHelper.GenerateTemplateError("Consulta inexistente").string_value;
+                            result.string_value = BuildTemplateHelper.GenerateTemplateError("No se puede acceder a esta información").string_value;
                             return result;
                         }
                     }
@@ -1040,9 +1008,8 @@ namespace INMEDIK.Models.Helpers
                     {
                         throw new Exception("La sesión ha caducado");
                     }
-
-
                 }
+
                 catch (Exception error)
                 {
                     result.exception = error;

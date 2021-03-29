@@ -33,20 +33,20 @@ namespace INMEDIK.Controllers
             ViewBag.PatientId = Request.Params["PatientId"];
             return View();
         }
-        public JsonResult GetSchedule(DTParameterModel model)
-        {
-            ClinicResult CurrentClinic = new ClinicResult();
-            var CurrentUser = UserHelper.GetCurrentUserAndClinic(Request, out CurrentClinic);
-            var currentEmployee = EmployeeHelper.GetEmployeeByIdUser(CurrentUser.Id);
-            string tabClicked = Request.Params["tabClicked"];
-            string PatientId = Request.Params["PatientId"];
-            var Sysdate = TimeZoneInfo.ConvertTimeFromUtc(
-                    DateTime.UtcNow,
-                    TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)")
-                    ).ToString("dd/MM/yyyy HH:mm:ss", new CultureInfo("es-MX"));
-            vwScheduleResult result = ScheduleHelper.GetSchedule(model, tabClicked, PatientId, CurrentUser.User.rolAux.name, CurrentUser.User.rolAux.id, currentEmployee.data.id, CurrentClinic.data.id);
-            return Json(new { data = result.data_list, recordsTotal = result.total.value, draw = model.Draw, recordsFiltered = result.total.value, SysDate = Sysdate }, "application/json", Encoding.UTF8, JsonRequestBehavior.DenyGet);
-        }
+        //public JsonResult GetSchedule(DTParameterModel model)
+        //{
+        //    ClinicResult CurrentClinic = new ClinicResult();
+        //    var CurrentUser = UserHelper.GetCurrentUserAndClinic(Request, out CurrentClinic);
+        //    var currentEmployee = EmployeeHelper.GetEmployeeByIdUser(CurrentUser.Id);
+        //    string tabClicked = Request.Params["tabClicked"];
+        //    string PatientId = Request.Params["PatientId"];
+        //    var Sysdate = TimeZoneInfo.ConvertTimeFromUtc(
+        //            DateTime.UtcNow,
+        //            TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)")
+        //            ).ToString("dd/MM/yyyy HH:mm:ss", new CultureInfo("es-MX"));
+        //    vwScheduleResult result = ScheduleHelper.GetSchedule(model, tabClicked, PatientId, CurrentUser.User.rolAux.name, CurrentUser.User.rolAux.id, currentEmployee.data.id, CurrentClinic.data.id);
+        //    return Json(new { data = result.data_list, recordsTotal = result.total.value, draw = model.Draw, recordsFiltered = result.total.value, SysDate = Sysdate }, "application/json", Encoding.UTF8, JsonRequestBehavior.DenyGet);
+        //}
 
         public JsonResult LoadDetail(string CategoryName, int id)
         {
@@ -104,15 +104,16 @@ namespace INMEDIK.Controllers
             return File(Path.Combine(dir + FileRes.data.Name), FileRes.data.ContentType);
         }
 
-        public FileStreamResult BuildPrenscription(int consultId)
+        public FileStreamResult BuildPrenscription(int consultId, int noteid)
         {
             string userName = HttpContext.User.Identity.Name;
-            string htmlPrenscription = ScheduleHelper.BuildPrenscription(consultId, userName).string_value;
+            string htmlPrenscription = ScheduleHelper.BuildPrenscription(consultId, userName, noteid).string_value;
             byte[] byteArray = PdfManager.HtmlToPdFNoMargin(htmlPrenscription);
             MemoryStream pdfStream = new MemoryStream();
             pdfStream.Write(byteArray, 0, byteArray.Length);
             pdfStream.Position = 0;
             return new FileStreamResult(pdfStream, "application/pdf");
         }
+
     }
 }
