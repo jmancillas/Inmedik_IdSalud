@@ -11,12 +11,10 @@ using System.Web.Mvc;
 
 namespace INMEDIK.Controllers
 {
-    [Authorize]
     public class ConceptController : Controller
     {
         // GET: Concept
         [MenuData]
-        [PSAuthorize]
         public ActionResult Index()
         {
             return View();
@@ -50,21 +48,21 @@ namespace INMEDIK.Controllers
             return Json(new { success = res.success, message = res.message }, JsonRequestBehavior.DenyGet);
         }
 
-        [PSAuthorize]
+        
         public JsonResult GetConcept(int id)
         {
             ConceptResult res = ConceptHelper.GetConcept(id);
             return Json(new { success = res.success, message = res.message, data = res.data }, JsonRequestBehavior.DenyGet);
         }
 
-        [PSAuthorize]
+        
         public JsonResult GetPackage(int id)
         {
             PackageResult res = ConceptHelper.GetPackage(id);
             return Json(new { success = res.success, message = res.message, data = res.data }, JsonRequestBehavior.DenyGet);
         }
 
-        [PSAuthorize]
+        
         public JsonResult GetConcepts(DTParameterModel model)
         {
             ConceptResult result = ConceptHelper.GetConcepts(model);
@@ -107,8 +105,6 @@ namespace INMEDIK.Controllers
             }
             return Json(new { data = res.data_list, message = res.message, success = res.success }, JsonRequestBehavior.AllowGet);
         }
-
-
 
         [HttpPost]
         public JsonResult GetConceptsTypeahead(string data = "")

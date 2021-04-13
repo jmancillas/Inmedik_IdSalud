@@ -2014,7 +2014,7 @@
           <Property Name="EvolutionNoteId" Type="int" />
           <Property Name="Consecutivo" Type="int" />
           <Property Name="Nombre" Type="nvarchar" MaxLength="500" />
-          <Property Name="RecipeText" Type="varchar" MaxLength="500" />
+          <Property Name="RecipeText" Type="varchar(max)" />
         </EntityType>
         <EntityType Name="RecordInvoice">
           <Key>
@@ -8793,6 +8793,70 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Function Name="fn_diagramobjects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int" />
+        <Function Name="sp_alterdiagram" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+          <Parameter Name="version" Type="int" Mode="In" />
+          <Parameter Name="definition" Type="varbinary(max)" Mode="In" />
+        </Function>
+        <Function Name="sp_calc_supplierrequest" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="referenceDate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_calc_warehouserequest" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="referenceDate" Type="datetime" Mode="In" />
+          <Parameter Name="clinicId" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_creatediagram" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+          <Parameter Name="version" Type="int" Mode="In" />
+          <Parameter Name="definition" Type="varbinary(max)" Mode="In" />
+        </Function>
+        <Function Name="sp_dropdiagram" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_getConceptsAutoComplete" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="input" Type="nvarchar" Mode="In" />
+          <Parameter Name="categoryName" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="sp_getSales" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="Order_column" Type="nvarchar" Mode="In" />
+          <Parameter Name="DateBegin" Type="varchar" Mode="In" />
+          <Parameter Name="DateEnd" Type="varchar" Mode="In" />
+          <Parameter Name="Ticket" Type="nvarchar" Mode="In" />
+          <Parameter Name="Clinic" Type="nvarchar" Mode="In" />
+          <Parameter Name="EmployeeName" Type="nvarchar" Mode="In" />
+          <Parameter Name="PatientName" Type="nvarchar" Mode="In" />
+          <Parameter Name="Total" Type="nvarchar" Mode="In" />
+          <Parameter Name="Discount" Type="nvarchar" Mode="In" />
+          <Parameter Name="Paid" Type="varchar" Mode="In" />
+          <Parameter Name="Cancelled" Type="varchar" Mode="In" />
+          <Parameter Name="startRowIndex" Type="nvarchar" Mode="In" />
+          <Parameter Name="pageSize" Type="nvarchar" Mode="In" />
+          <Parameter Name="clinicIds" Type="nvarchar" Mode="In" />
+          <Parameter Name="totalCount" Type="int" Mode="InOut" />
+        </Function>
+        <Function Name="sp_helpdiagramdefinition" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_helpdiagrams" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_renamediagram" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+          <Parameter Name="new_diagramname" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="sp_reportLastPurchaseByProduct" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="startDate" Type="datetime" Mode="In" />
+          <Parameter Name="endDate" Type="datetime" Mode="In" />
+          <Parameter Name="conceptId" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_upgraddiagrams" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
         <EntityContainer Name="dbIdSalud_expressModelStoreContainer">
           <EntitySet Name="Address" EntityType="Self.Address" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Advertisement" EntityType="Self.Advertisement" Schema="dbo" store:Type="Tables" />
@@ -14164,7 +14228,7 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
           <Property Name="EvolutionNoteId" Type="Int32" />
           <Property Name="Consecutivo" Type="Int32" />
           <Property Name="Nombre" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
-          <Property Name="RecipeText" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="RecipeText" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
           <NavigationProperty Name="CIE10" Relationship="Self.FK_Recipe_CIE10" FromRole="Recipe" ToRole="CIE10" />
           <NavigationProperty Name="EvolutionNote" Relationship="Self.FK_Recipe_EvolutionNote" FromRole="Recipe" ToRole="EvolutionNote" />
           <NavigationProperty Name="Exam" Relationship="Self.FK_Exam_Recipe" FromRole="Recipe" ToRole="Exam" />
@@ -22191,7 +22255,97 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
             <End Role="Role" EntitySet="Role" />
             <End Role="User" EntitySet="User" />
           </AssociationSet>
+          <FunctionImport Name="sp_alterdiagram">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+            <Parameter Name="version" Mode="In" Type="Int32" />
+            <Parameter Name="definition" Mode="In" Type="Binary" />
+          </FunctionImport>
+          <FunctionImport Name="sp_calc_supplierrequest">
+            <Parameter Name="referenceDate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_calc_warehouserequest">
+            <Parameter Name="referenceDate" Mode="In" Type="DateTime" />
+            <Parameter Name="clinicId" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_creatediagram">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+            <Parameter Name="version" Mode="In" Type="Int32" />
+            <Parameter Name="definition" Mode="In" Type="Binary" />
+          </FunctionImport>
+          <FunctionImport Name="sp_dropdiagram">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_getConceptsAutoComplete" ReturnType="Collection(dbIdSalud_expressModel.sp_getConceptsAutoComplete_Result)">
+            <Parameter Name="input" Mode="In" Type="String" />
+            <Parameter Name="categoryName" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="sp_getSales">
+            <Parameter Name="Order_column" Mode="In" Type="String" />
+            <Parameter Name="DateBegin" Mode="In" Type="String" />
+            <Parameter Name="DateEnd" Mode="In" Type="String" />
+            <Parameter Name="Ticket" Mode="In" Type="String" />
+            <Parameter Name="Clinic" Mode="In" Type="String" />
+            <Parameter Name="EmployeeName" Mode="In" Type="String" />
+            <Parameter Name="PatientName" Mode="In" Type="String" />
+            <Parameter Name="Total" Mode="In" Type="String" />
+            <Parameter Name="Discount" Mode="In" Type="String" />
+            <Parameter Name="Paid" Mode="In" Type="String" />
+            <Parameter Name="Cancelled" Mode="In" Type="String" />
+            <Parameter Name="startRowIndex" Mode="In" Type="String" />
+            <Parameter Name="pageSize" Mode="In" Type="String" />
+            <Parameter Name="clinicIds" Mode="In" Type="String" />
+            <Parameter Name="totalCount" Mode="InOut" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_helpdiagramdefinition" ReturnType="Collection(dbIdSalud_expressModel.sp_helpdiagramdefinition_Result)">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_helpdiagrams" ReturnType="Collection(dbIdSalud_expressModel.sp_helpdiagrams_Result)">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_renamediagram">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+            <Parameter Name="new_diagramname" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="sp_reportLastPurchaseByProduct" ReturnType="Collection(dbIdSalud_expressModel.sp_reportLastPurchaseByProduct_Result)">
+            <Parameter Name="startDate" Mode="In" Type="DateTime" />
+            <Parameter Name="endDate" Mode="In" Type="DateTime" />
+            <Parameter Name="conceptId" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_upgraddiagrams" />
         </EntityContainer>
+        <ComplexType Name="sp_getConceptsAutoComplete_Result">
+          <Property Type="Int32" Name="id" Nullable="false" />
+          <Property Type="String" Name="categoryname" Nullable="false" MaxLength="100" />
+          <Property Type="String" Name="name" Nullable="false" MaxLength="100" />
+          <Property Type="String" Name="code" Nullable="true" MaxLength="50" />
+        </ComplexType>
+        <ComplexType Name="sp_helpdiagramdefinition_Result">
+          <Property Type="Int32" Name="version" Nullable="true" />
+          <Property Type="Binary" Name="definition" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="sp_helpdiagrams_Result">
+          <Property Type="String" Name="Database" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="Name" Nullable="false" MaxLength="128" />
+          <Property Type="Int32" Name="ID" Nullable="false" />
+          <Property Type="String" Name="Owner" Nullable="true" MaxLength="128" />
+          <Property Type="Int32" Name="OwnerID" Nullable="false" />
+        </ComplexType>
+        <ComplexType Name="sp_reportLastPurchaseByProduct_Result">
+          <Property Type="Int32" Name="ConceptId" Nullable="false" />
+          <Property Type="String" Name="conceptName" Nullable="false" MaxLength="100" />
+          <Property Type="Decimal" Name="Price" Nullable="false" Precision="18" Scale="2" />
+          <Property Type="String" Name="supplierName" Nullable="true" MaxLength="100" />
+          <Property Type="Decimal" Name="QuantityBuy" Nullable="true" Precision="38" Scale="2" />
+          <Property Type="Decimal" Name="BuyPrice" Nullable="true" Precision="38" Scale="4" />
+          <Property Type="Decimal" Name="QuantitySold" Nullable="false" Precision="38" Scale="2" />
+          <Property Type="Double" Name="SoldPrice" Nullable="false" />
+        </ComplexType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -26111,6 +26265,57 @@ advertencia 6002: La tabla o vista 'dbIdSalud_express.dbo.vwWarehouseStock' no t
               <ScalarProperty Name="id" ColumnName="UserId" />
             </EndProperty>
           </AssociationSetMapping>
+          <FunctionImportMapping FunctionImportName="sp_alterdiagram" FunctionName="dbIdSalud_expressModel.Store.sp_alterdiagram" />
+          <FunctionImportMapping FunctionImportName="sp_calc_supplierrequest" FunctionName="dbIdSalud_expressModel.Store.sp_calc_supplierrequest" />
+          <FunctionImportMapping FunctionImportName="sp_calc_warehouserequest" FunctionName="dbIdSalud_expressModel.Store.sp_calc_warehouserequest" />
+          <FunctionImportMapping FunctionImportName="sp_creatediagram" FunctionName="dbIdSalud_expressModel.Store.sp_creatediagram" />
+          <FunctionImportMapping FunctionImportName="sp_dropdiagram" FunctionName="dbIdSalud_expressModel.Store.sp_dropdiagram" />
+          <FunctionImportMapping FunctionImportName="sp_getConceptsAutoComplete" FunctionName="dbIdSalud_expressModel.Store.sp_getConceptsAutoComplete">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="dbIdSalud_expressModel.sp_getConceptsAutoComplete_Result">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="categoryname" ColumnName="categoryname" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="code" ColumnName="code" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_getSales" FunctionName="dbIdSalud_expressModel.Store.sp_getSales" />
+          <FunctionImportMapping FunctionImportName="sp_helpdiagramdefinition" FunctionName="dbIdSalud_expressModel.Store.sp_helpdiagramdefinition">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="dbIdSalud_expressModel.sp_helpdiagramdefinition_Result">
+                <ScalarProperty Name="version" ColumnName="version" />
+                <ScalarProperty Name="definition" ColumnName="definition" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_helpdiagrams" FunctionName="dbIdSalud_expressModel.Store.sp_helpdiagrams">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="dbIdSalud_expressModel.sp_helpdiagrams_Result">
+                <ScalarProperty Name="Database" ColumnName="Database" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Owner" ColumnName="Owner" />
+                <ScalarProperty Name="OwnerID" ColumnName="OwnerID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_renamediagram" FunctionName="dbIdSalud_expressModel.Store.sp_renamediagram" />
+          <FunctionImportMapping FunctionImportName="sp_reportLastPurchaseByProduct" FunctionName="dbIdSalud_expressModel.Store.sp_reportLastPurchaseByProduct">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="dbIdSalud_expressModel.sp_reportLastPurchaseByProduct_Result">
+                <ScalarProperty Name="ConceptId" ColumnName="ConceptId" />
+                <ScalarProperty Name="conceptName" ColumnName="conceptName" />
+                <ScalarProperty Name="Price" ColumnName="Price" />
+                <ScalarProperty Name="supplierName" ColumnName="supplierName" />
+                <ScalarProperty Name="QuantityBuy" ColumnName="QuantityBuy" />
+                <ScalarProperty Name="BuyPrice" ColumnName="BuyPrice" />
+                <ScalarProperty Name="QuantitySold" ColumnName="QuantitySold" />
+                <ScalarProperty Name="SoldPrice" ColumnName="SoldPrice" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_upgraddiagrams" FunctionName="dbIdSalud_expressModel.Store.sp_upgraddiagrams" />
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

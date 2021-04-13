@@ -1324,7 +1324,7 @@ namespace INMEDIK.Models.Helpers
             return result;
         }
 
-        public static EvolutionNoteResult SaveCurrentNote(ConceptAux concept, EvolutionNoteAux evolution, int idx, int electronicFileId, bool toPrint, ConceptAux tipec)
+        public static EvolutionNoteResult SaveCurrentNote(ConceptAux concept, EvolutionNoteAux evolution, int idx, int electronicFileId, bool toPrint, ConceptAux tipec, bool toSigns)
         {
             EvolutionNoteResult result = new EvolutionNoteResult();
             UserResult res = UserHelper.GetUser(HttpContext.Current.User.Identity.Name);
@@ -1352,7 +1352,8 @@ namespace INMEDIK.Models.Helpers
                             DataHelper.fill(aux.personAux, patientdb.Person);
                             EvolutionNote evolutionDb = db.EvolutionNote.Where(p => p.Id == evolution.id).FirstOrDefault();
 
-                            evolutionDb.ConceptId = concept.id;
+                            if(evolutionDb != null && concept.id != 0) evolutionDb.ConceptId = concept.id;
+
                             ElectronicFileUpdate electronicFileUpdate = new ElectronicFileUpdate();
                             electronicFileUpdate.UpdatedBy = res.User.id.Value;
                             electronicFileUpdate.UpdatedDate = evolutionDb.Created;
@@ -1414,6 +1415,7 @@ namespace INMEDIK.Models.Helpers
                                     explorationDb.PainScaleAdult = Convert.ToInt32(evolution.evolutionExplorationAux.painScale);
                                 }
 
+                                if (!toSigns) result.data.evolutionExplorationAux.saveVitalSigns = false;
                                 db.SaveChanges();
                             }
                             else
@@ -1446,7 +1448,7 @@ namespace INMEDIK.Models.Helpers
                                 db.SaveChanges();
                                 evolutionDb.EvolExplorationId = explorationData.Id;
                                 result.data.evolutionExplorationAux.id = explorationData.Id;
-                                result.data.evolutionExplorationAux.saveVitalSigns = false;
+                                if (toSigns) result.data.evolutionExplorationAux.saveVitalSigns = true;
                             }
 
                             EvolComments commentsDb = db.EvolComments.Where(e => e.Id == evolutionDb.EvolCommentsId).FirstOrDefault();
@@ -1553,8 +1555,8 @@ namespace INMEDIK.Models.Helpers
                             db.EvolExploration.Add(explorationData);
 
                             db.SaveChanges();
-                            result.data.evolutionExplorationAux.id = explorationData.Id; 
-                            result.data.evolutionExplorationAux.saveVitalSigns = true;
+                            result.data.evolutionExplorationAux.id = explorationData.Id;
+                            if (!toSigns) result.data.evolutionExplorationAux.saveVitalSigns = false;
 
                             EvolComments commentsData = db.EvolComments.Create();
                             commentsData.Notes = evolution.commentsAux.notes;
@@ -1949,10 +1951,7 @@ namespace INMEDIK.Models.Helpers
                                 DataHelper.fill(temp, Evol);
                                 DataHelper.fill(temp.evolutionConditionAux, Evol.EvolCurrentCondition);
                                 DataHelper.fill(temp.evolutionExplorationAux, Evol.EvolExploration);
-                                if (temp.evolutionConditionAux.tipeConsult == null)
-                                {
-                                    temp.evolutionExplorationAux.saveVitalSigns = true;
-                                }
+                                
                                 temp.commentsAux.notes = Evol.EvolComments.Notes;
                                 foreach (var files in Evol.EvFile)
                                 {

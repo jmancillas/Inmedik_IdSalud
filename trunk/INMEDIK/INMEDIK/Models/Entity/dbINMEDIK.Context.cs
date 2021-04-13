@@ -12,6 +12,8 @@ namespace INMEDIK.Models.Entity
     using System;
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
+    using System.Data.Entity.Core.Objects;
+    using System.Linq;
     
     public partial class dbINMEDIK : DbContext
     {
@@ -278,5 +280,221 @@ namespace INMEDIK.Models.Entity
         public virtual DbSet<vwUserTimeHandler> vwUserTimeHandler { get; set; }
         public virtual DbSet<vwWaitingTimes> vwWaitingTimes { get; set; }
         public virtual DbSet<vwWarehouseStock> vwWarehouseStock { get; set; }
+    
+        public virtual int sp_alterdiagram(string diagramname, Nullable<int> owner_id, Nullable<int> version, byte[] definition)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            var versionParameter = version.HasValue ?
+                new ObjectParameter("version", version) :
+                new ObjectParameter("version", typeof(int));
+    
+            var definitionParameter = definition != null ?
+                new ObjectParameter("definition", definition) :
+                new ObjectParameter("definition", typeof(byte[]));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_alterdiagram", diagramnameParameter, owner_idParameter, versionParameter, definitionParameter);
+        }
+    
+        public virtual int sp_calc_supplierrequest(Nullable<System.DateTime> referenceDate)
+        {
+            var referenceDateParameter = referenceDate.HasValue ?
+                new ObjectParameter("referenceDate", referenceDate) :
+                new ObjectParameter("referenceDate", typeof(System.DateTime));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_calc_supplierrequest", referenceDateParameter);
+        }
+    
+        public virtual int sp_calc_warehouserequest(Nullable<System.DateTime> referenceDate, Nullable<int> clinicId)
+        {
+            var referenceDateParameter = referenceDate.HasValue ?
+                new ObjectParameter("referenceDate", referenceDate) :
+                new ObjectParameter("referenceDate", typeof(System.DateTime));
+    
+            var clinicIdParameter = clinicId.HasValue ?
+                new ObjectParameter("clinicId", clinicId) :
+                new ObjectParameter("clinicId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_calc_warehouserequest", referenceDateParameter, clinicIdParameter);
+        }
+    
+        public virtual int sp_creatediagram(string diagramname, Nullable<int> owner_id, Nullable<int> version, byte[] definition)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            var versionParameter = version.HasValue ?
+                new ObjectParameter("version", version) :
+                new ObjectParameter("version", typeof(int));
+    
+            var definitionParameter = definition != null ?
+                new ObjectParameter("definition", definition) :
+                new ObjectParameter("definition", typeof(byte[]));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_creatediagram", diagramnameParameter, owner_idParameter, versionParameter, definitionParameter);
+        }
+    
+        public virtual int sp_dropdiagram(string diagramname, Nullable<int> owner_id)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_dropdiagram", diagramnameParameter, owner_idParameter);
+        }
+    
+        public virtual ObjectResult<sp_getConceptsAutoComplete_Result> sp_getConceptsAutoComplete(string input, string categoryName)
+        {
+            var inputParameter = input != null ?
+                new ObjectParameter("input", input) :
+                new ObjectParameter("input", typeof(string));
+    
+            var categoryNameParameter = categoryName != null ?
+                new ObjectParameter("categoryName", categoryName) :
+                new ObjectParameter("categoryName", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_getConceptsAutoComplete_Result>("sp_getConceptsAutoComplete", inputParameter, categoryNameParameter);
+        }
+    
+        public virtual int sp_getSales(string order_column, string dateBegin, string dateEnd, string ticket, string clinic, string employeeName, string patientName, string total, string discount, string paid, string cancelled, string startRowIndex, string pageSize, string clinicIds, ObjectParameter totalCount)
+        {
+            var order_columnParameter = order_column != null ?
+                new ObjectParameter("Order_column", order_column) :
+                new ObjectParameter("Order_column", typeof(string));
+    
+            var dateBeginParameter = dateBegin != null ?
+                new ObjectParameter("DateBegin", dateBegin) :
+                new ObjectParameter("DateBegin", typeof(string));
+    
+            var dateEndParameter = dateEnd != null ?
+                new ObjectParameter("DateEnd", dateEnd) :
+                new ObjectParameter("DateEnd", typeof(string));
+    
+            var ticketParameter = ticket != null ?
+                new ObjectParameter("Ticket", ticket) :
+                new ObjectParameter("Ticket", typeof(string));
+    
+            var clinicParameter = clinic != null ?
+                new ObjectParameter("Clinic", clinic) :
+                new ObjectParameter("Clinic", typeof(string));
+    
+            var employeeNameParameter = employeeName != null ?
+                new ObjectParameter("EmployeeName", employeeName) :
+                new ObjectParameter("EmployeeName", typeof(string));
+    
+            var patientNameParameter = patientName != null ?
+                new ObjectParameter("PatientName", patientName) :
+                new ObjectParameter("PatientName", typeof(string));
+    
+            var totalParameter = total != null ?
+                new ObjectParameter("Total", total) :
+                new ObjectParameter("Total", typeof(string));
+    
+            var discountParameter = discount != null ?
+                new ObjectParameter("Discount", discount) :
+                new ObjectParameter("Discount", typeof(string));
+    
+            var paidParameter = paid != null ?
+                new ObjectParameter("Paid", paid) :
+                new ObjectParameter("Paid", typeof(string));
+    
+            var cancelledParameter = cancelled != null ?
+                new ObjectParameter("Cancelled", cancelled) :
+                new ObjectParameter("Cancelled", typeof(string));
+    
+            var startRowIndexParameter = startRowIndex != null ?
+                new ObjectParameter("startRowIndex", startRowIndex) :
+                new ObjectParameter("startRowIndex", typeof(string));
+    
+            var pageSizeParameter = pageSize != null ?
+                new ObjectParameter("pageSize", pageSize) :
+                new ObjectParameter("pageSize", typeof(string));
+    
+            var clinicIdsParameter = clinicIds != null ?
+                new ObjectParameter("clinicIds", clinicIds) :
+                new ObjectParameter("clinicIds", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_getSales", order_columnParameter, dateBeginParameter, dateEndParameter, ticketParameter, clinicParameter, employeeNameParameter, patientNameParameter, totalParameter, discountParameter, paidParameter, cancelledParameter, startRowIndexParameter, pageSizeParameter, clinicIdsParameter, totalCount);
+        }
+    
+        public virtual ObjectResult<sp_helpdiagramdefinition_Result> sp_helpdiagramdefinition(string diagramname, Nullable<int> owner_id)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_helpdiagramdefinition_Result>("sp_helpdiagramdefinition", diagramnameParameter, owner_idParameter);
+        }
+    
+        public virtual ObjectResult<sp_helpdiagrams_Result> sp_helpdiagrams(string diagramname, Nullable<int> owner_id)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_helpdiagrams_Result>("sp_helpdiagrams", diagramnameParameter, owner_idParameter);
+        }
+    
+        public virtual int sp_renamediagram(string diagramname, Nullable<int> owner_id, string new_diagramname)
+        {
+            var diagramnameParameter = diagramname != null ?
+                new ObjectParameter("diagramname", diagramname) :
+                new ObjectParameter("diagramname", typeof(string));
+    
+            var owner_idParameter = owner_id.HasValue ?
+                new ObjectParameter("owner_id", owner_id) :
+                new ObjectParameter("owner_id", typeof(int));
+    
+            var new_diagramnameParameter = new_diagramname != null ?
+                new ObjectParameter("new_diagramname", new_diagramname) :
+                new ObjectParameter("new_diagramname", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_renamediagram", diagramnameParameter, owner_idParameter, new_diagramnameParameter);
+        }
+    
+        public virtual ObjectResult<sp_reportLastPurchaseByProduct_Result> sp_reportLastPurchaseByProduct(Nullable<System.DateTime> startDate, Nullable<System.DateTime> endDate, Nullable<int> conceptId)
+        {
+            var startDateParameter = startDate.HasValue ?
+                new ObjectParameter("startDate", startDate) :
+                new ObjectParameter("startDate", typeof(System.DateTime));
+    
+            var endDateParameter = endDate.HasValue ?
+                new ObjectParameter("endDate", endDate) :
+                new ObjectParameter("endDate", typeof(System.DateTime));
+    
+            var conceptIdParameter = conceptId.HasValue ?
+                new ObjectParameter("conceptId", conceptId) :
+                new ObjectParameter("conceptId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_reportLastPurchaseByProduct_Result>("sp_reportLastPurchaseByProduct", startDateParameter, endDateParameter, conceptIdParameter);
+        }
+    
+        public virtual int sp_upgraddiagrams()
+        {
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("sp_upgraddiagrams");
+        }
     }
 }

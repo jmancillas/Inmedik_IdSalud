@@ -744,6 +744,7 @@ namespace INMEDIK.Models.Helpers
 
                             Person person = employeeDB.Person;
                             employee.personAux.fillDB(ref person);
+                            person.SecondLastName = employee.personAux.secondlastname;
 
                             Address address = person.Address;
                             employee.personAux.addressAux.fillDB(ref address);
@@ -783,6 +784,7 @@ namespace INMEDIK.Models.Helpers
 
                             person = db.Person.Create();
                             employee.personAux.fillDB(ref person);
+                            person.SecondLastName = employee.personAux.secondlastname;
 
                             address = db.Address.Create();
                             employee.personAux.addressAux.fillDB(ref address);

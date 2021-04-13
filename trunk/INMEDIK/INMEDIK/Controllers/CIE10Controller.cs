@@ -15,12 +15,11 @@ namespace INMEDIK.Controllers
     {
         // GET: CIE10
         [MenuData]
-        [PSAuthorize]
         public ActionResult Index()
         {
             return View();
         }
-        [PSAuthorize]
+     
         public JsonResult GetCIE10(DTParameterModel model)
         {
             CIE10AuxResult result = CIE10Helper.GetCIE10Catalog(model);

@@ -665,7 +665,7 @@
                 });
             };
 
-            dt.SaveVitalSignsNote = function (concept, evolution, idx, electronicFileId, toPrint, tipec) {
+            dt.SaveVitalSignsNote = function (concept, evolution, idx, electronicFileId, toPrint, tipec, Signs) {
                 dt.DiseasesNote = evolution.evolutionDiagnosticAux;
                 dt.setEvolDate(evolution);
                 $http({
@@ -676,7 +676,8 @@
                         evolution: evolution,
                         idx: idx,
                         electronicFileId: electronicFileId,
-                        toPrint: toPrint
+                        toPrint: toPrint,
+                        toSigns: Signs
                     },
                     headers: {
                         'Content-Type': 'application/json'
@@ -702,7 +703,7 @@
                 });
             }
 
-            dt.SaveCurrentNote = function (concept, evolution, idx, electronicFileId, toPrint, tipec) {
+            dt.SaveCurrentNote = function (concept, evolution, idx, electronicFileId, toPrint, tipec, Signs) {
                 dt.subbmiting = true;
                 dt.DiseasesNote = evolution.evolutionDiagnosticAux;
                 dt.setEvolDate(evolution);
@@ -714,7 +715,8 @@
                         evolution: evolution,
                         idx: idx,
                         electronicFileId: electronicFileId,
-                        toPrint: toPrint
+                        toPrint: toPrint,
+                        toSigns: Signs
                     },
                     headers: {
                         'Content-Type': 'application/json'
@@ -2618,12 +2620,12 @@
                                 {{INMEDIKApp.ConsultFile.identificationAux.sex_string}}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        @*<div class="col-md-4">
                             <label class="col-md-4">Empresa: </label>
                             <div class="col-md-8">
                                 {{INMEDIKApp.ConsultFile.patientAux.personAux.companyName}}
                             </div>
-                        </div>
+                        </div>*@
                         <div class="col-md-4">
                             <label class="col-md-3">Edad: </label>
                             <div class="col-md-9">
@@ -3199,7 +3201,7 @@
                                                                         </div>
                                                                         <div class="col-md-3">
                                                                             <input type="text" class="form-control" id="batch{{$index}}" name="quantity" placeholder="Lote" maxlength="50"
-                                                                                   ng-model="medicamentstock.stock"
+                                                                                   ng-model="medicamentstock.stock < 0 ? 0 : medicamentstock.stock"
                                                                                    uib-typeahead="item as item.inStock for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')" />
                                                                         </div>
                                                                         <div class="col-md-3">
@@ -3615,7 +3617,7 @@
                                             <div class="panel panel-default">
                                                 <div class="panel panel-heading" ng-if="!evolution.IsCancelled">
                                                     <span id="btncollapse" class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodymod{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1"  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected)">Guardar  <i class="fa fa-folder"></i></span>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1"  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, false)">Guardar  <i class="fa fa-folder"></i></span>
                                                     <label class="col-md-2">Creada el día: {{evolution.sCreated}}</label>
                                                     <label class="col-md-2">Doctor: {{evolution.userCreated}}</label>
                                                     @*<label class="col-md-2" ng-if="evolution.sUpdated != '01/01/0001 00:00'">Modificado el día: {{evolution.sUpdated}}</label>*@
@@ -3902,7 +3904,7 @@
                                                                         </div>
                                                                     </div>
                                                                     <div style="text-align:end">
-                                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveVitalSignsNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected)" >Guardar Signos Vitales</div>
+                                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveVitalSignsNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, true)" >Guardar Signos Vitales</div>
                                                                     </div>
                                                                     <br /><br />
                                                                 </div>
@@ -4021,8 +4023,8 @@
                                                     </div>
                                                     <div style="text-align:end">
                                                         <button type="button" id="btncollapse" class="btn btn-default" data-toggle="collapse" data-target="#panelBodymod{{$index}}">Cerrar</button>
-                                                        <div class="btn btn-primary" data-loading-text="Guardando..."  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected)"  >Guardar Nota</div>
-                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, true, INMEDIKApp.conceptselected)"  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns">Guardar e Imprimir</div>
+                                                        <div class="btn btn-primary" data-loading-text="Guardando..."  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, false)"  >Guardar Nota</div>
+                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, true, INMEDIKApp.conceptselected, false)"  ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns">Guardar e Imprimir</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4241,7 +4243,7 @@
                                                                     <div class="panel panel-default">
                                                                         <div class="panel-heading">
                                                                             <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyexm{{$index}}"><i class="fas fa-bars"></i></span>
-                                                                            <span class="btn btn-warning btn-xs pull-left col-md-1" ng-disabled="examn.recipeAux.id > 0" ng-click="INMEDIKApp.SaveExamnsElements(INMEDIKApp.selectedconcept, evolution,$index,INMEDIKApp.ConsultFile.id,false)">Guardar  <i class="fa fa-folder"></i></span>
+                                                                            <span class="btn btn-warning btn-xs pull-left col-md-1" ng-disabled="examn.recipeAux.id > 0" ng-click="INMEDIKApp.SaveExamnsElements(INMEDIKApp.selectedconcept, evolution,$index,INMEDIKApp.ConsultFile.id, false)">Guardar  <i class="fa fa-folder"></i></span>
                                                                             <span class="btn btn-danger btn-xs pull-right" ng-disabled="examn.recipeAux.id > 0" ng-click="INMEDIKApp.ExamModal($index)"><i class="fa fa-times"></i></span>
                                                                             <label class="col-md-2">Creada el día: {{examn.sCreated}}</label>
                                                                             <label class="col-md-2">Doctor: {{examn.createdby}}</label>
@@ -4583,7 +4585,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6 no-padding-right">
+                                @*<div class="col-md-6 no-padding-right">
                                     <div class="form-group" ng-class="{'invalid-group': (patientforms.reference.$touched && patientforms.reference.$invalid)}">
                                         <label for="name" class="control-label col-md-3">empresa: </label>
                                         <div class="col-md-9">
@@ -4594,7 +4596,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
+                                </div>*@
                             </div>
                             <div class="clearfix"></div>
                         </div>

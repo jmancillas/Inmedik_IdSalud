@@ -11,8 +11,6 @@ using System.Web.Mvc;
 
 namespace INMEDIK.Controllers
 {
-    [Authorize]
-    [PSAuthorize]
     public class ScheduleController : Controller
     {
         [MenuData]
@@ -33,20 +31,20 @@ namespace INMEDIK.Controllers
             ViewBag.PatientId = Request.Params["PatientId"];
             return View();
         }
-        //public JsonResult GetSchedule(DTParameterModel model)
-        //{
-        //    ClinicResult CurrentClinic = new ClinicResult();
-        //    var CurrentUser = UserHelper.GetCurrentUserAndClinic(Request, out CurrentClinic);
-        //    var currentEmployee = EmployeeHelper.GetEmployeeByIdUser(CurrentUser.Id);
-        //    string tabClicked = Request.Params["tabClicked"];
-        //    string PatientId = Request.Params["PatientId"];
-        //    var Sysdate = TimeZoneInfo.ConvertTimeFromUtc(
-        //            DateTime.UtcNow,
-        //            TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)")
-        //            ).ToString("dd/MM/yyyy HH:mm:ss", new CultureInfo("es-MX"));
-        //    vwScheduleResult result = ScheduleHelper.GetSchedule(model, tabClicked, PatientId, CurrentUser.User.rolAux.name, CurrentUser.User.rolAux.id, currentEmployee.data.id, CurrentClinic.data.id);
-        //    return Json(new { data = result.data_list, recordsTotal = result.total.value, draw = model.Draw, recordsFiltered = result.total.value, SysDate = Sysdate }, "application/json", Encoding.UTF8, JsonRequestBehavior.DenyGet);
-        //}
+        public JsonResult GetSchedule(DTParameterModel model)
+        {
+            ClinicResult CurrentClinic = new ClinicResult();
+            var CurrentUser = UserHelper.GetCurrentUserAndClinic(Request, out CurrentClinic);
+            var currentEmployee = EmployeeHelper.GetEmployeeByIdUser(CurrentUser.Id);
+            string tabClicked = Request.Params["tabClicked"];
+            string PatientId = Request.Params["PatientId"];
+            var Sysdate = TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)")
+                    ).ToString("dd/MM/yyyy HH:mm:ss", new CultureInfo("es-MX"));
+            vwScheduleResult result = ScheduleHelper.GetSchedule(model, tabClicked, PatientId, CurrentUser.User.rolAux.name, CurrentUser.User.rolAux.id, currentEmployee.data.id, CurrentClinic.data.id);
+            return Json(new { data = result.data_list, recordsTotal = result.total.value, draw = model.Draw, recordsFiltered = result.total.value, SysDate = Sysdate }, "application/json", Encoding.UTF8, JsonRequestBehavior.DenyGet);
+        }
 
         public JsonResult LoadDetail(string CategoryName, int id)
         {
