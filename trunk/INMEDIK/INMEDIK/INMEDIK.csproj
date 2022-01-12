@@ -692,12 +692,6 @@
     <Compile Include="Models\Entity\sp_getConceptsAutoComplete_Result.cs">
       <DependentUpon>dbINMEDIK.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\Entity\sp_helpdiagramdefinition_Result.cs">
-      <DependentUpon>dbINMEDIK.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Models\Entity\sp_helpdiagrams_Result.cs">
-      <DependentUpon>dbINMEDIK.tt</DependentUpon>
-    </Compile>
     <Compile Include="Models\Entity\sp_reportLastPurchaseByProduct_Result.cs">
       <DependentUpon>dbINMEDIK.tt</DependentUpon>
     </Compile>
@@ -711,9 +705,6 @@
       <DependentUpon>dbINMEDIK.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Entity\Supplier.cs">
-      <DependentUpon>dbINMEDIK.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Models\Entity\sysdiagrams.cs">
       <DependentUpon>dbINMEDIK.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Entity\tabletCart.cs">

@@ -1713,7 +1713,7 @@
                     }
                 }).then(function (res) {
                     dt.saving = false;
-
+                    debugger
                     if (res.data.success) {
                         dt.ConsultFile.id = res.data.data.id;
                         dt.ConsultFile.patientAux.ahfaux.id = res.data.data.patientAux.ahfaux.id;

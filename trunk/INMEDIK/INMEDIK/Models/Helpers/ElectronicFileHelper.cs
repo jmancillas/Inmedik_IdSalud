@@ -3190,7 +3190,7 @@ namespace INMEDIK.Models.Helpers
 
                             db.SaveChanges();
                             dbTransaction.Commit();
-
+                            result.success = true;
                         }
                         else
                         {
