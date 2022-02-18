@@ -11,6 +11,7 @@ using System.Web.Mvc;
 
 namespace INMEDIK.Controllers
 {
+    [Authorize]
     public class ConceptController : Controller
     {
         // GET: Concept

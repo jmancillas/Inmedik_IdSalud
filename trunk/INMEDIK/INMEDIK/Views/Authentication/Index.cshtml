@@ -25,12 +25,8 @@
         }
 
         .AuthFormContainer {
-            /*position: absolute;*/
-            /*padding: 15px;*/
-            margin-top: 100px !important;
-            /*border: solid;
-            border-width: 1px;*/
-            max-width: 600px;
+            margin-top: 50px !important;
+            max-width: 500px;
             margin: auto;
             width: 100%;
             border-radius: 10px;
@@ -38,7 +34,6 @@
         }
 
         .center-total {
-            /*top: 30%;*/
             left: 50%;
             -moz-transform: translate(-50%, -50%);
             -o-transform: translate(-50%, -50%);
@@ -74,15 +69,6 @@
             }
     </style>
 }
-<!--
-<div class="text-center">
-    <div class="row">
-        <div class="col-xs-12">
-           <h2>Authentication form</h2>
-        </div>
-    </div>
-</div>
--->
 
 @section Scripts
 {
@@ -102,8 +88,6 @@
 
     <div class="">
         <form name="authForm" method="post" class="form-horizontal" action="@Url.Action("SignIn","Authentication")">
-
-            @*<div class="auth-logo"><img src="~/Content/Images/logo-inmedik.png" /></div>*@
             <div class="auth-logo"><img src="~/Content/Images/id-salud-v2.png" /></div>
 
             <div class="form-group">
@@ -148,10 +132,6 @@
         </form>
     </div>
 </div>
-<div class="row">
-    <br />
-    <br />
-    <br />
-    @*<div style="text-align:center"><a class="auth-link" target="_blank" href="http://inmedi-k.com.mx/"><img src="~/Content/Images/favicon-32x32.png" />INMEDIK</a></div>*@
-    <div style="text-align:center"><a class="auth-link" target="_blank" href="http://idsalud.com.mx/"><img src="~/Content/Images/favicon_idsalud.png" />ID Salud</a></div>
+<div>
+    <div style="text-align:center"><a class="auth-link" target="_blank" href=""><img src="~/Content/Images/favicon_idsalud.png" />ID Salud</a></div>
 </div>

@@ -73,7 +73,7 @@ namespace INMEDIK.Controllers
                         }
                         filterContext.Controller.ViewBag.Menu = menuViews;
                         filterContext.Controller.ViewBag.ClinicName = clinicRes.data.name;
-                        filterContext.Controller.ViewBag.UsuarioNombre = currentUser.User.rolAux.description + " " + currentUser.User.nombre;
+                        filterContext.Controller.ViewBag.UsuarioNombre = currentUser.User.rolAux.description + " : " + currentUser.User.nombre;
                     }
                     else
                     {

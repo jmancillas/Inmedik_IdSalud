@@ -13,6 +13,7 @@ using System.Web.Configuration;
 
 namespace INMEDIK.Controllers
 {
+    [Authorize]
     public class ElectronicFileController : Controller
     {
         // GET: ElectronicFile
