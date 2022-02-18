@@ -78,5 +78,12 @@ namespace INMEDIK.Controllers
             var dir = System.Web.HttpContext.Current.Server.MapPath("~/App_Data/Files/ElectronicFile/");
             return File(Path.Combine(dir + FileRes.data.Name), FileRes.data.ContentType);
         }
+
+        [PSAuthorize]
+        public FilePathResult DownloadEvFile(int evId)
+        {
+            FileDbResult FileRes = AdsHelper.GetFileDbByEvId(evId);
+            return new FilePathResult(string.Format("~/App_Data/Files/ElectronicFile/{0}", FileRes.data.Name), FileRes.data.ContentType);
+        }
     }
 }

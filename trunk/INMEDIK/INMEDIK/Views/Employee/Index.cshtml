@@ -257,6 +257,7 @@
                     dt.subbmiting = false;
                 });
             };
+
             dt.LoadElementPermits = function (id) {
                 $http({
                     method: 'POST',
@@ -268,7 +269,7 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(function (res) {
-
+                    debugger
                     if (res.data.success) {
                         dt.Employee = res.data.data;
                         $("#EmployeePermits").modal("show");
@@ -572,7 +573,7 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(function (res) {
-
+                    
                     if (res.data.success) {
                         dt.Views = res.data.data;
                     }
@@ -983,10 +984,10 @@
                                 <div class="panel-heading">Menús disponibles para el empleado</div>
                                 <div class="panel-body" id="panelBody">
                                     <div ng-repeat="view in INMEDIKApp.Views" class="col-md-6">
-                                        <input type="checkbox" checklist-model="INMEDIKApp.Employee.userAux.menuViewAux" checklist-value="view"> <i class="{{view.icon}}"></i> {{view.name}}
+                                        <input type="checkbox" disabled checklist-model="INMEDIKApp.Employee.userAux.menuViewAux" checklist-value="view"> <i class="{{view.icon}}"></i> {{view.name}}
                                     </div>
                                     <div class="col-md-6">
-                                        <input type="checkbox" ng-model="INMEDIKApp.Employee.canCancel"> <i class="fas fa-trash-alt"></i> Cancelaciones
+                                        <input type="checkbox" ng-model="INMEDIKApp.Employee.canCancel" > <i class="fas fa-trash-alt"></i> Cancelaciones
                                     </div>
                                 </div>
                             </div>
