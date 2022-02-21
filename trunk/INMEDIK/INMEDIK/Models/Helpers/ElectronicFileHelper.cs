@@ -901,6 +901,7 @@ namespace INMEDIK.Models.Helpers
                             }
                         }
                     }
+
                     result.total.value = query.Count();
 
                     query = query.Skip(filter.Start).Take(filter.Length);

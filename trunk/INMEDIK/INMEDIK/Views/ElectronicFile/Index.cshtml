@@ -1,14 +1,10 @@
 ﻿@section styles
 {
-
     <link rel="stylesheet" type="text/css" href="~/Content/angular-datatables.css" />
     <link rel="stylesheet" type="text/css" href="~/Content/angular-datepicker.css" />
     <link rel="stylesheet" type="text/css" href="~/Content/DataTables/dataTables.bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="~/Content/DataTables/responsive.bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="~/Content/mdr-file.min.css" />
-
-    @*<link rel="stylesheet" type="text/css" href="~/Content/bootstrap.min.css" />*@
-
 
     <style type="text/css">
         .table-responsive {
@@ -160,8 +156,14 @@
             border-radius: 3px;
             color: #17202A;
         }
+
+        li.disabled {
+            pointer-events: none;
+        }
+
     </style>
 }
+
 @section scripts
 {
     <script type="text/javascript" src="~/Scripts/customUtil.js"></script>
@@ -179,6 +181,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9.7.1/dist/sweetalert2.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>
+
     <script type="text/javascript">
 
         var INMEDIKApp = angular.module('INMEDIKApp', ["ui.bootstrap", "ui.bootstrap.tpls", 'datePicker', 'datatables', 'mdr.file', "ngFileUpload"]);
@@ -194,21 +197,6 @@
             dt.Inid = 0;
             dt.DetailObj = {};
             dt.dtInstance = {};
-            dt.ConsultFile = {
-                "identificationAux": null,
-                "diseaseAux": null,
-                "patientAux": null,
-                "explorationAux": {
-                    "painScale": 0,
-                    "painScaleAdult": 0
-                },
-                "evolutionNotesAux": null,
-                "interconsultAux": null,
-                "servicenoteAux": null,
-                "examnoteAux": null,
-                "medicnoteAux": null,
-                "referencenoteAux": null
-            };
             dt.evolution = [];
             dt.categories = {};
             dt.CourseThreatment = [];
@@ -243,17 +231,30 @@
             dt.saveService = false;
             dt.selectedconcept = [];
             dt.conceptselected = [];
-
             dt.Prueba = {};
-
             dt.File = [{}];
-
             dt.DiagnosticIdx = 0;
             dt.efId = 0;
             dt.PainScale = 0;
             dt.previewFile = previewFile;
             dt.regularExpretions = Ut_getRegularExpretions();
             dt.FormTouchedAndInvalid = false;
+
+            dt.ConsultFile = {
+                "identificationAux": null,
+                "diseaseAux": null,
+                "patientAux": null,
+                "explorationAux": {
+                    "painScale": 0,
+                    "painScaleAdult": 0
+                },
+                "evolutionNotesAux": null,
+                "interconsultAux": null,
+                "servicenoteAux": null,
+                "examnoteAux": null,
+                "medicnoteAux": null,
+                "referencenoteAux": null
+            };
 
             //Viewbags
             dt.Diseases = JSON.parse('@Html.Raw(ViewBag.DiseaseRes)');
@@ -275,6 +276,7 @@
             $.each(dt.Clinics, function () {
                 dt.ClinicsL.push({ id: this.id, name: this.name });
             });
+
             //Fin de viewbags
 
             dt.sendIdx = function (idx) {
@@ -341,7 +343,7 @@
                 });
             };
 
-           dt.loadcategories = function (val) {
+            dt.loadcategories = function (val) {
                 return $http.post('@Url.Action("GetCategories", "Category")', {
                     data: val
                 }).then(function (response) {
@@ -366,7 +368,7 @@
                     dt.ConsultFile.medicnoteAux.unshift({
                         diagnosticAux: [],
                         medicamstock: [],
-                        recipeAux:[]
+                        recipeAux: []
                     });
                 }
             };
@@ -390,7 +392,6 @@
             }
 
             dt.SelectPatient = function (PatientData) {
-                //dt.SelectandSave();
                 dt.loadcategories();
                 dt.ConsultFile.patientAux = PatientData;
                 dt.ConsultFile.patientAux.ahfaux.commentsAux = [];
@@ -429,7 +430,6 @@
             }
 
             dt.LoadElement = function (consultId) {
-
                 consultId ? consultId : consultId = dt.efId
                 mostrarPantallaCarga()
                 dt.Plan = [];
@@ -532,7 +532,7 @@
                         if (dt.ConsultFile.evolutionNotesAux.length > 0) {
                             for (var i = 0; i < dt.ConsultFile.evolutionNotesAux.length; i++) {
                                 dt.Recipe.push({
-                                        recipe: dt.ConsultFile.evolutionNotesAux[i].recipeAux.recipe,
+                                    recipe: dt.ConsultFile.evolutionNotesAux[i].recipeAux.recipe,
                                 })
                             }
                         }
@@ -562,8 +562,7 @@
 
                 }, function errorCallback(res) {
                     console.log("error: " + res);
-                    }).finally(function () {
-                       // $('#History-nav').click();
+                }).finally(function () {
                     quitarPantallaCarga();
                     $("#ElectronicFileModal").modal('show');
                 });
@@ -579,17 +578,13 @@
                 dt.saveService = false;
             }
 
-            $(document).on('hidden.bs.modal', function (e) {
-            });
-
+            $(document).on('hidden.bs.modal', function (e) {});
 
             $("#Evolutionnote-nav").on("click", function () {
                 if (!dt.ConsultFile.evolutionNotesAux.length > 0) {
                     dt.addEvolutionNote();
                 }
-
             });
-
 
             dt.addEvolutionNote = function () {
                 dt.ConsultFile.evolutionNotesAux.unshift({
@@ -603,7 +598,6 @@
             }
 
             dt.addmedicstock = function (evolution) {
-                debugger
                 dt.saving = true;
                 evolution.medicamstock.unshift({});
             }
@@ -625,7 +619,7 @@
                     dt.ConsultFile.interconsultAux.unshift({});
                 } else if (!isTab) {
                     dt.ConsultFile.interconsultAux.unshift({});
-                }  
+                }
             }
 
             dt.addReferenceConsult = function (isTab) {
@@ -634,7 +628,7 @@
                     dt.ConsultFile.referencenoteAux.unshift({});
                 } else if (!isTab) {
                     dt.ConsultFile.referencenoteAux.unshift({});
-                }               
+                }
             }
 
             dt.addExam = function () {
@@ -701,10 +695,7 @@
                     }
                 }, function errorCallback(res) {
                     console.log("error: " + res);
-                }).finally(function () {
-                     //location.reload();
-                   // $("#ElectronicFileModal").modal('hide');
-                });
+                }).finally(function () { });
             }
 
             dt.SaveCurrentNote = function (concept, evolution, idx, electronicFileId, toPrint, tipec, Signs) {
@@ -789,7 +780,7 @@
                             }
                         }
 
-                         Swal.fire({
+                        Swal.fire({
                             icon: 'success',
                             width: 600,
                             title: 'se han guardado correctamente, puede continuar.',
@@ -816,7 +807,6 @@
                 }).finally(function () {
                     dt.subbmiting = false;
                     quitarPantallaCarga()
-                    //$("#ElectronicFileModal").modal('hide');
                     dt.LoadElement();
                 });
             }
@@ -900,7 +890,6 @@
             dt.ProductModal = function (idx, atention) {
                 if (atention == undefined || 0) {
                     dt.index = idx;
-                    //$("#PdDeletionWarningModal").modal('show');
                     Swal.fire({
                         title: '¿borrar datos?',
                         text: "Los datos no se han guardado!",
@@ -922,10 +911,10 @@
                     $("#InCancellationWarningModal").modal('show');
                 }
             }
+
             dt.ServiceModal = function (idx, service) {
                 if (service == undefined || 0) {
                     dt.index = idx;
-                    //$("#SvDeletionWarningModal").modal('show');
                     Swal.fire({
                         title: '¿borrar datos?',
                         text: "Los datos no se han guardado!",
@@ -938,7 +927,6 @@
                     }).then((result) => {
                         if (result.value) {
                             $('#dltservbtn').click();
-
                         }
                     })
                 }
@@ -947,10 +935,10 @@
                     $("#InCancellationWarningModal").modal('show');
                 }
             }
+
             dt.MedicModal = function (idx, medicament) {
                 if (medicament == undefined || 0) {
                     dt.index = idx;
-                   //$("#MeDeletionWarningModal").modal('show');
                     Swal.fire({
                         title: '¿borrar datos?',
                         text: "Los datos no se han guardado!",
@@ -972,10 +960,10 @@
                     $("#InCancellationWarningModal").modal('show');
                 }
             }
+
             dt.ExamModal = function (idx, services) {
                 if (services == undefined || 0) {
                     dt.index = idx;
-                    //$("#SvDeletionWarningModal").modal('show');
                     Swal.fire({
                         title: '¿borrar datos?',
                         text: "Los datos no se han guardado!",
@@ -997,6 +985,7 @@
                     $("#InCancellationWarningModal").modal('show');
                 }
             }
+
             dt.EvolutionModal = function (idx, evolution) {
                 if (evolution.id == undefined || 0) {
                     dt.index = idx;
@@ -1043,8 +1032,6 @@
                     if (res.data.success) {
                         dt.ConsultFile.evolutionNotesAux.find(c => c.id == Evid).IsCancelled = true
                     }
-
-
                 });
             }
 
@@ -1061,8 +1048,6 @@
                     if (res.data.success) {
                         dt.ConsultFile.interconsultAux.find(c => c.id == Inid).IsCancelled = true
                     }
-
-
                 });
             }
 
@@ -1079,63 +1064,46 @@
                     if (res.data.success) {
                         dt.ConsultFile.referencenoteAux.find(c => c.id == Refid).IsCancelled = true
                     }
-
-
                 });
-            }
-
-            dt.change = function (mensaje) {
-                console.log(mensaje);
             }
 
             dt.DeleteProductNote = function (idx) {
                 dt.ConsultFile.productnoteAux.splice(idx, 1);
                 $("#servselect").val('0')
             }
+
             dt.DeleteServiceNote = function (idx) {
                 dt.ConsultFile.servicenoteAux.splice(idx, 1);
                 $("#servselect").val('0')
             }
+
             dt.DeleteMedicamentNote = function (idx) {
                 dt.ConsultFile.medicnoteAux.splice(idx, 1);
                 $("#servselect").val('0')
             }
+
             dt.DeleteEvolutionNote = function (idx) {
                 dt.ConsultFile.evolutionNotesAux.splice(idx, 1);
             }
+
             dt.DeleteExamNote = function (idx) {
                 dt.ConsultFile.examnoteAux.splice(idx, 1)
             }
 
             dt.setDeleteMedic = function (index, item, medicam) {
-
                 medicam.medicamstock.splice(index, item);
             }
+
             dt.DeleteInterConsult = function (idx) {
-                //if (dt.ConsultFile.interconsultAux.length > 1) {
                 dt.ConsultFile.interconsultAux.splice(idx, 1);
-                //}
-                //else {
-                //    dt.ConsultFile = [{}];
-                //}
             }
 
             dt.DeleteReferenceConsult = function (idx) {
-                //if (dt.ReferenceConsult.length > 1) {
                 dt.ConsultFile.referencenoteAux.splice(idx, 1);
-                //}
-                //else {
-                //    dt.ReferenceConsult = [{}];
-                //}
             }
 
             dt.DeletePreviousResult = function (idx) {
-                //if (dt.PreviousResult.length > 1) {
-                    dt.PreviousResult.splice(idx, 1);
-                //}
-                //else {
-                //    dt.PreviousResult = [{}];
-                //}
+                dt.PreviousResult.splice(idx, 1);
             }
 
             dt.DeleteEvolPreviousResult = function (evolution, idx) {
@@ -1148,7 +1116,6 @@
             }
 
             dt.DeleteDiagnosis = function (evolution, idx) {
-
                 dt.RecipeAdd = false;
 
                 if (evolution.evolutionDiagnosticAux) {
@@ -1249,24 +1216,19 @@
                     }
                 }
                 dt.RecipeAdd = true;
-                //dt.ConsultFile.evolutionNotesAux[dt.EvNoteIndex].evolutionDiagnosticAux[idx] = {
-                //    consecutivo: evolutionNote.evolutionDiagnosticAux[idx].consecutivo,
-                //    nombre: evolutionNote.evolutionDiagnosticAux[idx].nombre,
-                //    descripcion_capitulo: evolutionNote.evolutionDiagnosticAux[idx].descripcion_capitulo
-                //};
             };
 
             dt.RecipeRead = function () {
                 $('#RecipeModal').modal('show');
             }
+
             dt.cleanPlan = function () {
                 dt.Plan = [];
             }
+
             dt.cleanRecipe = function (evolution) {
-               // dt.RecipeAdd = false;
-               evolution.recipeAux = [];
+                evolution.recipeAux = [];
                 $('input[type="text"]').val('');
-                console.log(dt.Auxindication);
             }
 
             dt.CleanOptions = function () {
@@ -1323,7 +1285,6 @@
 
             dt.getPresentation = function (item, evolDiagnosis) {
                 evolDiagnosis.presentation = item.presentation;
-                console.log(evolDiagnosis.presentation);
             }
 
             dt.getWayOfAdministration = function (item, evolDiagnosis) {
@@ -1442,9 +1403,7 @@
                     }
                 }, function errorCallback(res) {
                     console.log("error: " + res);
-                }).finally(function () {
-                    //$("#ConfirmSaveBranchRequestResponse").modal('hide');
-                });
+                }).finally(function () { });
             }
 
             dt.showCIE10 = function (idx, type) {
@@ -1474,16 +1433,16 @@
 
             dt.setEvolDate = function (evolution) {
                 if (evolution.evolutionPreviousAux != undefined) {
-                for (i = 0; i < evolution.evolutionPreviousAux.length; i++) {
-                    if (evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol != null) {
-                        evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol).toDate();
-                    }
-                    if (evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides != null) {
-                        evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides).toDate();
-                    }
-                    if (evolution.evolutionPreviousAux[i].dateOfTaking_Glucose != null) {
-                        evolution.evolutionPreviousAux[i].dateOfTaking_Glucose = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Glucose).toDate();
-                    }
+                    for (i = 0; i < evolution.evolutionPreviousAux.length; i++) {
+                        if (evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol != null) {
+                            evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Cholesterol).toDate();
+                        }
+                        if (evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides != null) {
+                            evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Triglycerides).toDate();
+                        }
+                        if (evolution.evolutionPreviousAux[i].dateOfTaking_Glucose != null) {
+                            evolution.evolutionPreviousAux[i].dateOfTaking_Glucose = moment(evolution.evolutionPreviousAux[i].dateOfTaking_Glucose).toDate();
+                        }
                     }
                 }
             }
@@ -1505,6 +1464,7 @@
                 dt.person.nationalityAux = dt.NationalitiesL[idx];
                 $("#NewPatientModal").modal("show");
             };
+
             $("#NewPatientModal").on("hidden.bs.modal", function () {
                 dt.openSearchPatient = false;
                 $scope.PatientForms.$setUntouched();
@@ -1569,6 +1529,7 @@
                         "sSortDescending": ": descendiente"
                     }
                 });
+
             @* Definicion de las columnas del DT *@
             dt.dtPersonColumns = [
                 DTColumnBuilder.newColumn("name").withTitle("Nombre"),
@@ -1578,9 +1539,11 @@
                 DTColumnBuilder.newColumn("email").withTitle("Email"),
                 DTColumnBuilder.newColumn("id").withTitle("Acción").renderWith(selectBtn).withClass('notSearchable').notSortable()
             ];
+
             function createdRowPerson(row, data, dataIndex) {
                 $compile(angular.element(row).contents())($scope);
             }
+
             function selectBtn(data, type, full, meta) {
                 if (dt.PersonData.indexOf(full) == -1) {
                     dt.PersonData.push(full);
@@ -1589,7 +1552,6 @@
             }
 
             dt.PersonInstanceCallback = function (instance) {
-                // Setup - add a text input to each footer cell
                 dt.PersonData = [];
                 dt.dtPersonInstance = instance;
                 var id = '#' + dt.dtPersonInstance.id;
@@ -1601,7 +1563,6 @@
                 });
 
                 var table = dt.dtPersonInstance.DataTable;
-                // Apply the search
                 table.columns().every(function () {
                     var that = this;
 
@@ -1655,7 +1616,6 @@
                 }).then(function (res) {
 
                     if (res.data.success) {
-                        //dt.setClientSelected(res.data.patient, true);
                         $("#NewPatientModal").modal('hide');
                     }
                     else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
@@ -1678,6 +1638,7 @@
                     dt.subbmiting = false;
                 });
             };
+
             //termina creacion de paciente
 
             dt.SelectandSave = function () {
@@ -1717,22 +1678,21 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(function (res) {
-                    dt.saving = false;
-                    debugger
+                    dt.saving = false
                     if (res.data.success) {
                         dt.ConsultFile.id = res.data.data.id;
                         dt.ConsultFile.patientAux.ahfaux.id = res.data.data.patientAux.ahfaux.id;
                         dt.ConsultFile.patientAux.appAux.id = res.data.data.patientAux.appAux.id;
                         dt.ConsultFile.patientAux.apnpAux.id = res.data.data.patientAux.apnpAux.id;
 
-                         Swal.fire({
+                        Swal.fire({
                             icon: 'success',
                             width: 600,
                             title: 'se ha guardado correctamente',
                             showConfirmButton: false,
                             timer: 1500
-                         })
-                         dt.dtInstance.reloadData();
+                        })
+                        dt.dtInstance.reloadData();
                     }
                     else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
                         dt.errors[0] = "La sesión ha caducado.";
@@ -1762,7 +1722,7 @@
                 $http({
                     method: 'POST',
                     url: '@Url.Action("GetElectronicFileUpdates", "ElectronicFile")',
-                    data: {ConsultFile: dt.ConsultFile},
+                    data: { ConsultFile: dt.ConsultFile },
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -1859,14 +1819,12 @@
             }
 
             dt.SaveServiceElements = function (services, idx, electronicFileId, toPrint) {
-
                 $http({
                     method: 'POST',
                     url: '@Url.Action("SaveServices", "ElectronicFile")',
                     data: {
                         ConsultFile: dt.ConsultFile,
                         services: services,
-                        //name: services.filesAux.image.name,
                         idx: idx,
                         electronicFileId: electronicFileId,
                         toPrint: toPrint
@@ -1876,9 +1834,9 @@
                     }
                 }).then(function (res) {
                     if (res.data.success) {
-                       dt.saveService = true;
+                        dt.saveService = true;
                     }
-                    
+
                     if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
                         dt.errors[0] = "La sesión ha caducado.";
                         $("#resultModal").modal('show');
@@ -1894,17 +1852,17 @@
                     }
 
                     $.each(dt.ConsultFile.servicenoteAux, function (i, service) {
-                    var serviceId = service.id;
+                        var serviceId = service.id;
 
-                    if (services.filesAux.length > 0) {
-                        for (i = 0; i < services.filesAux.length; i++) {
-                            if (services.filesAux[i].image != undefined) {
-                                services.filesAux[i].image.upload = Upload.upload({
+                        if (services.filesAux.length > 0) {
+                            for (i = 0; i < services.filesAux.length; i++) {
+                                if (services.filesAux[i].image != undefined) {
+                                    services.filesAux[i].image.upload = Upload.upload({
                                         url: "@Url.Action("SaveImageSv", "Files")",
-                                    data: { Description: services.filesAux[i].Description, File: services.filesAux[i].image, evId: serviceId, fileId: services.filesAux[i].id },
+                                        data: { Description: services.filesAux[i].Description, File: services.filesAux[i].image, evId: serviceId, fileId: services.filesAux[i].id },
                                     })
 
-                                services.filesAux[i].image.upload.then(function (res) {
+                                    services.filesAux[i].image.upload.then(function (res) {
                                         if (res.data.success) {
                                         }
                                         else if (res.data.success == undefined && res.data.indexOf("SignIn") > -1) {
@@ -1932,23 +1890,22 @@
                             }
                         }
                     });
-                        Swal.fire({
-                            icon: 'success',
-                            width: 600,
-                            title: 'se ha guardado correctamente',
-                            showConfirmButton: false,
-                            timer: 1500
-                        })
+                    Swal.fire({
+                        icon: 'success',
+                        width: 600,
+                        title: 'se ha guardado correctamente',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
                 }, function errorCallback(res) {
                     console.log("error: " + res);
                 }).finally(function () {
                     dt.subbmiting = false;
                     dt.LoadElement(electronicFileId);
                 });
-             }
+            }
 
             dt.SaveMedicamentElements = function (ConsultFile, medicaments, concepts) {
-                console.log(medicaments);
                 $http({
                     method: 'POST',
                     url: '@Url.Action("SaveMedicaments", "ElectronicFile")',
@@ -1985,8 +1942,7 @@
                     console.log("error: " + res);
                 }).finally(function () {
                 });
-             }
-
+            }
 
             dt.SaveExamnsElements = function () {
                 if (dt.PreviousResult.length > 0) {
@@ -2093,29 +2049,25 @@
 
             dt.AddFile = function (evolutionNote) {
                 if (evolutionNote.filesAux.length < 5) {
-                     evolutionNote.filesAux.push({});
+                    evolutionNote.filesAux.push({});
                 }
-            }
-
-            dt.SaveFiles = function (evolution) {
-                console.log(evolution);
             }
 
             dt.diseaseIsChkd = function (family, disease) {
                 if (family.id == undefined && disease.id == 1) {
                     dt.saving = false;
                     family.diseaseAux[0] = { id: 1, name: "Interrogados y negados" };
-                        return true;
+                    return true;
                 }
                 else {
                     var disIdx = family.diseaseAux.findIndex(d => d.id == disease.id);
-                     if (disIdx > -1) {
-                     dt.saving = true;
-                     return true;
-                     }
-                       {
+                    if (disIdx > -1) {
+                        dt.saving = true;
+                        return true;
+                    }
+                    {
                         return false;
-                       }
+                    }
                 }
 
                 dt.FamilyList = [];
@@ -2181,6 +2133,7 @@
 
                     }
                 }
+
                 //nuevo expediente
                 else {
                     var disIdx = family.diseaseAux.findIndex(d => d.id == disease.id);
@@ -2242,11 +2195,11 @@
             };
 
             dt.dtElectronicFileOptions = DTOptionsBuilder.newOptions()
-            .withOption("ajax", {
-                dataType: "json",
-                type: "POST",
-                url: "@Url.Action("GetElectronicFiles", "ElectronicFile")"
-            })
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetElectronicFiles", "ElectronicFile")"
+                })
                 .withDataProp("data")
                 .withPaginationType('full_numbers')
                 .withOption('createdRow', createdRow)
@@ -2286,7 +2239,6 @@
             ];
 
             dt.InstanceCallback = function (instance) {
-                // Setup - add a text input to each footer cell
                 dt.dtInstance = instance;
                 var id = '#' + dt.dtInstance.id;
                 $(id + ' thead th').each(function () {
@@ -2297,7 +2249,6 @@
                 });
 
                 var table = dt.dtInstance.DataTable;
-                // Apply the search
                 table.columns().every(function () {
                     var that = this;
 
@@ -2316,11 +2267,11 @@
             };
 
             dt.dtOptionsCIE10 = DTOptionsBuilder.newOptions()
-                 .withOption("ajax", {
-                     dataType: "json",
-                     type: "POST",
-                     url: "@Url.Action("GetCIE10", "CIE10")"
-                 })
+                .withOption("ajax", {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Url.Action("GetCIE10", "CIE10")"
+                })
                 .withDataProp("data")
                 .withPaginationType('full_numbers')
                 .withOption('createdRow', createdRowCIE10)
@@ -2358,7 +2309,7 @@
                 });
 
             function AddCIE10DiseaseBtn(data, type, full, meta) {
-                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.AddCIE10Disease(' + data + ', '+ type +')" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
+                return '<div class="text-center"><button type="button" ng-click="INMEDIKApp.AddCIE10Disease(' + data + ', ' + type + ')" class="btn btn-info btn-xs"><i class="fa fa-plus" aria-hidden="true"></i> Agregar</button></div>';
             }
 
             dt.ActiveCIE10Catalog = function (active, idx) {
@@ -2372,8 +2323,7 @@
                 var alreadyIn = dt.Plan.filter(function (a) { return a.consecutivo == Consecutivo; })[0];
 
                 if (elem != undefined && alreadyIn == undefined) {
-                    if (dt.ConsultFile.evolutionNotesAux.length > 0)
-                    {
+                    if (dt.ConsultFile.evolutionNotesAux.length > 0) {
                         dt.ConsultFile.evolutionNotesAux[dt.EvNoteIndex].evolutionDiagnosticAux[dt.DiagnosticIdx] = {
                             consecutivo: elem.consecutivo,
                             catalog_key: elem.catalog_Key,
@@ -2381,8 +2331,7 @@
                             descripcion_capitulo: elem.descripcion_capitulo
                         }
                     }
-                    if (dt.ConsultFile.servicenoteAux.length > 0)
-                    {
+                    if (dt.ConsultFile.servicenoteAux.length > 0) {
                         dt.ConsultFile.servicenoteAux[dt.EvNoteIndex].diagnosticAux[dt.DiagnosticIdx] = {
                             consecutivo: elem.consecutivo,
                             catalog_key: elem.catalog_Key,
@@ -2390,8 +2339,7 @@
                             descripcion_capitulo: elem.descripcion_capitulo
                         }
                     }
-                    if (dt.ConsultFile.medicnoteAux.length > 0)
-                    {
+                    if (dt.ConsultFile.medicnoteAux.length > 0) {
                         dt.ConsultFile.medicnoteAux[dt.EvNoteIndex].diagnosticAux[dt.DiagnosticIdx] = {
                             consecutivo: elem.consecutivo,
                             catalog_key: elem.catalog_Key,
@@ -2401,8 +2349,6 @@
                     }
 
                     $("#CIE10Modal").modal('hide');
-                   // $('#Evolucion-tab').click();
-                   // $('#History-tab').addClass('active');
                 }
             }
 
@@ -2415,7 +2361,6 @@
             ]
 
             dt.dtInstanceCallbackCIE10 = function (instance) {
-                // Setup - add a text input to each footer cell
                 dt.dtInstanceCIE10 = instance;
                 var id = '#' + dt.dtInstanceCIE10.id;
                 $(id + ' thead th').each(function () {
@@ -2426,7 +2371,6 @@
                 });
 
                 var table = dt.dtInstanceCIE10.DataTable;
-                // Apply the search
                 table.columns().every(function () {
                     var that = this;
 
@@ -2466,8 +2410,6 @@
                     }
                 }).then(function (res) {
                     dt.cities = res.data.data;
-                    //dt.selectedCity = undefined;
-                    //dt.address.countyAux = undefined;
                     if (callback != undefined)
                         callback();
 
@@ -2476,6 +2418,7 @@
                 });
 
             };
+
             dt.UpdateCounties = function () {
                 $http({
                     method: 'POST',
@@ -2491,6 +2434,23 @@
                 });
             };
 
+            function previewFile(data) {
+                var preview = $(data).siblings('img.preview-img')[0];
+                var file = $(data)[0].files[0];
+
+                var reader = new FileReader();
+
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                }
+
+                if (file) {
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = "";
+                }
+            }
+        
             function init() {
                 $http({
                     method: 'POST',
@@ -2525,31 +2485,10 @@
                 dt.UpdateCities();
                 dt.UpdateCounties();
             };
+
             init();
-
         });
-    </script>
 
-    <script type="text/javascript">
-
-        function previewFile(data) {
-
-
-            var preview = $(data).siblings('img.preview-img')[0];
-            var file = $(data)[0].files[0];
-
-            var reader = new FileReader();
-
-            reader.onloadend = function () {
-                preview.src = reader.result;
-            }
-
-            if (file) {
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = "";
-            }
-        }
     </script>
 }
 
@@ -2575,7 +2514,8 @@
                 </div>
                 <div class="modal-body col-md-12">
                     <div class="col-md-12">
-                        <h4 class="modal-title">Ficha de identificación: </h4>
+                        <h4 style="margin-left: 10px;" class="modal-title">Ficha de identificación: </h4>
+                        <hr style="margin:10px" />
                     </div>
                     <div class="form-group col-md-12">
                         <div class="col-md-4">
@@ -2596,7 +2536,6 @@
                                 {{INMEDIKApp.ConsultFile.identificationAux.medicName}}
                             </div>
                         </div>
-
                     </div>
                     <div class="form-group col-md-12">
                         <div class="col-md-4">
@@ -2654,7 +2593,7 @@
                                 <a id="History-nav" data-toggle="tab" href="#History-tab">Historia Clínica</a>
                             </li>
                             <li ng-class="{'disabled': (INMEDIKApp.ConsultFile.id == undefined)}" id="fisicExploration">
-                                <a id="Physical-nav" ng-click="type = 'Fisica'" data-toggle="tab" href="#AS-tab">Exploración física</a>
+                                <a id="Physical-nav" ng-class="{'disabled-click': (INMEDIKApp.ConsultFile.id == undefined)}" ng-click="type = 'Fisica'" data-toggle="tab" href="#AS-tab">Exploración física</a>
                             </li>
                             <li ng-class="{'disabled': (INMEDIKApp.ConsultFile.id == undefined)}" id="consult">
                                 <a id="Evolutionnote-nav" ng-click="type = 'Evolucion';INMEDIKApp.ActiveCIE10Catalog('Evolucion')" data-toggle="tab"
@@ -2711,9 +2650,9 @@
                                                         <div class="form-horizontal">
                                                             <div class="form-group">
                                                                 <div class="col-md-12 no-padding-sides">
-                                                                    <table class="table table-bordered table-hover table-responsive">
+                                                                    <table class="table table-condensed table-hover table-responsive">
                                                                         <thead>
-                                                                            <tr class="col-md-12">
+                                                                            <tr class="col-md-12" style="text-align:center">
                                                                                 <td class="col-md-3"></td>
                                                                                 <td class="col-md-1">Abuelo</td>
                                                                                 <td class="col-md-1">Abuela</td>
@@ -2728,7 +2667,7 @@
                                                                                 <td class="col-md-3">{{disease.name}}</td>
                                                                                 <td class="col-md-1" ng-repeat="family in INMEDIKApp.ConsultFile.patientAux.ahfaux.familyAux" ng-init="INMEDIKApp.arr2d[$parent.$index][$index] = INMEDIKApp.diseaseIsChkd(family,disease);">
                                                                                     <input id="check{{$index}}" class="col-md-12" type="checkbox" 
-                                                                                            ng-model="INMEDIKApp.arr2d[$parent.$index][$index]" @*ng-checked="INMEDIKApp.diseaseIsChkd(family,disease)" *@ 
+                                                                                            ng-model="INMEDIKApp.arr2d[$parent.$index][$index]"
                                                                                             ng-change="INMEDIKApp.ValidateAHF(family,disease,$parent.$index, $index)" 
                                                                                          ng-disabled="$parent.$index == 0" />
                                                                                 </td>
@@ -2755,14 +2694,22 @@
                                                                         <div class="form-group col-md-2">
                                                                             <input type="checkbox" ng-model="INMEDIKApp.ConsultFile.patientAux.appAux.disease" />
                                                                         </div>
-                                                                        <div class="form-group col-md-12" ng-show="INMEDIKApp.ConsultFile.patientAux.appAux.disease">
+                                                                        <div class="form-group col-md-10" ng-show="INMEDIKApp.ConsultFile.patientAux.appAux.disease">
                                                                             <div class="col-md-5">
                                                                                 <label class="control-label">Hipertension Arterial: <input type="checkbox" ng-model="INMEDIKApp.ConsultFile.patientAux.appAux.hta" /> </label>
                                                                             </div>
                                                                             <div class="col-md-5">
                                                                                 <label class="control-label">Diabetes:  <input type="checkbox" ng-model="INMEDIKApp.ConsultFile.patientAux.appAux.dm" /> </label>
                                                                             </div>
-                                                                            <div class="col-md-8">
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group col-md-12">
+                                                                    <label class="control-label col-md-2"></label>
+                                                                    <div class="col-md-10">
+                                                                        <div class="form-group col-md-2"></div>
+                                                                        <div class="form-group col-md-12" ng-show="INMEDIKApp.ConsultFile.patientAux.appAux.disease">
+                                                                            <div class="col-md-10">
                                                                                 <textarea id="Currentdisease" name="Currentdisease" ng-model="INMEDIKApp.ConsultFile.patientAux.appAux.currentDisease" class="col-md-12" maxlength="500" rows="3" placeholder="Otra"></textarea>
                                                                             </div>
                                                                         </div>
@@ -2944,19 +2891,17 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-                                    <div class="btn btn-primary" data-loading-text="Guardando..." @*ng-disabled="dt.saving"*@ ng-click="INMEDIKApp.SaveClinicHistoryElements()">Guardar</div>
+                                    <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="dt.saving" ng-click="INMEDIKApp.SaveClinicHistoryElements()">Guardar</div>
                                 </div>
                             </div>
                             @* fin historia clinica *@
-                            @* inicio panel servicios *@
+                            @* inicio panel atenciones *@
                             <div id="Serv-tab" class="tab-pane">
                                 <div class="form-horizontal">
                                     <div class="form-group">
                                         <div class="col-md-12">
-                                            <div class="col-md-12 pull-right">
-                                                
-                                                <div style="text-align: initial;">
-                                                    <label for="state" class="control-label" style="margin-right:1rem;">Tipo<span class="required">*</span>: </label>
+                                            <div class="pull-left">
+                                                <div>
                                                     <button type="button" class="btn btn-default" ng-click="INMEDIKApp.validateatention('Servicios')">Servicios</button>
                                                     <button type="button" class="btn btn-default" ng-click="INMEDIKApp.validateatention('Medicamentos')">Medicamentos</button>
                                                 </div>
@@ -2964,7 +2909,7 @@
                                         </div>
                                     </div>
                                     @*inicio servicios*@
-                                <div class="form-group">
+                                    <div class="form-group">
                                     <div class="col-md-12" ng-repeat="services in INMEDIKApp.ConsultFile.servicenoteAux">
                                         <div class="panel panel-default">
                                             <div class="panel panel-heading">
@@ -2972,12 +2917,12 @@
                                                 <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveServiceElements(services,$index,INMEDIKApp.ConsultFile.id,false, type)">Guardar  <i class="fa fa-folder"></i></span>
                                                 <label class="col-md-2">Creada el día: {{services.sCreated}}</label>
                                                 <label class="col-md-2">Tipo: Servicios</label>
-                                                <label class="col-md-2">Doctor: {{services.createdby}}</label>
+                                                <label class="col-md-2">Doctor: {{services.userCreated}}</label>
                                                 <span ng-show="services.filesAux.length > 0" class="col-md-1"><i class="fas fa-file-image fa-2x col-lg-offset-8"></i></span>
                                                 <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.ServiceModal($index, service)"><i class="fa fa-times"></i></span>
                                                 <div class="clearfix"></div>
                                             </div>
-                                            <div class="panel panel-heading" style="background-color: #ff1a1a" ng-if="evolution.IsCancelled">
+                                            <div class="panel panel-heading" style="background-color: #ff1a1a " ng-if="evolution.IsCancelled">
                                                 <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBody{{$index}}"><i class="fas fa-bars"></i></span>
                                                 <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveServiceElements(services,$index,INMEDIKApp.ConsultFile.id,false)">Guardar  <i class="fa fa-folder"></i></span>
                                                 <label class="col-md-2">Creada el día: {{services.sCreated}}</label>
@@ -2989,7 +2934,7 @@
                                             </div>
                                             <div class="panel-body collapse" id="panelserv{{$index}}">
                                                 <div class="col-md-12">
-                                                    <div class="col-md-1">
+                                                    <div class="col-md-2">
                                                         <ul class="nav nav-pills">
                                                             <li class="active">
                                                                 <a ng-click="type = 'Servicio'" href="#Service{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Servicio">
@@ -3008,15 +2953,15 @@
                                                             </li>
                                                         </ul>
                                                     </div>
-                                                    <div class="col-md-11">
+                                                    <div class="col-md-10">
                                                         <div class="tab-content">
                                                             <div id="Service{{$index}}-tab" class="tab-pane fade in active">
                                                                 <div class="form-group col-md-12">
-                                                                    <div class="form-group">
-                                                                        <div class="col-md-8">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-2" for="ConsultTipe">Tipo: </label>
-                                                                                <div class="col-md-9">
+                                                                    <div class="form-group col-md-12">
+                                                                        <div class="col-md-12">
+                                                                            <div class="form-group col-md-12">
+                                                                                <label class="control-label col-md-1" for="ConsultTipe">Tipo: </label>
+                                                                                <div class="col-md-11">
                                                                                     <input ng-click="type = 'Servicios'" type="text" ng-disabled="evolution.id > 0" placeholder="Escribir nombre" id="name{{type}}" name="ConsultTipe"
                                                                                            ng-model="services.conceptAux.name"
                                                                                            uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
@@ -3048,12 +2993,12 @@
                                                                     <div class="form-group">
                                                                         <div class="col-md-12">
                                                                             <div class="col-md-12 pull-right">
-                                                                                <label class="col-md-3 pull-right">Nuevo Diagnóstico <button ng-disabled="evolution.id > 0" id="addEvolDiagnosis" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addDiagnosticServ(services)"><i class="fa fa-folder" aria-hidden="true"></i></button></label>
+                                                                                <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addDiagnosticServ(services)"> Agregar Diagnóstico</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="form-group col-md-12" style="margin: 20px !important" ng-repeat="servDiagnosis in services.diagnosticAux">
+                                                                    <div class="form-group">
+                                                                        <div class="col-md-12" ng-repeat="servDiagnosis in services.diagnosticAux">
                                                                             <div class="panel panel-default">
                                                                                 <div class="panel-heading">
                                                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}"><i class="fas fa-bars"></i></span>
@@ -3086,13 +3031,12 @@
                                                                 <div class="form-horizontal">
                                                                     <div class="form-group col-md-12">
                                                                         <div class="col-md-12">
-                                                                            <label class="col-md-1">Receta:</label>
+                                                                            <label class="col-md-12">Receta:</label>
                                                                             <textarea class="col-md-12" placeholder="Receta" rows="10" ng-model="services.recipeAux.recipe"></textarea>
+                                                                            <button id="printDisease" class="btn btn-info btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.ShowPdfPrenscription(services,$index,INMEDIKApp.ConsultFile.id,true)" ng-disabled="INMEDIKApp.subbmiting || !INMEDIKApp.saveService">Imprimir</button>
+
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                                <div class="col-md-12">
-                                                                    <button id="printDisease" class="btn btn-info btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.ShowPdfPrenscription(services,$index,INMEDIKApp.ConsultFile.id,true)" ng-disabled="INMEDIKApp.subbmiting || !INMEDIKApp.saveService">Imprimir</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -3101,7 +3045,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                    </div>
                                     @*fin servicios*@
                                     @*inicio medicamentos*@
                                     <div class="form-group">
@@ -3112,7 +3056,7 @@
                                                     <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveMedicamentElements(medicamentstock, medicam, INMEDIKApp.selectedconcept)">Guardar  <i class="fa fa-folder"></i></span>
                                                     <label class="col-md-2">Creada el día: {{medicam.sCreated}}</label>
                                                     <label class="col-md-2">Tipo:Medicamento {{medicam.conceptAux.name}}</label>
-                                                    <label class="col-md-2">Doctor: {{medicam.createdby}}</label>
+                                                    <label class="col-md-2">Doctor: {{medicam.userCreated}}</label>
                                                     <span ng-show="evolution.filesAux.length > 0" class="col-md-1"><i class="fas fa-file-image fa-2x col-lg-offset-8"></i></span>
                                                     <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.MedicModal($index, medicament)"><i class="fa fa-times"></i></span>
                                                     <div class="clearfix"></div>
@@ -3146,12 +3090,11 @@
                                                         <div class="col-md-10">
                                                             <div class="tab-content">
                                                                 <div id="Medic{{$index}}-tab" class="tab-pane fade in active">
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-12">
-                                                                            <button id="medicId" class="btn btn-success btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.medicstock(medicam)"> Agregar Medicamento</button>
-                                                                        </div>
+                                                                    <div class="form-horizontal">
+                                                                        <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.medicstock(medicam)"> Agregar Medicamento</span>
                                                                     </div>
-                                                                    <div class="form-group col-md-12">
+                                                                    <br /><br />
+                                                                    <div ng-if="medicam.medicamstock.length > 0" class="form-group col-md-12">
                                                                         <div class="col-md-12">
                                                                             <div class="col-md-4">
                                                                                 <label>Medicamento</label>
@@ -3167,18 +3110,18 @@
                                                                     <div id="stock{{index}}" class="form-group col-md-12" ng-repeat="medicamentstock in medicam.medicamstock">
                                                                         <div class="col-md-4">
                                                                             <input type="text" placeholder="Escribir nombre o Código" name="conceptAux"
-                                                                                   ng-model="medicamentstock.medicamento"
-                                                                                   uib-typeahead="item as item.name for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')"
-                                                                                   typeahead-loading="loading"
-                                                                                   typeahead-editable="false"
-                                                                                   typeahead-on-select="INMEDIKApp.SelectMedicament(medicamentstock.medicamento, medicam)"
-                                                                                   typeahead-no-results="noResult" class="form-control"
-                                                                                   autocomplete="off" required />
+                                                                                    ng-model="medicamentstock.medicamento"
+                                                                                    uib-typeahead="item as item.name for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')"
+                                                                                    typeahead-loading="loading"
+                                                                                    typeahead-editable="false"
+                                                                                    typeahead-on-select="INMEDIKApp.SelectMedicament(medicamentstock.medicamento, medicam)"
+                                                                                    typeahead-no-results="noResult" class="form-control"
+                                                                                    autocomplete="off" required />
                                                                         </div>
                                                                         <div class="col-md-3">
-                                                                            <input type="text" class="form-control" id="batch{{$index}}" name="quantity" placeholder="Lote" maxlength="50"
-                                                                                   ng-model="medicamentstock.stock < 0 ? 0 : medicamentstock.stock"
-                                                                                   uib-typeahead="item as item.inStock for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')" />
+                                                                            <input type="text" disabled class="form-control" id="batch{{$index}}" name="quantity" placeholder="Lote" maxlength="50"
+                                                                                    ng-model="medicamentstock.stock < 0 ? 0 : medicamentstock.stock"
+                                                                                    uib-typeahead="item as item.inStock for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')" />
                                                                         </div>
                                                                         <div class="col-md-3">
                                                                             <input type="number" class="form-control" ng-model="medicamentstock.quantity" ng-blur="INMEDIKApp.GetTouched($event)" min="{{movement.minQuantity}}" id="quantity" required name="quantity_{{$index}}" placeholder="Cantidad" maxlength="50">
@@ -3188,9 +3131,9 @@
                                                                             <span style="padding:5px" class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.setDeleteMedic($index,1, medicam)"><i class="fa fa-times"></i></span>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="form-group">
+                                                                    <div class="form-group col-md-12" style="margin-left: 0;" ng-if="medicam.medicamstock.length > 0">
                                                                         <textarea class="col-md-12" placeholder="Receta" rows="8" ng-model="medicam.notes"></textarea>
-                                                                        <button id="printDisease" class="btn btn-info btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.ShowPdfPrenscription(medicam,$index,INMEDIKApp.ConsultFile.id,true)" ng-disabled="INMEDIKApp.subbmiting">Imprimir</button>
+                                                                        <button id="printDisease" class="btn btn-primary btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.ShowPdfPrenscription(medicam,$index,INMEDIKApp.ConsultFile.id,true)" ng-disabled="INMEDIKApp.subbmiting">Imprimir</button>
                                                                     </div>
                                                                 </div>
                                                                 <div id="DiagnosticEvolMedc{{$index}}-tab" class="tab-pane fade">
@@ -3198,7 +3141,7 @@
                                                                         <div class="form-group">
                                                                             <div class="col-md-12">
                                                                                 <div class="col-md-12 pull-right">
-                                                                                    <label class="col-md-3 pull-right">Nuevo Diagnóstico <button ng-disabled="evolution.id > 0" id="addEvolDiagnosis" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addMedicamDiagnosis(medicam)"><i class="fa fa-folder" aria-hidden="true"></i></button></label>
+                                                                                    <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addMedicamDiagnosis(medicam)"> Agregar Diagnóstico</span>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
@@ -3256,7 +3199,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Respiratorio: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Respiratory" name="Respiratory" maxlength="500" rows="3" placeholder="Respiratorio" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.respiratory"></textarea>
+                                                        <textarea id="Respiratory" name="Respiratory" maxlength="500" rows="3" placeholder="Respiratorio" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.respiratory"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3264,7 +3207,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Cardiovascular: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Cardiovascular" name="Cardiovascular" maxlength="500" rows="3" placeholder="Cardiovascular" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.cardiovascular"></textarea>
+                                                        <textarea id="Cardiovascular" name="Cardiovascular" maxlength="500" rows="3" placeholder="Cardiovascular" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.cardiovascular"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3272,7 +3215,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Digestivo: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Digestive" name="Digestive" maxlength="500" rows="3" placeholder="Digestivo" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.digestive"></textarea>
+                                                        <textarea id="Digestive" name="Digestive" maxlength="500" rows="3" placeholder="Digestivo" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.digestive"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3280,7 +3223,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Urinario: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Urinary" name="Urinary" maxlength="500" rows="3" placeholder="Urinario" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.urinary"></textarea>
+                                                        <textarea id="Urinary" name="Urinary" maxlength="500" rows="3" placeholder="Urinario" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.urinary"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3288,7 +3231,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Musculoesquelético: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Musculoskeletal" name="Musculoskeletal" maxlength="500" rows="3" placeholder="Musculoesquelético" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.musculoskeletal"></textarea>
+                                                        <textarea id="Musculoskeletal" name="Musculoskeletal" maxlength="500" rows="3" placeholder="Musculoesquelético" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.musculoskeletal"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3296,7 +3239,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Genital: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Genital" name="Genital" maxlength="500" rows="3" placeholder="Genital" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.genital"></textarea>
+                                                        <textarea id="Genital" name="Genital" maxlength="500" rows="3" placeholder="Genital" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.genital"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3306,7 +3249,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Hematológico: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Hematological" name="Hematological" maxlength="500" rows="3" placeholder="Hematológico" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.hematological"></textarea>
+                                                        <textarea id="Hematological" name="Hematological" maxlength="500" rows="3" placeholder="Hematológico" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.hematological"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3314,7 +3257,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Endócrino: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Endocrine" name="Endocrine" maxlength="500" rows="3" placeholder="Endócrino" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.endocrine"></textarea>
+                                                        <textarea id="Endocrine" name="Endocrine" maxlength="500" rows="3" placeholder="Endócrino" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.endocrine"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3322,7 +3265,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Nervioso: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Nervous" name="Nervous" maxlength="500" rows="3" placeholder="Nervioso" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.nervous"></textarea>
+                                                        <textarea id="Nervous" name="Nervous" maxlength="500" rows="3" placeholder="Nervioso" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.nervous"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3330,7 +3273,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Psicosomático: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Psychosomatic" name="Psychosomatic" maxlength="500" rows="3" placeholder="Psicosomático" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.psychosomatic"></textarea>
+                                                        <textarea id="Psychosomatic" name="Psychosomatic" maxlength="500" rows="3" placeholder="Psicosomático" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.psychosomatic"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3338,7 +3281,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label col-md-4">Otros: </label>
                                                     <div class="col-md-8">
-                                                        <textarea @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="Others" name="Others" maxlength="500" rows="3" placeholder="Otros" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.others"></textarea>
+                                                        <textarea id="Others" name="Others" maxlength="500" rows="3" placeholder="Otros" class="col-md-12" ng-model="INMEDIKApp.ConsultFile.deviceAndSystemsAux.others"></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3347,7 +3290,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-                                    <div class="btn btn-primary" data-loading-text="Guardando..." @*ng-disabled="dt.saving"*@ ng-click="INMEDIKApp.SaveExplorationElements()">Guardar</div>
+                                    <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="dt.saving" ng-click="INMEDIKApp.SaveExplorationElements()">Guardar</div>
                                 </div>
                             </div>
                             @* fin aparatos y sistemas *@
@@ -3380,9 +3323,9 @@
                                                                 </label>
                                                                 <div class="col-md-10">
                                                                     <input type="number" min="1" class="col-md-2" ng-model="INMEDIKApp.ConsultFile.explorationAux.temperature" autocomplete="off" /><span class="col-md-1"> C°</span>
-                                                                    @*<span class="label label-danger" ng-if="INMEDIKApp.ConsultFile.explorationAux.temperature>=38">Fiebre</span>
+                                                                    <span class="label label-danger" ng-if="INMEDIKApp.ConsultFile.explorationAux.temperature>=38">Fiebre</span>
                                                                         <span class="label label-warning" ng-if="INMEDIKApp.ConsultFile.explorationAux.temperature>=37.5 && INMEDIKApp.ConsultFile.explorationAux.temperature<=37.9">Febricula</span>
-                                                                        <span class="label label-info" ng-if="INMEDIKApp.ConsultFile.explorationAux.temperature<36 && INMEDIKApp.ConsultFile.explorationAux.temperature > 1">Hipotermia</span>*@
+                                                                        <span class="label label-info" ng-if="INMEDIKApp.ConsultFile.explorationAux.temperature<36 && INMEDIKApp.ConsultFile.explorationAux.temperature > 1">Hipotermia</span>
                                                                 </div>
                                                             </div>
                                                             <div class="form-group col-md-12">
@@ -3415,7 +3358,7 @@
                                                                               ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && INMEDIKApp.ConsultFile.explorationAux.heartRate<=99 && INMEDIKApp.ConsultFile.explorationAux.heartRate > 1) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && INMEDIKApp.ConsultFile.explorationAux.heartRate<=59 && INMEDIKApp.ConsultFile.explorationAux.heartRate > 1) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && INMEDIKApp.ConsultFile.explorationAux.heartRate<=59 && INMEDIKApp.ConsultFile.explorationAux.heartRate > 1)">Bradicardia</span>
                                                                     </label>
                                                                     <div class="col-md-8">
-                                                                        <inputclass="col-md-8" type="number" min="1" ng-model="INMEDIKApp.ConsultFile.explorationAux.heartRate" autocomplete="off" /><span class="col-md-2"> lpm</span>
+                                                                        <input class="col-md-8" type="number" min="1" ng-model="INMEDIKApp.ConsultFile.explorationAux.heartRate" autocomplete="off" /><span class="col-md-2"> lpm</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6">
@@ -3546,7 +3489,6 @@
                                                             <div class="form-group col-md-12">
                                                                 <label class="col-md-2">Recetaaaaaa: </label>
                                                                 <div class="col-md-10">
-                                                                    @*<h4>Plan: </h4>*@
                                                                     <div class="form-group" style="border:inset;max-width:700px;max-height:200px;min-height:200px;overflow:auto;">
                                                                         <div class="col-md-12" ng-repeat="recipe in INMEDIKApp.Recipe">
                                                                             <h5>{{recipe.nombre}}</h5>
@@ -3567,13 +3509,13 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ class="col-md-1 pull-right btn btn-primary" ng-click="INMEDIKApp.SaveExplorationElements()">Guardar</div>
+                                            <div class="col-md-1 pull-right btn btn-primary" ng-click="INMEDIKApp.SaveExplorationElements()">Guardar</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             @* fin exploracion fisica *@
-                            @* inicio panel nota evolucion *@
+                            @* inicio panel nota evolucion (Consultas) *@
                             <div id="Evolucion-tab" class="tab-pane fade">
                                 <div class="form-horizontal">
                                     <div class="form-group">
@@ -3845,7 +3787,7 @@
                                                                     <div class="form-group col-md-12">
                                                                         <h4 class="col-md-12 text-center">Escala del dolor </h4>
                                                                     </div>
-                                                                    <div class="form-group col-md-12" @*ng-if="INMEDIKApp.ConsultFile.patientAux.personAux.age>=8"*@>
+                                                                    <div class="form-group col-md-12">
                                                                         <input type="range" class="slider-input" min="0" max="10" step="1" id="painScaleRange{{$index}}" ng-model="evolution.evolutionExplorationAux.painScaleAdult" />
                                                                         <div class="ticks">
                                                                             <span class="tick">0</span>
@@ -3933,7 +3875,7 @@
                                                                                     <div class="clearfix"></div>
                                                                                 </div>
                                                                                 <div class="panel-body in" id="diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}">
-                                                                                    <div class="form-group col-md-12" @*ng-if="evolDiagnosis.nombre == undefined"*@>
+                                                                                    <div class="form-group col-md-12">
                                                                                         <label class="col-md-4">Diagnósticos o problemas clínicos:</label>
                                                                                         <div class="col-md-8">
                                                                                             <input class="col-md-11" ng-model="evolDiagnosis.name" readonly />
@@ -4021,7 +3963,7 @@
                                         <div class="col-md-12">
                                             <div class="col-md-12 pull-right">
                                                 <label class="col-md-3 pull-right">
-                                                    Nueva interconsulta 
+                                                    Nueva nota 
                                                     <button id="addInterConsult" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addInterConsult(false)" data-toggle="collapse" data-target="#panelBodyInter0">
                                                         <i class="fa fa-folder" aria-hidden="true"></i>
                                                     </button>
@@ -4033,21 +3975,18 @@
                                         <div class="col-md-12" ng-repeat="interconsult in INMEDIKApp.ConsultFile.interconsultAux">
                                             <div class="panel panel-default">
                                                 <div class="panel-heading" ng-if="!interconsult.IsCancelled">
-                                                    @*<label class="col-lg-3">{{evolution.stringVersion}}</label>
-                                                        <label class="col-lg-3">Creada por: {{evolution.stringCreatedBy}}</label>
-                                                        <label class="col-lg-3">Creada el día: {{evolution.created_string}}</label>*@
                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyInter{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentInterconsult(interconsult,$index,INMEDIKApp.ConsultFile.id)" @*ng-disabled="INMEDIKApp.subbmiting||interconsult.IsCancelled"*@>Guardar  <i class="fa fa-folder"></i></span>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentInterconsult(interconsult,$index,INMEDIKApp.ConsultFile.id)">Guardar<i class="fa fa-folder"></i></span>
                                                     <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.InterConsultModal($index, interconsult)"><i class="fa fa-times"></i></span>
-                                                    <label class="col-md-4">Creada el día: {{interconsult.sCreated}}</label>
-                                                    <label class="col-md-4">Doctor: {{interconsult.CreatedBy}}</label>
+                                                    <label class="col-md-2">Creada el día: {{interconsult.sCreated}}</label>
+                                                    <label class="col-md-2">Doctor: {{interconsult.CreatedBy}}</label>
                                                     <div class="clearfix"></div>
                                                 </div>
                                                 <div class="panel-heading" style="background-color: #ff1a1a" ng-if="interconsult.IsCancelled">
                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyInter{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentInterconsult(interconsult,$index,INMEDIKApp.ConsultFile.id)" @*ng-disabled="INMEDIKApp.subbmiting||interconsult.IsCancelled"*@>Guardar  <i class="fa fa-folder"></i></span>
-                                                    <label class="col-md-4">Creada el día: {{interconsult.sCreated}}</label>
-                                                    <label class="col-md-4">Doctor: {{interconsult.CreatedBy}}</label>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentInterconsult(interconsult,$index,INMEDIKApp.ConsultFile.id)">Guardar<i class="fa fa-folder"></i></span>
+                                                    <label class="col-md-2">Creada el día: {{interconsult.sCreated}}</label>
+                                                    <label class="col-md-2">Doctor: {{interconsult.CreatedBy}}</label>
                                                     <label class="col-md-1 pull-right">Cancelado</label>
                                                     <div class="clearfix"></div>
                                                 </div>
@@ -4105,7 +4044,7 @@
                                         <div class="col-md-12">
                                             <div class="col-md-12 pull-right">
                                                 <label class="col-md-3 pull-right">
-                                                    Nueva nota de referencia 
+                                                    Nueva nota
                                                     <button id="addReferenceConsult" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addReferenceConsult(false)" data-toggle="collapse" data-target="#panelBodyRef0">
                                                         <i class="fa fa-folder" aria-hidden="true"></i>
                                                     </button>
@@ -4118,17 +4057,17 @@
                                             <div class="panel panel-default">
                                                 <div class="panel-heading" ng-if="!reference.IsCancelled">
                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyRef{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentReferenceNote(reference,$index,INMEDIKApp.ConsultFile.id)" @*ng-disabled="INMEDIKApp.subbmiting||reference.IsCancelled"*@>Guardar  <i class="fa fa-folder"></i></span>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentReferenceNote(reference,$index,INMEDIKApp.ConsultFile.id)">Guardar<i class="fa fa-folder"></i></span>
                                                     <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.ReferenceModal($index, reference)"><i class="fa fa-times"></i></span>
-                                                    <label class="col-md-4">Creada el día: {{reference.sCreated}}</label>
-                                                    <label class="col-md-4">Doctor: {{reference.CreatedBy}}</label>
+                                                    <label class="col-md-2">Creada el día: {{reference.sCreated}}</label>
+                                                    <label class="col-md-2">Doctor: {{reference.CreatedBy}}</label>
                                                     <div class="clearfix"></div>
                                                 </div>
                                                 <div class="panel-heading" style="background-color: #ff1a1a" ng-if="reference.IsCancelled">
                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyRef{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentReferenceNote(reference,$index,INMEDIKApp.ConsultFile.id)" @*ng-disabled="INMEDIKApp.subbmiting||reference.IsCancelled"*@>Guardar  <i class="fa fa-folder"></i></span>
-                                                    <label class="col-md-4">Creada el día: {{reference.sCreated}}</label>
-                                                    <label class="col-md-4">Doctor: {{reference.CreatedBy}}</label>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentReferenceNote(reference,$index,INMEDIKApp.ConsultFile.id)">Guardar<i class="fa fa-folder"></i></span>
+                                                    <label class="col-md-2">Creada el día: {{reference.sCreated}}</label>
+                                                    <label class="col-md-2">Doctor: {{reference.CreatedBy}}</label>
                                                     <label class="col-md-1 pull-right">Cancelado</label>
                                                     <div class="clearfix"></div>
                                                 </div>
@@ -4212,7 +4151,7 @@
                                                                     <div class="col-md-12 pull-right">
                                                                         <label class="col-md-3 pull-right">
                                                                             Nuevo Examen 
-                                                                            <button @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="addExam" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addExam()" data-toggle="collapse" data-target="#panelBodyexm0">
+                                                                            <button id="addExam" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addExam()" data-toggle="collapse" data-target="#panelBodyexm0">
                                                                                 <i class="fa fa-folder" aria-hidden="true"></i>
                                                                             </button>
                                                                         </label>
@@ -4272,7 +4211,7 @@
                                                                     <div class="col-md-12 pull-right">
                                                                         <label class="col-md-3 pull-right">
                                                                             Nuevo Resultado 
-                                                                            <button @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ id="addPreviousResult" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addPreviousResult()" data-toggle="collapse" data-target="#panelBodyResults0">
+                                                                            <button id="addPreviousResult" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addPreviousResult()" data-toggle="collapse" data-target="#panelBodyResults0">
                                                                                 <i class="fa fa-folder" aria-hidden="true"></i>
                                                                             </button>
                                                                         </label>
@@ -4285,7 +4224,7 @@
                                                                         <div class="panel-heading">
                                                                             <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodyResults{{$index}}"><i class="fas fa-bars"></i></span>
                                                                             <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SavePreviousResult(INMEDIKApp.selectedconcept, evolution,$index,INMEDIKApp.ConsultFile.id,false)" ng-disabled="INMEDIKApp.subbmiting||evolution.IsCancelled">Guardar  <i class="fa fa-folder"></i></span>
-                                                                            <span class="btn btn-danger btn-xs pull-right" @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ ng-click="INMEDIKApp.DeletePreviousResult($index)"><i class="fa fa-times"></i></span>
+                                                                            <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.DeletePreviousResult($index)"><i class="fa fa-times"></i></span>
                                                                             <label class="col-md-2">Creada el día: {{results.sCreated}}</label>
                                                                             <label class="col-md-2">Doctor: {{results.CreatedBy}}</label>
                                                                             <div class="clearfix"></div>
@@ -4298,12 +4237,12 @@
                                                                                     <span class="label label-danger" ng-if="results.cholesterol>200"> Hipercolesterolemia</span>
                                                                                 </label>
                                                                                 <div class="col-md-4">
-                                                                                    <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ type="number" min="1" ng-model="results.cholesterol" /><span> mg/dl</span>
+                                                                                    <input type="number" min="1" ng-model="results.cholesterol" /><span> mg/dl</span>
                                                                                 </div>
                                                                                 <div class="col-md-6">
                                                                                     <label class="col-md-6">Fecha de toma: </label>
                                                                                     <div class="col-md-6">
-                                                                                        <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Cholesterol" id="dateOfTaking_Cholesterol" name="dateOfTaking_Cholesterol"
+                                                                                        <input date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Cholesterol" id="dateOfTaking_Cholesterol" name="dateOfTaking_Cholesterol"
                                                                                                readonly style="background-color: #ffffff !important; cursor: pointer !important;" placeholder="Fecha de toma">
                                                                                     </div>
                                                                                 </div>
@@ -4314,12 +4253,12 @@
                                                                                     <span class="label label-danger" ng-if="results.triglycerides>150"> Hipertrigliceridemia</span>
                                                                                 </label>
                                                                                 <div class="col-md-4">
-                                                                                    <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ type="number" min="1" ng-model="results.triglycerides" /> <span> mg/dl</span>
+                                                                                    <input type="number" min="1" ng-model="results.triglycerides" /> <span> mg/dl</span>
                                                                                 </div>
                                                                                 <div class="col-md-6">
                                                                                     <label class="col-md-6">Fecha de toma: </label>
                                                                                     <div class="col-md-6">
-                                                                                        <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Triglycerides" id="dateOfTaking_Triglycerides" name="dateOfTaking_Triglycerides"
+                                                                                        <input date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Triglycerides" id="dateOfTaking_Triglycerides" name="dateOfTaking_Triglycerides"
                                                                                                readonly style="background-color: #ffffff !important; cursor: pointer !important;" placeholder="Fecha de toma">
                                                                                     </div>
                                                                                 </div>
@@ -4336,12 +4275,12 @@
                                                                                     <span class="label label-danger" ng-if="results.glucose>140 && results.glucose_category=='2ADC'"> Hiperglucemia</span>
                                                                                 </label>
                                                                                 <div class="col-md-4">
-                                                                                    <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ type="number" min="1" ng-model="results.glucose" /><span> mg/dl</span>
+                                                                                    <input type="number" min="1" ng-model="results.glucose" /><span> mg/dl</span>
                                                                                 </div>
                                                                                 <div class="col-md-6">
                                                                                     <label class="col-md-6">Fecha de toma: </label>
                                                                                     <div class="col-md-6">
-                                                                                        <input @*ng-disabled="INMEDIKApp.ConsultFile.explorationAux.id != undefined"*@ date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Glucose" id="dateOfTaking_Glucose" name="dateOfTaking_Glucose"
+                                                                                        <input date-time view="date" format="DD/MM/YYYY" min-view="date" class="form-control col-md-5" ng-model="results.dateOfTaking_Glucose" id="dateOfTaking_Glucose" name="dateOfTaking_Glucose"
                                                                                                readonly style="background-color: #ffffff !important; cursor: pointer !important;" placeholder="Fecha de toma">
                                                                                     </div>
                                                                                 </div>
@@ -4391,6 +4330,7 @@
             </div>
         </div>
     </div>
+
     <div class="modal fade modal-info" id="CIE10Modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" style="width: 70%;">
             <div class="modal-content">
@@ -4407,9 +4347,6 @@
                         </div>
                     </div>
                 </div>
-                @*<div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-                    </div>*@
             </div>
         </div>
     </div>
@@ -4490,6 +4427,7 @@
             </div>
         </div>
     </div>
+
     <div class="modal fade" id="NewPatientModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
         <div class="modal-dialog modal-lg" style="width: 80%">
             <div class="modal-content">
@@ -4585,14 +4523,14 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElementP()" @*ng-disabled="PatientForm.$invalid || INMEDIKApp.subbmiting"*@>Guardar</button>
+                    <button type="button" class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveElementP()">Guardar</button>
                 </div>
             </div>
         </div>
     </div>
+
     <div id="ImageDeleteModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4609,9 +4547,9 @@
 
         </div>
     </div>
+
     <div id="EvDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4628,9 +4566,9 @@
 
         </div>
     </div>
+
     <div id="EvCancellationWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4648,9 +4586,9 @@
 
         </div>
     </div>
+
     <div id="InDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4667,9 +4605,9 @@
 
         </div>
     </div>
+
     <div id="PdDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4686,9 +4624,9 @@
 
         </div>
     </div>
+
     <div id="SvDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4707,9 +4645,9 @@
             </div>
         </div>
     </div>
+
     <div id="MeDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4726,9 +4664,9 @@
 
         </div>
     </div>
+
     <div id="InCancellationWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4746,9 +4684,9 @@
 
         </div>
     </div>
+
     <div id="RefDeletionWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4762,12 +4700,11 @@
                     <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.DeleteReferenceConsult(INMEDIKApp.index)" data-dismiss="modal">Continuar</button>
                 </div>
             </div>
-
         </div>
     </div>
+
     <div id="RefCancellationWarningModal" class="modal modal-danger fade" role="dialog">
         <div class="modal-dialog">
-
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
@@ -4782,9 +4719,9 @@
                     <button type="button" class="btn btn-danger" ng-click="INMEDIKApp.CancelReferenceNote(INMEDIKApp.Refid)" data-dismiss="modal">Continuar</button>
                 </div>
             </div>
-
         </div>
     </div>
+
     <div class="modal fade modal-info" id="RecipeModal" tabindex="-1" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -4792,29 +4729,8 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                     <h4>Receta</h4>
                 </div>
-                <div class="modal-body">
-                    @*<div class="form-group col-md-12">
-                            <label class="col-md-2">Receta: </label>
-                            <div class="col-md-10">
-                                <div class="form-group" style="border:inset;max-width:700px;max-height:200px;min-height:200px;overflow:auto;">
-                                    <div class="col-md-12" ng-repeat="recipe in evolution.recipeAux">
-                                        <h5>{{recipe.nombre}}</h5>
-                                        <ul ng-repeat="indications in recipe.indicationsAux">
-                                            <li>{{indications.activeSubstance}}, {{indications.commercialBrand}}, {{indications.presentation}}</li>
-                                            <li>{{indications.dose}} {{indications.unit}}, {{indications.frequency}}, {{indications.wayOfAdministration}}</li>
-                                            <li>Por(Días): {{indications.daysOfThreatment}}</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <button id="printDisease" class="btn btn-info btn-xs col-md-2 pull-right" style="margin: 4px" ng-click="INMEDIKApp.ShowPdfPrenscription(evolution,$index,INMEDIKApp.ConsultFile.id,true)" ng-disabled="INMEDIKApp.subbmiting">Imprimir</button>
-                                    <button id="addDisease" class="btn btn-default btn-xs col-md-2 pull-right" style="margin: 4px" ng-disabled="evolution.id > 0" ng-click="INMEDIKApp.cleanRecipe(evolution)">Limpiar</button>
-                                </div>
-                            </div>
-                        </div>*@
-                </div>
+                <div class="modal-body"></div>
             </div>
         </div>
     </div>
 </div>
-
