@@ -2434,7 +2434,7 @@
                 });
             };
 
-            function previewFile(data) {
+            function previewFile(data) { debugger
                 var preview = $(data).siblings('img.preview-img')[0];
                 var file = $(data)[0].files[0];
 
@@ -3522,7 +3522,7 @@
                                         <div class="col-md-12">
                                             <div class="col-md-12 pull-right">
                                                 <label class="col-md-2 pull-right">
-                                                    Nueva nota 
+                                                    Nueva nota
                                                     <button id="addEvolutionNote" class="btn btn-info btn-xs col-md-3 pull-right" ng-click="INMEDIKApp.addEvolutionNote()" data-toggle="collapse" data-target="#panelBodymod0">
                                                         <i class="fa fa-folder" aria-hidden="true"></i>
                                                     </button>
@@ -3535,8 +3535,8 @@
                                             <div class="panel panel-default">
                                                 <div class="panel panel-heading" ng-if="!evolution.IsCancelled">
                                                     <span id="btncollapse" class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBodymod{{$index}}"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" 
-                                                          ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" 
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" style="margin-left:5px;"
+                                                          ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
                                                           ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, false)">Guardar  <i class="fa fa-folder"></i></span>
                                                     <label class="col-md-2">Creada el día: {{evolution.sCreated}}</label>
                                                     <label class="col-md-2">Doctor: {{evolution.userCreated}}</label>
@@ -3547,7 +3547,8 @@
                                                 @*bloque que se muestra al estar cancelada la consulta*@
                                                 <div class="panel panel-heading" style="background-color: #ff1a1a" ng-if="evolution.IsCancelled">
                                                     <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#panelBody{{$index}}" ng-disabled="INMEDIKApp.subbmiting||evolution.IsCancelled"><i class="fas fa-bars"></i></span>
-                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" ng-click="INMEDIKApp.SaveCurrentNote(evolution,$index,INMEDIKApp.ConsultFile.id,false)" ng-disabled="INMEDIKApp.subbmiting||evolution.IsCancelled">Guardar  <i class="fa fa-folder"></i></span>
+                                                    <span class="btn btn-warning btn-xs pull-left col-md-1" style="margin-left:5px;"
+                                                          ng-disabled="INMEDIKApp.subbmiting||evolution.IsCancelled">Guardar<i class="fa fa-folder"></i></span>
                                                     <label class="col-md-2">Creada el día: {{evolution.sCreated}}</label>
                                                     <label class="col-md-2">Diagnóstico: </label>
                                                     <label class="col-md-2">Doctor: {{evolution.userCreated}}</label>
@@ -3558,398 +3559,444 @@
                                                 </div>
                                                 @*fin bloque consulta cancelada*@
                                                 <div class="panel-body collapse" id="panelBodymod{{$index}}">
-                                                <div class="col-md-12">
-                                                    <div class="col-md-2">
-                                                        <ul class="nav nav-pills">
-                                                            <li class="active">
-                                                                <a href="#Vital{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Signos vitales">
-                                                                    Signos vitales
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a href="#Evolution{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" ng-click="INMEDIKApp.ActiveCIE10Catalog('Evolucion')" title="Cuadro clínico">
-                                                                    Cuadro clínico
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a href="#Imagen{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Imagen">
-                                                                    Imagen/PDF
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a href="#DiagnosticEvol{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Diagnósticos o problemas clínicos" ng-click="INMEDIKApp.ActiveCIE10Catalog('Problemas',$index)">
-                                                                    Diagnósticos
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a href="#RecipeEvol{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Diagnósticos o problemas clínicos" ng-click="INMEDIKApp.ActiveCIE10Catalog('Problemas',$index)">
-                                                                    Receta
-                                                                </a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                    <div class="col-md-10">
-                                                        <div class="tab-content">
-                                                            <div id="Evolution{{$index}}-tab" class="tab-pane fade">
-                                                                <div class="form-horizontal">
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-3" for="ConsultTipe">Tipo de consulta: </label>
-                                                                                <div class="col-md-9">
-                                                                                    <input ng-click="type = 'Consultas'" type="text" placeholder="Escribir nombre" id="name{{type}}" name="ConsultTipe"
-                                                                                           ng-model="evolution.evolutionConditionAux.tipeConsult"
-                                                                                           uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
-                                                                                           typeahead-loading="loading[type]"
-                                                                                           typeahead-editable="false"
-                                                                                           typeahead-no-results="noResult[type]" class="form-control"
-                                                                                           typeahead-on-select="INMEDIKApp.setConceptSelected($item, type)"
-                                                                                           autocomplete="off" />
-                                                                                    <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
-                                                                                    <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                                    <div class="col-md-12">
+                                                        <div class="col-md-2">
+                                                            <ul class="nav nav-pills">
+                                                                <li class="active">
+                                                                    <a href="#Vital{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Signos vitales">
+                                                                        Signos vitales
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a href="#Evolution{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" ng-click="INMEDIKApp.ActiveCIE10Catalog('Evolucion')" title="Cuadro clínico">
+                                                                        Cuadro clínico
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a href="#Imagen{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Imagen">
+                                                                        Imagen/PDF
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a href="#DiagnosticEvol{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Diagnósticos o problemas clínicos" ng-click="INMEDIKApp.ActiveCIE10Catalog('Problemas',$index)">
+                                                                        Diagnósticos
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a href="#RecipeEvol{{$index}}-tab" data-toggle="tab" data-placement="right" data-container="body" title="Diagnósticos o problemas clínicos" ng-click="INMEDIKApp.ActiveCIE10Catalog('Problemas',$index)">
+                                                                        Receta
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-md-10">
+                                                            <div class="tab-content">
+                                                                <div id="Evolution{{$index}}-tab" class="tab-pane fade">
+                                                                    <div class="form-horizontal">
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-md-3" for="ConsultTipe">Tipo de consulta: </label>
+                                                                                    <div class="col-md-9">
+                                                                                        <input ng-click="type = 'Consultas'" type="text" placeholder="Escribir nombre" id="name{{type}}" name="ConsultTipe"
+                                                                                               ng-model="evolution.evolutionConditionAux.tipeConsult"
+                                                                                               ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                               uib-typeahead="item.name for item in INMEDIKApp.loadConcepts($viewValue,type)"
+                                                                                               typeahead-loading="loading[type]"
+                                                                                               typeahead-editable="false"
+                                                                                               typeahead-no-results="noResult[type]" class="form-control"
+                                                                                               typeahead-on-select="INMEDIKApp.setConceptSelected($item, type)"
+                                                                                               autocomplete="off" />
+                                                                                        <span class="text-danger" ng-show="noResult[type]">No se encontro coincidencias</span>
+                                                                                        <span class="text-primary" ng-show="loading[type]">Buscando...</span>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-3">Motivo de consulta: </label>
-                                                                                <div class="col-md-9">
-                                                                                    <textarea id="Reason" name="Reason" maxlength="500" rows="3" placeholder="Motivo de consulta" class="col-md-12" ng-model="evolution.evolutionConditionAux.reasonForConsultation" title="Motivo de consulta"></textarea>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-md-3">Motivo de consulta: </label>
+                                                                                    <div class="col-md-9">
+                                                                                        <textarea id="Reason" name="Reason" maxlength="500" rows="3"
+                                                                                                  placeholder="Motivo de consulta" class="col-md-12"
+                                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                  ng-model="evolution.evolutionConditionAux.reasonForConsultation" title="Motivo de consulta"></textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-md-3">Subjetivo: </label>
+                                                                                    <div class="col-md-9">
+                                                                                        <textarea id="Subjective" name="Subjective" maxlength="500" rows="3"
+                                                                                                  placeholder="Subjetivo" class="col-md-12"
+                                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                  ng-model="evolution.evolutionConditionAux.subjective" title="Subjetivo"></textarea>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-3">Subjetivo: </label>
-                                                                                <div class="col-md-9">
-                                                                                    <textarea id="Subjective" name="Subjective" maxlength="500" rows="3" placeholder="Subjetivo" class="col-md-12" ng-model="evolution.evolutionConditionAux.subjective" title="Subjetivo"></textarea>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-md-3">Objetivo: </label>
+                                                                                    <div class="col-md-9">
+                                                                                        <textarea id="objective" name="objective" maxlength="500" rows="3"
+                                                                                                  placeholder="Objetivo" class="col-md-12"
+                                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                  ng-model="evolution.evolutionConditionAux.objective" title="Objetivo"></textarea>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-3">Objetivo: </label>
-                                                                                <div class="col-md-9">
-                                                                                    <textarea id="objective" name="objective" maxlength="500" rows="3" placeholder="Objetivo" class="col-md-12" ng-model="evolution.evolutionConditionAux.objective" title="Objetivo"></textarea>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label class="control-label col-md-3">Análisis: </label>
-                                                                                <div class="col-md-9">
-                                                                                    <textarea id="Analysis" name="Analysis" maxlength="500" rows="3" placeholder="Análisis" class="col-md-12" ng-model="evolution.evolutionConditionAux.analysis" title="Análisis"></textarea>
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-group">
+                                                                                    <label class="control-label col-md-3">Análisis: </label>
+                                                                                    <div class="col-md-9">
+                                                                                        <textarea id="Analysis" name="Analysis" maxlength="500" rows="3"
+                                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                  placeholder="Análisis" class="col-md-12"
+                                                                                                  ng-model="evolution.evolutionConditionAux.analysis" title="Análisis"></textarea>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            <div id="Vital{{$index}}-tab" class="tab-pane fade in active">
-                                                                <div class="form-horizontal">
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-2">
-                                                                            <label class="col-md-6">Hábitus exterior: </label>
-                                                                        </div>
-                                                                        <div class="col-md-10">
-                                                                            <textarea id="Habitus" name="Habitus" maxlength="500" rows="3" placeholder="Habitus exterior" class="col-md-12" ng-model="evolution.evolutionExplorationAux.habitus"></textarea>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Temperatura:
-                                                                                <span class="label label-default" ng-if="evolution.evolutionExplorationAux.temperature>=36 && evolution.evolutionExplorationAux.temperature<37">Normal</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.temperature>=38">Fiebre</span>
-                                                                                <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.temperature>=37.5 && evolution.evolutionExplorationAux.temperature<=37.9">Febricula</span>
-                                                                                <span class="label label-info" ng-if="evolution.evolutionExplorationAux.temperature<36 && evolution.evolutionExplorationAux.temperature > 1">Hipotermia</span>
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input type="number" min="1" class="col-md-8" ng-model="evolution.evolutionExplorationAux.temperature" autocomplete="off" /><span class="col-md-1"> C°</span>
+                                                                <div id="Vital{{$index}}-tab" class="tab-pane fade in active">
+                                                                    <div class="form-horizontal">
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-2">
+                                                                                <label class="col-md-6">Hábitus exterior: </label>
+                                                                            </div>
+                                                                            <div class="col-md-10">
+                                                                                <textarea ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" id="Habitus" name="Habitus" maxlength="500" rows="3" placeholder="Habitus exterior" class="col-md-12" ng-model="evolution.evolutionExplorationAux.habitus"></textarea>
                                                                             </div>
                                                                         </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-6">
-                                                                                Tensión Arterial:
-                                                                                <span class="label label-default" ng-if="evolution.evolutionExplorationAux.ta_sistolica<=120 && evolution.evolutionExplorationAux.ta_sistolica > 1 && evolution.evolutionExplorationAux.ta_diastolica > 1 && evolution.evolutionExplorationAux.ta_diastolica <80">Normal</span>
-                                                                                <span class="label label-info" ng-if="evolution.evolutionExplorationAux.ta_sistolica>=120.1 && evolution.evolutionExplorationAux.ta_sistolica<=129.9 && evolution.evolutionExplorationAux.ta_diastolica <80">Elevada</span>
-                                                                                <span class="label label-warning" ng-if="(evolution.evolutionExplorationAux.ta_sistolica>=130 && evolution.evolutionExplorationAux.ta_sistolica<=139.9) || (evolution.evolutionExplorationAux.ta_diastolica >=80 && evolution.evolutionExplorationAux.ta_diastolica <=89)">Hipertensión nivel 1</span>
-                                                                                <span class="label label-warning" ng-if="(evolution.evolutionExplorationAux.ta_sistolica>=140 && evolution.evolutionExplorationAux.ta_sistolica<=179.9) || (evolution.evolutionExplorationAux.ta_diastolica >=90 && evolution.evolutionExplorationAux.ta_diastolica <=119)">Hipertensión nivel 2</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.ta_sistolica>=180 || evolution.evolutionExplorationAux.ta_diastolica >=120">Crisis de hipertensión</span>
-                                                                            </label>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Sistólica:
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.ta_sistolica" autocomplete="off" /><span class="col-md-3">mm Hg</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Diastólica:
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.ta_diastolica" autocomplete="off" /><span class="col-md-3">mm Hg</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Frecuencia cardiaca:
-                                                                                <span class="label label-default"
-                                                                                      ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate>=100 && evolution.evolutionExplorationAux.heartRate<=180) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate>=60 && evolution.evolutionExplorationAux.heartRate<=140) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate>=60 && evolution.evolutionExplorationAux.heartRate<=100)">Normal</span>
-                                                                                <span class="label label-danger"
-                                                                                      ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate>=181) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate>=141) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate>=101)">Taquicardia</span>
-                                                                                <span class="label label-danger"
-                                                                                      ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate<=99 && evolution.evolutionExplorationAux.heartRate > 1) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate<=59 && evolution.evolutionExplorationAux.heartRate > 1) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate<=59 && evolution.evolutionExplorationAux.heartRate > 1)">Bradicardia</span>
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.heartRate" autocomplete="off" /><span class="col-md-2"> lpm</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Frecuencia respiratoria:
-                                                                                <span class="label label-default" ng-if="evolution.evolutionExplorationAux.breathingFrequency>=12 && evolution.evolutionExplorationAux.breathingFrequency<=20">Normal</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.breathingFrequency>20">Taquipnea</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.breathingFrequency<12 && evolution.evolutionExplorationAux.breathingFrequency>=1">Bradipnea</span>
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.breathingFrequency" autocomplete="off" /><span class="col-md-2"> rpm</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                Saturación de oxígeno:
-                                                                                <span class="label label-default" ng-if="evolution.evolutionExplorationAux.oxygenSaturation>=95">Normal</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.oxygenSaturation<95 && evolution.evolutionExplorationAux.oxygenSaturation>=1">Hipoxemia</span>
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" max="100" ng-model="evolution.evolutionExplorationAux.oxygenSaturation" autocomplete="off" /><span class="col-md-2"> %</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">Peso </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.weight" ng-change="INMEDIKApp.CalculateIMCEvolution(evolution.evolutionExplorationAux.weight,evolution.evolutionExplorationAux.size,$index)" autocomplete="off" /><span class="col-md-2"> Kgs</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">Talla: </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.size" ng-change="INMEDIKApp.CalculateIMCEvolution(evolution.evolutionExplorationAux.weight,evolution.evolutionExplorationAux.size,$index)" autocomplete="off" /><span class="col-md-2"> Cms</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">Circunferencia de cadera: </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.hipCircumference" autocomplete="off" /><span class="col-md-2"> Cms</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">Circunferencia de cintura: </label>
-                                                                            <div class="col-md-8">
-                                                                                <input class="col-md-8" type="number" min="1" ng-model="evolution.evolutionExplorationAux.waistCircumference" autocomplete="off" /><span class="col-md-2"> Cms</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <label class="col-md-4">
-                                                                                IMC:
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc<16 && evolution.evolutionExplorationAux.imc>1"> Delgadez severa</span>
-                                                                                <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=16 && evolution.evolutionExplorationAux.imc<=16.99"> Delgadez moderada</span>
-                                                                                <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=17 && evolution.evolutionExplorationAux.imc<=18.49"> Delgadez leve</span>
-                                                                                <span class="label label-success" ng-if="evolution.evolutionExplorationAux.imc>=18.5 && evolution.evolutionExplorationAux.imc<=24.99"> Normal</span>
-                                                                                <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=25 && evolution.evolutionExplorationAux.imc<=29.99"> Preobeso</span>
-                                                                                <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=30 && evolution.evolutionExplorationAux.imc<=34.99"> Obesidad leve</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc>=35 && evolution.evolutionExplorationAux.imc<=39.99"> Obesidad media</span>
-                                                                                <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc>=40"> Obesidad morbida</span>
-                                                                            </label>
-                                                                            <div class="col-md-8">
-                                                                                <span>{{evolution.evolutionExplorationAux.imc}}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <h4 class="col-md-12 text-center">Escala del dolor </h4>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <input type="range" class="slider-input" min="0" max="10" step="1" id="painScaleRange{{$index}}" ng-model="evolution.evolutionExplorationAux.painScaleAdult" />
-                                                                        <div class="ticks">
-                                                                            <span class="tick">0</span>
-                                                                            <span class="tick">1</span>
-                                                                            <span class="tick">2</span>
-                                                                            <span class="tick">3</span>
-                                                                            <span class="tick">4</span>
-                                                                            <span class="tick">5</span>
-                                                                            <span class="tick">6</span>
-                                                                            <span class="tick">7</span>
-                                                                            <span class="tick">8</span>
-                                                                            <span class="tick">9</span>
-                                                                            <span class="tick">10</span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group col-md-12">
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor1.png" /> Sin Dolor</label>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor2.png" /> Duele un poco</label>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor3.png" /> Duele un poco más</label>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor4.png" /> Duele aún más</label>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor5.png" /> Duele mucho</label>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <label><img src="~/Content/Images/escala_del_dolor6.png" /> El peor dolor</label>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div style="text-align:end">
-                                                                    <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveVitalSignsNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, true)">Guardar Signos Vitales</div>
-                                                                </div>
-                                                                <br /><br />
-                                                            </div>
-                                                            <div id="Imagen{{$index}}-tab" class="tab-pane fade">
-                                                                <div class="form-horizontal">
-                                                                    <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.AddFile(evolution)"> Agregar imagen/PDF</span>
-                                                                </div>
-                                                                <br /><br />
-                                                                <div class="clearfix"></div>
-                                                                <div class="form-horizontal text-center">
-                                                                    <div class="form-group" ng-repeat="files in evolution.filesAux">
-                                                                        <div style="border-style: ridge;">
-
-                                                                            <div class="form-inline" style="margin: 25px;">
-                                                                                <div ng-if="!files.id" class="col-md-12">
-                                                                                    <span class="btn btn-danger btn-xs pull-right col-md-1" ng-click="INMEDIKApp.RemoveFileModal(evolution, $index)"><i class="fa fa-times"></i></span>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Temperatura:
+                                                                                    <span class="label label-default" ng-if="evolution.evolutionExplorationAux.temperature>=36 && evolution.evolutionExplorationAux.temperature<37">Normal</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.temperature>=38">Fiebre</span>
+                                                                                    <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.temperature>=37.5 && evolution.evolutionExplorationAux.temperature<=37.9">Febricula</span>
+                                                                                    <span class="label label-info" ng-if="evolution.evolutionExplorationAux.temperature<36 && evolution.evolutionExplorationAux.temperature > 1">Hipotermia</span>
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input type="number" min="1" class="col-md-8"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.temperature" autocomplete="off" /><span class="col-md-1"> C°</span>
                                                                                 </div>
-                                                                                <input ng-if="!files.id" type="file" id="img-{{$index}}" name="img-{{$index}}" ng-model="files.image" accept="image/*, application/pdf"
-                                                                                       ngf-select ngf-model-invalid="errorFile" onchange="previewFile(this)" ng-click="INMEDIKApp.sendIdx($index)" />
-                                                                                <img src="" ng-if="files.ContentType !== 'application/pdf'" ng-src="@Url.Action("GetEvImage","Ads")?evId={{files.id}}"
-                                                                                     class="preview-img" alt=" vista previa..." />
-                                                                                <br />
-                                                                                <label ng-if="files.id && files.ContentType === 'application/pdf'" class="col-md-12">Documento subido: {{files.OriginalName}}</label>
-                                                                                <a style="margin:10px;" href="@Url.Action("DownloadEvFile","Ads")?evId={{files.id}}" target="_blank"
-                                                                                   class="btn btn-primary" ng-if="files.id">Ver</a>
-                                                                                <br />
-                                                                                <textarea ng-if="files.Description !== null" id="IDescription" name="ImageDescription" maxlength="500" rows="3" ng-model="files.Description" ng-disabled="files.id" placeholder="Descripción" class="col-md-12"></textarea>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-6">
+                                                                                    Tensión Arterial:
+                                                                                    <span class="label label-default" ng-if="evolution.evolutionExplorationAux.ta_sistolica<=120 && evolution.evolutionExplorationAux.ta_sistolica > 1 && evolution.evolutionExplorationAux.ta_diastolica > 1 && evolution.evolutionExplorationAux.ta_diastolica <80">Normal</span>
+                                                                                    <span class="label label-info" ng-if="evolution.evolutionExplorationAux.ta_sistolica>=120.1 && evolution.evolutionExplorationAux.ta_sistolica<=129.9 && evolution.evolutionExplorationAux.ta_diastolica <80">Elevada</span>
+                                                                                    <span class="label label-warning" ng-if="(evolution.evolutionExplorationAux.ta_sistolica>=130 && evolution.evolutionExplorationAux.ta_sistolica<=139.9) || (evolution.evolutionExplorationAux.ta_diastolica >=80 && evolution.evolutionExplorationAux.ta_diastolica <=89)">Hipertensión nivel 1</span>
+                                                                                    <span class="label label-warning" ng-if="(evolution.evolutionExplorationAux.ta_sistolica>=140 && evolution.evolutionExplorationAux.ta_sistolica<=179.9) || (evolution.evolutionExplorationAux.ta_diastolica >=90 && evolution.evolutionExplorationAux.ta_diastolica <=119)">Hipertensión nivel 2</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.ta_sistolica>=180 || evolution.evolutionExplorationAux.ta_diastolica >=120">Crisis de hipertensión</span>
+                                                                                </label>
                                                                             </div>
                                                                         </div>
-                                                                        <br />
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Sistólica:
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.ta_sistolica" autocomplete="off" /><span class="col-md-3">mm Hg</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Diastólica:
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.ta_diastolica" autocomplete="off" /><span class="col-md-3">mm Hg</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Frecuencia cardiaca:
+                                                                                    <span class="label label-default"
+                                                                                          ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate>=100 && evolution.evolutionExplorationAux.heartRate<=180) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate>=60 && evolution.evolutionExplorationAux.heartRate<=140) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate>=60 && evolution.evolutionExplorationAux.heartRate<=100)">Normal</span>
+                                                                                    <span class="label label-danger"
+                                                                                          ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate>=181) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate>=141) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate>=101)">Taquicardia</span>
+                                                                                    <span class="label label-danger"
+                                                                                          ng-if="(INMEDIKApp.ConsultFile.patientAux.personAux.age<=2 && evolution.evolutionExplorationAux.heartRate<=99 && evolution.evolutionExplorationAux.heartRate > 1) || ((INMEDIKApp.ConsultFile.patientAux.personAux.age>2 && INMEDIKApp.ConsultFile.patientAux.personAux.age<=10) && evolution.evolutionExplorationAux.heartRate<=59 && evolution.evolutionExplorationAux.heartRate > 1) || (INMEDIKApp.ConsultFile.patientAux.personAux.age>10 && evolution.evolutionExplorationAux.heartRate<=59 && evolution.evolutionExplorationAux.heartRate > 1)">Bradicardia</span>
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.heartRate" autocomplete="off" /><span class="col-md-2"> lpm</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Frecuencia respiratoria:
+                                                                                    <span class="label label-default" ng-if="evolution.evolutionExplorationAux.breathingFrequency>=12 && evolution.evolutionExplorationAux.breathingFrequency<=20">Normal</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.breathingFrequency>20">Taquipnea</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.breathingFrequency<12 && evolution.evolutionExplorationAux.breathingFrequency>=1">Bradipnea</span>
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.breathingFrequency" autocomplete="off" /><span class="col-md-2"> rpm</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    Saturación de oxígeno:
+                                                                                    <span class="label label-default" ng-if="evolution.evolutionExplorationAux.oxygenSaturation>=95">Normal</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.oxygenSaturation<95 && evolution.evolutionExplorationAux.oxygenSaturation>=1">Hipoxemia</span>
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1" max="100"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.oxygenSaturation" autocomplete="off" /><span class="col-md-2"> %</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">Peso </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.weight" ng-change="INMEDIKApp.CalculateIMCEvolution(evolution.evolutionExplorationAux.weight,evolution.evolutionExplorationAux.size,$index)" autocomplete="off" /><span class="col-md-2"> Kgs</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">Talla: </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.size" ng-change="INMEDIKApp.CalculateIMCEvolution(evolution.evolutionExplorationAux.weight,evolution.evolutionExplorationAux.size,$index)" autocomplete="off" /><span class="col-md-2"> Cms</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">Circunferencia de cadera: </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.hipCircumference" autocomplete="off" /><span class="col-md-2"> Cms</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">Circunferencia de cintura: </label>
+                                                                                <div class="col-md-8">
+                                                                                    <input class="col-md-8" type="number" min="1"
+                                                                                           ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                           ng-model="evolution.evolutionExplorationAux.waistCircumference" autocomplete="off" /><span class="col-md-2"> Cms</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label class="col-md-4">
+                                                                                    IMC:
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc<16 && evolution.evolutionExplorationAux.imc>1"> Delgadez severa</span>
+                                                                                    <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=16 && evolution.evolutionExplorationAux.imc<=16.99"> Delgadez moderada</span>
+                                                                                    <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=17 && evolution.evolutionExplorationAux.imc<=18.49"> Delgadez leve</span>
+                                                                                    <span class="label label-success" ng-if="evolution.evolutionExplorationAux.imc>=18.5 && evolution.evolutionExplorationAux.imc<=24.99"> Normal</span>
+                                                                                    <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=25 && evolution.evolutionExplorationAux.imc<=29.99"> Preobeso</span>
+                                                                                    <span class="label label-warning" ng-if="evolution.evolutionExplorationAux.imc>=30 && evolution.evolutionExplorationAux.imc<=34.99"> Obesidad leve</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc>=35 && evolution.evolutionExplorationAux.imc<=39.99"> Obesidad media</span>
+                                                                                    <span class="label label-danger" ng-if="evolution.evolutionExplorationAux.imc>=40"> Obesidad morbida</span>
+                                                                                </label>
+                                                                                <div class="col-md-8">
+                                                                                    <span>{{evolution.evolutionExplorationAux.imc}}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <h4 class="col-md-12 text-center">Escala del dolor </h4>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <input type="range" class="slider-input" min="0" max="10" step="1" id="painScaleRange{{$index}}"
+                                                                                   ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                   ng-model="evolution.evolutionExplorationAux.painScaleAdult" />
+                                                                            <div class="ticks">
+                                                                                <span class="tick">0</span>
+                                                                                <span class="tick">1</span>
+                                                                                <span class="tick">2</span>
+                                                                                <span class="tick">3</span>
+                                                                                <span class="tick">4</span>
+                                                                                <span class="tick">5</span>
+                                                                                <span class="tick">6</span>
+                                                                                <span class="tick">7</span>
+                                                                                <span class="tick">8</span>
+                                                                                <span class="tick">9</span>
+                                                                                <span class="tick">10</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="form-group col-md-12">
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor1.png" /> Sin Dolor</label>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor2.png" /> Duele un poco</label>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor3.png" /> Duele un poco más</label>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor4.png" /> Duele aún más</label>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor5.png" /> Duele mucho</label>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label><img src="~/Content/Images/escala_del_dolor6.png" /> El peor dolor</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style="text-align:end">
+                                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" ng-click="INMEDIKApp.SaveVitalSignsNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, true)">Guardar Signos Vitales</div>
+                                                                    </div>
+                                                                    <br /><br />
+                                                                </div>
+                                                                <div id="Imagen{{$index}}-tab" class="tab-pane fade">
+                                                                    <div class="form-horizontal">
+                                                                        <span ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.AddFile(evolution)"> Agregar imagen/PDF</span>
+                                                                    </div>
+                                                                    <br /><br />
+                                                                    <div class="clearfix"></div>
+                                                                    <div class="form-horizontal text-center">
+                                                                        <div class="form-group" ng-repeat="files in evolution.filesAux">
+                                                                            <div style="border-style: ridge;">
+                                                                                <div class="form-inline" style="margin: 25px;">
+                                                                                    <div ng-if="!files.id" class="col-md-12">
+                                                                                        <span class="btn btn-danger btn-xs pull-right col-md-1" ng-click="INMEDIKApp.RemoveFileModal(evolution, $index)"><i class="fa fa-times"></i></span>
+                                                                                    </div>
+                                                                                    <input ng-if="!files.id" type="file" id="img-{{$index}}" name="img-{{$index}}" ng-model="files.image" accept="image/*, application/pdf"
+                                                                                           ngf-select ngf-model-invalid="errorFile" onchange="angular.element(this).scope().previewFile(this)" ng-click="INMEDIKApp.sendIdx($index)" />
+                                                                                    <img src="" ng-if="files.ContentType !== 'application/pdf'" ng-src="@Url.Action("GetEvImage","Ads")?evId={{files.id}}"
+                                                                                         class="preview-img" alt=" vista previa..." />
+                                                                                    <br />
+                                                                                    <label ng-if="files.id && files.ContentType === 'application/pdf'" class="col-md-12">Documento subido: {{files.OriginalName}}</label>
+                                                                                    <a style="margin:10px;" href="@Url.Action("DownloadEvFile","Ads")?evId={{files.id}}" target="_blank"
+                                                                                       class="btn btn-primary" ng-if="files.id">Ver</a>
+                                                                                    <br />
+                                                                                    <textarea ng-if="files.Description !== null" id="IDescription" name="ImageDescription" maxlength="500" rows="3" ng-model="files.Description" ng-disabled="files.id" placeholder="Descripción" class="col-md-12"></textarea>
+                                                                                </div>
+                                                                            </div>
+                                                                            <br />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="clearfix"></div>
+                                                                    <div class="form-horizontal">
                                                                     </div>
                                                                 </div>
-                                                                <div class="clearfix"></div>
-                                                                <div class="form-horizontal">
-                                                                </div>
-                                                            </div>
-                                                            <div id="DiagnosticEvol{{$index}}-tab" class="tab-pane fade">
-                                                                <div class="form-horizontal">
-                                                                    <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addDiagnosis(evolution)"> Agregar Diagnóstico</span>
-                                                                    <div class="form-group">
-                                                                        <div class="col-md-12" ng-repeat="evolDiagnosis in evolution.evolutionDiagnosticAux">
-                                                                            <div class="panel panel-default">
-                                                                                <div class="panel-heading">
-                                                                                    <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}"><i class="fas fa-bars"></i></span>
-                                                                                    <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.DeleteDiagnosis(evolution,$index)"><i class="fa fa-times"></i></span>
-                                                                                    <label class="col-md-4">Diagnóstico: {{evolDiagnosis.name}}</label>
-                                                                                    <div class="clearfix"></div>
-                                                                                </div>
-                                                                                <div class="panel-body in" id="diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}">
-                                                                                    <div class="form-group col-md-12">
-                                                                                        <label class="col-md-4">Diagnósticos o problemas clínicos:</label>
-                                                                                        <div class="col-md-8">
-                                                                                            <input class="col-md-11" ng-model="evolDiagnosis.name" readonly />
-                                                                                            <button id="addDisease" style="padding: 3px 5px !important" class="btn btn-info btn-xs col-md-1" ng-click="INMEDIKApp.showCIE10($index)"><i class="fa fa-list-ul" aria-hidden="true"></i></button>
+                                                                <div id="DiagnosticEvol{{$index}}-tab" class="tab-pane fade">
+                                                                    <div class="form-horizontal">
+                                                                        <span ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addDiagnosis(evolution)"> Agregar Diagnóstico</span>
+                                                                        <div class="form-group">
+                                                                            <div class="col-md-12" ng-repeat="evolDiagnosis in evolution.evolutionDiagnosticAux">
+                                                                                <div class="panel panel-default">
+                                                                                    <div class="panel-heading">
+                                                                                        <span class="btn btn-info btn-xs pull-left" data-toggle="collapse" data-target="#diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}"><i class="fas fa-bars"></i></span>
+                                                                                        <span class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.DeleteDiagnosis(evolution,$index)"><i class="fa fa-times"></i></span>
+                                                                                        <label class="col-md-4">Diagnóstico: {{evolDiagnosis.name}}</label>
+                                                                                        <div class="clearfix"></div>
+                                                                                    </div>
+                                                                                    <div class="panel-body in" id="diagnosticpanelBodyResults{{$parent.$index}}-{{$index}}">
+                                                                                        <div class="form-group col-md-12">
+                                                                                            <label class="col-md-4">Diagnósticos o problemas clínicos:</label>
+                                                                                            <div class="col-md-8">
+                                                                                                <input class="col-md-11" ng-model="evolDiagnosis.name" readonly />
+                                                                                                <button id="addDisease" style="padding: 3px 5px !important" class="btn btn-info btn-xs col-md-1"
+                                                                                                        ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                        ng-click="INMEDIKApp.showCIE10($index)">
+                                                                                                    <i class="fa fa-list-ul" aria-hidden="true"></i>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="form-group col-md-12">
+                                                                                            <label class="col-md-2">Pronostico: </label>
+                                                                                            <div class="col-md-10">
+                                                                                                <textarea id="Pronostic" type="text" name="Pronostic" maxlength="500" rows="2" ng-model="evolDiagnosis.pronostic"
+                                                                                                          ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                                          placeholder="Pronostico" class="form-control col-md-12"></textarea>
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="form-group col-md-12">
-                                                                                        <label class="col-md-2">Pronostico: </label>
-                                                                                        <div class="col-md-10">
-                                                                                            <textarea id="Pronostic" type="text" name="Pronostic" maxlength="500" rows="2" ng-model="evolDiagnosis.pronostic" ng-disabled="evolDiagnosis.name == undefined||evolution.id > 0" placeholder="Pronostico" class="form-control col-md-12"></textarea>
-                                                                                        </div>
-                                                                                    </div>
-
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            <div id="RecipeEvol{{$index}}-tab" class="tab-pane fade">
-                                                                <div class="form-horizontal">
-                                                                    <span ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSigns" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addmedicstock(evolution)"> Agregar Medicamento</span>
-                                                                </div>
-                                                                <br /><br />
-                                                                <div ng-if="evolution.medicamstock.length > 0" class="form-group col-md-12">
-                                                                    <div class="col-md-12">
+                                                                <div id="RecipeEvol{{$index}}-tab" class="tab-pane fade">
+                                                                    <div class="form-horizontal">
+                                                                        <span ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" class="btn btn-info btn-xs pull-right" ng-click="INMEDIKApp.addmedicstock(evolution)"> Agregar Medicamento</span>
+                                                                    </div>
+                                                                    <br /><br />
+                                                                    <div ng-if="evolution.medicamstock.length > 0" class="form-group col-md-12">
+                                                                        <div class="col-md-12">
+                                                                            <div class="col-md-4">
+                                                                                <label>Medicamento</label>
+                                                                            </div>
+                                                                            <div class="col-md-3">
+                                                                                <label>En Stock</label>
+                                                                            </div>
+                                                                            <div class="col-md-3">
+                                                                                <label>Cantidad</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div id="stock{{index}}" class="form-group col-md-12" ng-repeat="medicamentstock in evolution.medicamstock">
                                                                         <div class="col-md-4">
-                                                                            <label>Medicamento</label>
+                                                                            <input type="text" placeholder="Escribir nombre o Código" name="conceptAux"
+                                                                                   ng-model="medicamentstock.medicamento"
+                                                                                   ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                   uib-typeahead="item as item.name for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')"
+                                                                                   typeahead-loading="loading"
+                                                                                   typeahead-editable="false"
+                                                                                   typeahead-on-select="INMEDIKApp.SelectMedicament(medicamentstock.medicamento, evolution)"
+                                                                                   typeahead-no-results="noResult" class="form-control"
+                                                                                   autocomplete="off" required />
                                                                         </div>
                                                                         <div class="col-md-3">
-                                                                            <label>En Stock</label>
+                                                                            <input type="text" class="form-control" id="batch{{$index}}" name="quantity" placeholder="Lote" maxlength="50"
+                                                                                   ng-model="medicamentstock.stock" disabled
+                                                                                   uib-typeahead="item as item.inStock for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')" />
                                                                         </div>
                                                                         <div class="col-md-3">
-                                                                            <label>Cantidad</label>
+                                                                            <input type="number" class="form-control"
+                                                                                   ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                   ng-model="medicamentstock.quantity" ng-blur="INMEDIKApp.GetTouched($event)" min="{{movement.minQuantity}}" id="quantity" required name="quantity_{{$index}}" placeholder="Cantidad" maxlength="50">
+                                                                            <span class="label label-danger" ng-show="InvoiceForm['quantity_' + $index].$touched && InvoiceForm['quantity_' + $index].$error.min">* La cantidad no debe ser menor a {{movement.minQuantity}}</span>
+                                                                        </div>
+                                                                        <div class="col-md-1" style="margin: 2px">
+                                                                            <span style="padding:5px" class="btn btn-danger btn-xs pull-right"
+                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                  ng-click="INMEDIKApp.setDeleteMedic($index,1, medicam)"><i class="fa fa-times"></i></span>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                                <div id="stock{{index}}" class="form-group col-md-12" ng-repeat="medicamentstock in evolution.medicamstock">
-                                                                    <div class="col-md-4">
-                                                                        <input type="text" placeholder="Escribir nombre o Código" name="conceptAux"
-                                                                               ng-model="medicamentstock.medicamento"
-                                                                               uib-typeahead="item as item.name for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')"
-                                                                               typeahead-loading="loading"
-                                                                               typeahead-editable="false"
-                                                                               typeahead-on-select="INMEDIKApp.SelectMedicament(medicamentstock.medicamento, evolution)"
-                                                                               typeahead-no-results="noResult" class="form-control"
-                                                                               autocomplete="off" required />
+                                                                    <div class="form-group" ng-if="evolution.medicamstock.length > 0">
+                                                                        <textarea class="col-md-12" placeholder="Receta" rows="8"
+                                                                                  ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0"
+                                                                                  ng-model="evolution.objRecipe.recipe"></textarea>
                                                                     </div>
-                                                                    <div class="col-md-3">
-                                                                        <input type="text" class="form-control" id="batch{{$index}}" name="quantity" placeholder="Lote" maxlength="50"
-                                                                               ng-model="medicamentstock.stock" ng-disabled="evolution.id > 0 && !evolution.evolutionExplorationAux.saveVitalSignss"
-                                                                               uib-typeahead="item as item.inStock for item in INMEDIKApp.loadConcepts($viewValue,'Medicamentos')" />
-                                                                    </div>
-                                                                    <div class="col-md-3">
-                                                                        <input type="number" class="form-control" ng-model="medicamentstock.quantity" ng-blur="INMEDIKApp.GetTouched($event)" min="{{movement.minQuantity}}" id="quantity" required name="quantity_{{$index}}" placeholder="Cantidad" maxlength="50">
-                                                                        <span class="label label-danger" ng-show="InvoiceForm['quantity_' + $index].$touched && InvoiceForm['quantity_' + $index].$error.min">* La cantidad no debe ser menor a {{movement.minQuantity}}</span>
-                                                                    </div>
-                                                                    <div class="col-md-1" style="margin: 2px">
-                                                                        <span style="padding:5px" class="btn btn-danger btn-xs pull-right" ng-click="INMEDIKApp.setDeleteMedic($index,1, medicam)"><i class="fa fa-times"></i></span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-group" ng-if="evolution.medicamstock.length > 0">
-                                                                    <textarea class="col-md-12" placeholder="Receta" rows="8" ng-model="evolution.objRecipe.recipe"></textarea>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div style="text-align:end">
+                                                        <button type="button" id="btncollapse" class="btn btn-default" data-toggle="collapse" data-target="#panelBodymod{{$index}}">Cerrar</button>
+                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, false)">Guardar Nota</div>
+                                                        <div class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, true, INMEDIKApp.conceptselected, false)" ng-disabled="evolution.id > 0 && evolution.evolutionExplorationAux.id >= 0">Guardar e Imprimir</div>
+                                                    </div>
                                                 </div>
-                                                <div style="text-align:end">
-                                                    <button type="button" id="btncollapse" class="btn btn-default" data-toggle="collapse" data-target="#panelBodymod{{$index}}">Cerrar</button>
-                                                    <div class="btn btn-primary" data-loading-text="Guardando..." ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns" ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, false, INMEDIKApp.conceptselected, false)">Guardar Nota</div>
-                                                    <div class="btn btn-primary" data-loading-text="Guardando..." ng-click="INMEDIKApp.SaveCurrentNote(INMEDIKApp.selectedconcept, evolution, $index, INMEDIKApp.ConsultFile.id, true, INMEDIKApp.conceptselected, false)" ng-disabled="evolution.id > 0 && evolution.objRecipe.id && !evolution.evolutionExplorationAux.saveVitalSigns">Guardar e Imprimir</div>
-                                                </div>
-</div>
                                             </div>
                                         </div>
                                     </div>

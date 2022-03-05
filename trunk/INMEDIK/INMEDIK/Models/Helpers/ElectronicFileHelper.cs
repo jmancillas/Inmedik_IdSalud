@@ -1496,6 +1496,28 @@ namespace INMEDIK.Models.Helpers
                                 var stock = db.Stock.FirstOrDefault(s => s.ConceptId == medicaments.medicamento.id);
                                 stock.InStock -= medicaments.quantity;
                             }
+
+                            foreach (var DiagnosticData in evolution.evolutionDiagnosticAux)
+                            {
+                                var cie10db = db.CIE10.FirstOrDefault(c => c.Consecutivo == DiagnosticData.consecutivo);
+                                string diagnosticNamedb = cie10db.Nombre;
+                                EvolDiagnostic EvolDiDB = db.EvolDiagnostic.Create();
+                                EvolDiDB.CIE10Id = DiagnosticData.consecutivo;
+                                EvolDiDB.EvolutionNoteId = evolution.id;
+                                EvolDiDB.Pronostic = DiagnosticData.pronostic;
+                                EvolDiDB.Dose = DiagnosticData.dose;
+                                EvolDiDB.Presentation = DiagnosticData.presentacion;
+                                EvolDiDB.WayOfAdministration = DiagnosticData.wayOfAdministration;
+                                EvolDiDB.Frequency = DiagnosticData.frequency;
+                                EvolDiDB.DaysOfThreatment = DiagnosticData.daysOfThreatment;
+                                EvolDiDB.ActiveSubstance = DiagnosticData.activeSubstance;
+                                EvolDiDB.CommercialBrand = DiagnosticData.commercialBrand;
+                                EvolDiDB.Unit = DiagnosticData.unit;
+                                EvolDiDB.DiagnosticName = diagnosticNamedb;
+                                db.EvolDiagnostic.Add(EvolDiDB);
+                                db.SaveChanges();
+                            }
+
                             evolutionDb.Updated = DateTime.UtcNow;
                             evolutionDb.UpdatedBy = res.User.id.Value;
                             result.data.id = evolution.id;
